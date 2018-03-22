@@ -27,7 +27,7 @@ define([], function(){
         this.url = url;
         this.script = script;
         this.MessageBox = MessageBox;
-        this.deferred = new Promise();
+        this.deferred = Q.defer();
         this.tabId = void 0;
         this.selected = false;
     }
