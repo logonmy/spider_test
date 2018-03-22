@@ -36,3 +36,51 @@ bilibili首页更新调试发现 : 去重未生效 相关 bilibiliVideoDetail/ba
                 })
         会报错unchecked runtime.lastError while running tabs.executeScript: The tab was closed.
    所以被迫要经常重启chrome
+   样例： toutiaoUserList 无法给 搜索李开复的页面植入脚本
+
+5  爬虫未跑通: 多玩首页 头条号历史 微博关键词 微信新榜 好奇心日报首页
+   未开发: 梨视频丢给思远了
+   解决方案待确认: 微博每日更新(是否要上爬虫平台) 微博博主回复(是否上平台) 微博博主历史 清洗解决与入库方案 sinaPic是否要爬
+
+
+
+detail与list对应关系
+
+_bilibili bilibiliKeywordList bilibiliUserList
+     \             |                 /
+             bilibiliVideoDetail
+
+_duowanPic === _duowanPicDetail
+
+_haoqixin === _haoqixinDetail
+
+toutiaoKeywordList === toutiaoKeywordDetail
+
+toutiaoUserList === toutiaoUserDetail
+
+wxPublicList wxXingBang
+     \           /
+     wxPublicDetail
+
+
+爬虫名称对应
+_bilibili                      bilibili_index_update
+bilibiliKeywordList            duowanPic_index_update
+bilibiliUserList               duowanPic_index_detail
+bilibiliVideoDetail                 等等
+
+_duowanPic
+_duowanPicDetail
+
+_haoqixin
+_haoqixinDetail
+
+toutiaoKeywordList
+toutiaoKeywordDetail
+
+toutiaoUserList
+toutiaoUserDetail
+
+wxPublicList
+wxXingBang
+wxPublicDetail
