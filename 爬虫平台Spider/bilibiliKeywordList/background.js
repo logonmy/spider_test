@@ -39,13 +39,14 @@ require([
 
             console.log(`打开网页Tab(url=${task.value}), 注入爬取逻辑`);
 
-            let baseUrl = "https://search.bilibili.com/all?keyword=" + + task.value;
+            let baseUrl = "https://search.bilibili.com/all?keyword=" + task.value;
 
             let tabCount = new Tab(baseUrl, ["./business/script1.js"]);
 
             let pageCount = await tabCount.run();
+            console.log("当前关键词共有"+ pageCount + "页");
 
-            let dataArray = [];
+            var dataArray = [];
             for(let i = 1;i <= pageCount;i++){
                 let url = baseUrl + "&page=" + i;
                 let tab = new Tab(url, ["./business/script.js"]);
@@ -54,19 +55,18 @@ require([
 
                 await filterItems(task, data);
                 console.log(`过滤掉已爬取的链接后,data=`, data);
-                dataArray.push(data);
-            }
 
-            for(let data of dataArray){
+                dataArray.push(data);
+
                 console.log(`开始添加详情页爬取任务`);
                 await postDetailTasks(data);
                 console.log(`详情页爬取任务添加完成`);
-
-                task.data = JSON.stringify(data);
-                console.log(`提交爬取任务结果数据`);
-                await Task.putTaskData(task);
-                console.log(`提交爬取任务结果数据完成`);
             }
+
+            task.data = JSON.stringify(dataArray);
+            console.log(`提交爬取任务结果数据`);
+            await Task.putTaskData(task);
+            console.log(`提交爬取任务结果数据完成`);
 
             console.log(`上报爬取任务成功,task=`, task);
             await Task.resolveTask(task);
@@ -85,6 +85,7 @@ require([
         while (true) {
             let task = await Task.fetchTask(BEE_NAME);
             if (task === null) {
+                console.log("暂时没有任务");
                 await Async.sleep(SLEEP_TIME);
                 continue;
             }

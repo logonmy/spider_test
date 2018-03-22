@@ -69,6 +69,7 @@ require([
         while (true) {
             let task = await Task.fetchTask(BEE_NAME);
             if (task === null) {
+                console.log("暂时没有任务");
                 await Async.sleep(SLEEP_TIME);
                 continue;
             }

@@ -40,15 +40,17 @@ require([
             console.log(`打开网页Tab(url=${task.value}), 注入爬取逻辑`);
 
             let tab0Href = "https://search.bilibili.com/upuser?keyword=" + task.value;
-            let tab0 = new Tab(tab0Href, [".business/script1.js"]);
+            let tab0 = new Tab(tab0Href, ["./business/script1.js"]);
             let data0 = await tab0.run();
+            console.log("Up主的页面链接为" + data0.value);
 
             let tab1 = new Tab(data0.value, ["./business/script2.js"]);
             let pageCount = await tab1.run();
+            console.log("共有" + pageCount + "页");
 
             let dataArray = [];
             for(let i=1;i <= pageCount;i++){
-                let tab = new Tab(data0.value + "page=" + i, ["./business/script.js"]);
+                let tab = new Tab(data0.value + "?page=" + i, ["./business/script.js"]);
                 console.log(`开始爬取`);
                 let data = await tab.run();
                 console.log(`爬取完成,data=`, data);
@@ -57,18 +59,17 @@ require([
                 await filterItems(task, data);
                 console.log(`过滤掉已爬取的链接后,data=`, data);
                 dataArray.push(data);
-            }
 
-            for(let data of dataArray){
                 console.log(`开始添加详情页爬取任务`);
                 await postDetailTasks(data);
                 console.log(`详情页爬取任务添加完成`);
 
-                task.data = JSON.stringify(data);
-                console.log(`提交爬取任务结果数据`);
-                await Task.putTaskData(task);
-                console.log(`提交爬取任务结果数据完成`);
             }
+
+            task.data = JSON.stringify(dataArray);
+            console.log(`提交爬取任务结果数据`);
+            await Task.putTaskData(task);
+            console.log(`提交爬取任务结果数据完成`);
 
             console.log(`上报爬取任务成功,task=`, task);
             await Task.resolveTask(task);
@@ -86,6 +87,7 @@ require([
         while (true) {
             let task = await Task.fetchTask(BEE_NAME);
             if (task === null) {
+                console.log("暂时没有任务");
                 await Async.sleep(SLEEP_TIME);
                 continue;
             }

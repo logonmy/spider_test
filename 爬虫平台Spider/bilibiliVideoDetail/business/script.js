@@ -18,9 +18,14 @@ var TemplateData = {
     comments: []
 }
 
-try{
-    setTimeout(function(){
+var index = setInterval(function(){
+    window.scrollTo(0, document.documentElement.scrollTop + 200);
+}, 50);
 
+
+setTimeout(function(){
+
+    try{
         let viewBox= document.querySelector("#viewbox_report");
 
         TemplateData.title = viewBox.querySelector("h1").getAttribute("title");
@@ -53,17 +58,16 @@ try{
         for(let i=0;i< comments.length;i++){
             TemplateData.comments.push(comments[i].querySelector("p.text").innerText);
         }
-
+        console.log(TemplateData);
         chrome.runtime.sendMessage(TemplateData, function (response) {});
         window.close();
-    }, 1000)
-}
-catch (e){
-    chrome.runtime.sendMessage({
-        error:e,
-        data: TemplateData,
-        url: window.location.href,
-        false: true
-    }, function (response) {});
-    window.close();
-}
+    }catch(e){
+        chrome.runtime.sendMessage({
+            error:e,
+            data: TemplateData,
+            url: window.location.href,
+            false: true
+        }, function (response) {});
+        window.close();
+    }
+}, 1000)

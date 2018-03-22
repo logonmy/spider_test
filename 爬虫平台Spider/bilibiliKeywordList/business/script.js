@@ -15,12 +15,25 @@ let run = async () => {
     await sleep(1);
     var items = document.querySelectorAll(".video.matrix .info a");
     for(let item of items){
-        TemplateData.items.push(item.getAttribute("href"))
+        if(item.getAttribute("href").indexOf("www.bilibili") > -1){
+            TemplateData.items.push({
+                url:item.getAttribute("href")
+            });
+        }
     }
+    chrome.runtime.sendMessage(TemplateData);
     console.log(TemplateData);
+    window.close();
 }
 
 try{
     run();
 }catch(e){
+    chrome.runtime.sendMessage({
+        error:e,
+        data: TemplateData,
+        url: window.location.href,
+        false: true
+    }, function (response) {});
+    window.close();
 }
