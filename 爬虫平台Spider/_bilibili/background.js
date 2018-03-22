@@ -1,8 +1,3 @@
-require.config({
-    "baseUrl": "./",
-    "waitSeconds": 0
-});
-
 require([
     "config",
     "../api/http",
@@ -38,7 +33,8 @@ require([
             console.log(`开始处理爬取任务,task=`, task);
 
             console.log(`打开网页Tab(url=${task.value}), 注入爬取逻辑`);
-            let tab = new Tab(task.value, ["./business/script.js"]);
+            let indexUrl = "https://www.bilibili.com/"
+            let tab = new Tab(indexUrl, ["./business/script.js"]);
 
             console.log(`开始爬取`);
             let data = await tab.run();
