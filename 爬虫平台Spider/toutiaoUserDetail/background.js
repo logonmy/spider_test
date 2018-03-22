@@ -59,11 +59,12 @@ require([
     };
 
     (async() => {
-        const BEE_NAME = "toutiao_user_list";
+        const BEE_NAME = "toutiao_user_detail";
         const SLEEP_TIME = 10000;
         while (true) {
             let task = await Task.fetchTask(BEE_NAME);
             if (task === null) {
+                console.log("暂时没有任务");
                 await Async.sleep(SLEEP_TIME);
                 continue;
             }

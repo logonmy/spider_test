@@ -61,6 +61,7 @@ require([
         const BEE_NAME = "toutiao_keyword_detail";
         const SLEEP_TIME = 10000;
         while (true) {
+            console.log("暂时没有任务");
             let task = await Task.fetchTask(BEE_NAME);
             if (task === null) {
                 await Async.sleep(SLEEP_TIME);

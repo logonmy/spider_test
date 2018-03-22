@@ -39,8 +39,8 @@ require([
 
             console.log(`打开网页Tab(url=${task.value}), 注入爬取逻辑`);
 
-            taks.value = "https://www.toutiao.com/search/?keyword=" + task.value;
-            let tab0 = new Tab(task.value, ["./business/script1.js"]);
+            let url = "https://www.toutiao.com/search/?keyword=" + task.value;
+            let tab0 = new Tab(url, ["./business/script1.js"]);
             let data0 = await tab0.run();
 
             let tab = new Tab(data0.value, ["./business/script.js"]);
@@ -78,6 +78,7 @@ require([
         while (true) {
             let task = await Task.fetchTask(BEE_NAME);
             if (task === null) {
+                console.log("暂无任务");
                 await Async.sleep(SLEEP_TIME);
                 continue;
             }

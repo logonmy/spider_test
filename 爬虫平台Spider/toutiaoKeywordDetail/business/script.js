@@ -266,15 +266,19 @@ var TemplateData = {
 }
 
 
-try{
-    setTimeout(function(){
-
+setTimeout(function(){
+    try{
         // http://www.365yg.com/group/6461145367760077326/
         if(window.location.href.indexOf("365yg") > -1){
             //阳光视频
             TemplateData.title= document.querySelector(".abs-title").innerText;
             TemplateData.url= window.location.href;
             TemplateData.videoSrc = document.querySelector("video").getAttribute("src");
+
+            console.log(TemplateData);
+            chrome.runtime.sendMessage(TemplateData, function (response) {});
+            window.close();
+
         }else if(window.location.href.indexOf("www.toutiao.com") > -1){
             //头条自己的文章
             var count = 0
@@ -286,7 +290,7 @@ try{
             TemplateData.title = document.querySelector(".article-title").innerText
             TemplateData.date = new Date(document.querySelectorAll(".article-sub span")[1].innerText).getTime();
             TemplateData.url = window.location.href;
-            TemplateData.content = JSON.stringify(BeeUtils.htmlToJson(document.querySelector(".article-content div")));
+            TemplateData.content = JSON.stringify(BeeUtils.htmlToJson(document.querySelector(".article-content")));
 
             let comments = document.querySelectorAll("#comment ul li");
             for(let i=0;i<comments.length;i++){
@@ -300,14 +304,14 @@ try{
             chrome.runtime.sendMessage(TemplateData, function (response) {});
             window.close();
         }
-    }, 5000)
-}
-catch (e){
-    chrome.runtime.sendMessage({
-        error:e,
-        data: TemplateData,
-        url: window.location.href,
-        false: true
-    }, function (response) {});
-    window.close();
-}
+    }catch(e){
+        chrome.runtime.sendMessage({
+            error:e,
+            data: TemplateData,
+            url: window.location.href,
+            false: true
+        }, function (response) {});
+        window.close();
+    }
+
+}, 5000)
