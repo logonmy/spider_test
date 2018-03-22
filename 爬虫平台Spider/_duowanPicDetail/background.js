@@ -30,7 +30,8 @@ require([
             console.log(`打开网页Tab(url=${task.value}), 注入爬取逻辑`);
 
             let tab0 = new Tab(task.value, ["./business/script1.js"]);
-            let pageCount = tab0.run();
+            let pageCount = await tab0.run();
+            console.log("当前图库有"+ pageCount + "张图片");
 
             let dataArray = []
             for(let i=1;i <= pageCount;i++){
@@ -39,30 +40,23 @@ require([
                 console.log(`开始爬取`);
                 let data = await tab.run();
                 console.log(`爬取完成,data=`, data);
+                dataArray.push(data);
 
+                console.log(`发送爬取结果到消息队列topic=${task.name}`);
+                await postDataToMessage(task, data);
+                console.log(`发送爬取结果到消息队列完成`);
+
+                console.log(`添加内容url(${data.url})到去重模块的历史集合`);
+                await postDataToDereplicate(task, data);
+                console.log(`添加到去重模块成功`);
 
             }
-
             //todo 类似的还有 只是现在反应过来
-            //task提交爬去任务结果数据 本来task.data应该是一个json 现在 是一个数组了 多个json了
-            //是接受类似数据格式 还是一个task可以多次提交？？？？？
-            //类似的好像在b站那里
-            //
-            //q文件被我删了 tab类里面要用 看看那new Promise能不能顶一下 不行就加回来
 
-
-            task.data = JSON.stringify(data);
+            task.data = JSON.stringify(dataArray);
             console.log(`提交爬取任务结果数据`);
             await Task.putTaskData(task);
             console.log(`提交爬取任务结果数据完成`);
-
-            console.log(`发送爬取结果到消息队列topic=${task.name}`);
-            await postDataToMessage(task, data);
-            console.log(`发送爬取结果到消息队列完成`);
-
-            console.log(`添加内容url(${data.url})到去重模块的历史集合`);
-            await postDataToDereplicate(task, data);
-            console.log(`添加到去重模块成功`);
 
             console.log(`上报爬取任务成功,task=`, task);
             await Task.resolveTask(task);
@@ -80,6 +74,7 @@ require([
         while (true) {
             let task = await Task.fetchTask(BEE_NAME);
             if (task === null) {
+                console.log("暂时没有任务");
                 await Async.sleep(SLEEP_TIME);
                 continue;
             }

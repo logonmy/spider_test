@@ -8,6 +8,8 @@ include puppeteer solvation
 include utils from 3.20-new Date()
 include nodeServer for test write by express/jade
 
+historyUtil里面没用
+puppeteer里面的 BIgV是每天跑的博主更新 环境需求 redis/各种包/chrome或chromium（路径在worker.js的execu..Path里）
 
 遗留问题
 
@@ -38,7 +40,7 @@ bilibili首页更新调试发现 : 去重未生效 相关 bilibiliVideoDetail/ba
    所以被迫要经常重启chrome
    样例： toutiaoUserList 无法给 搜索李开复的页面植入脚本
 
-5  爬虫未跑通: 多玩首页 头条号历史 微博关键词 微信新榜 好奇心日报首页
+5  爬虫未跑通: 头条号历史 微博关键词 微信新榜 好奇心日报首页
    未开发: 梨视频丢给思远了
    解决方案待确认: 微博每日更新(是否要上爬虫平台) 微博博主回复(是否上平台) 微博博主历史 清洗解决与入库方案 sinaPic是否要爬
 

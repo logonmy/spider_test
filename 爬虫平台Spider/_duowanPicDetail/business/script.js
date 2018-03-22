@@ -7,12 +7,12 @@ var templateData = {
     created_at: new Date().getTime()
 }
 
-let run = async () => {
-    var count = 0
-    var index = setInterval(() => {
-        if(count === 300){
-            clearInterval(index);
+var count = 0
+var index = setInterval(() => {
+    if(count === 300){
+        clearInterval(index);
 
+        try{
             if(document.querySelector("#image-show .show-img img")){
                 console.log("is img")
                 var img = document.querySelector("#image-show .show-img img");
@@ -45,25 +45,20 @@ let run = async () => {
             console.log(templateData)
             chrome.runtime.sendMessage(templateData)
             window.close();
-
-        }else{
-            count ++;
-            window.scrollTo(0, document.documentElement.scrollTop + 200);
-            if(document.querySelector(".dw-comment-more_comment")){
-                document.querySelector(".dw-comment-more_comment").click();
-            }
+        }catch(e){
+            chrome.runtime.sendMessage({
+                error:e,
+                data: templateData,
+                url: window.location.href,
+                false: true
+            }, function (response) {});
+            window.close();
         }
-    } ,5000/100)
-}
-
-try{
-    run();
-}catch(e){
-    chrome.runtime.sendMessage({
-        error:e,
-        data: templateData,
-        url: window.location.href,
-        false: true
-    }, function (response) {});
-    window.close();
-}
+    }else{
+        count ++;
+        window.scrollTo(0, document.documentElement.scrollTop + 200);
+        if(document.querySelector(".dw-comment-more_comment")){
+            document.querySelector(".dw-comment-more_comment").click();
+        }
+    }
+} ,5000/100)

@@ -10,7 +10,7 @@ try{
     for(var i=1;i< lists.length;i++){
         let href = lists[i].querySelector("a").getAttribute("href");
         if(href.indexOf("tu.duowan.com") > -1){
-            templateData.items.push(href);
+            templateData.items.push({url:href});
         }
     }
 

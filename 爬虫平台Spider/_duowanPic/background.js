@@ -38,7 +38,8 @@ require([
             console.log(`开始处理爬取任务,task=`, task);
 
             console.log(`打开网页Tab(url=${task.value}), 注入爬取逻辑`);
-            let tab = new Tab(task.value, ["./business/script.js"]);
+
+            let tab = new Tab("http://tu.duowan.com/tu", ["./business/script.js"]);
 
             console.log(`开始爬取`);
             let data = await tab.run();
@@ -73,6 +74,7 @@ require([
         while (true) {
             let task = await Task.fetchTask(BEE_NAME);
             if (task === null) {
+                console.log("暂时没有任务");
                 await Async.sleep(SLEEP_TIME);
                 continue;
             }
