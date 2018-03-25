@@ -11,7 +11,7 @@ require([
     "../service/tab"
 ], (Config, Http, Async, Task, Tab) => {
 
-    const filterItems = async(task, data) => {
+    const filterItems = async (task, data) => {
         let query = {
             partition: task.name,
             keys: data.items.map(item => item.url)
@@ -20,7 +20,7 @@ require([
         data.items = data.items.filter((item, i) => (res.filter_result[i]));
     };
 
-    const postDetailTasks = async(data) => {
+    const postDetailTasks = async (data) => {
         for (let item of data.items) {
             let query = {
                 name: "wx_public_detail",
@@ -33,15 +33,43 @@ require([
         }
     };
 
-    const runTask = async(task) => {
+    const runTask = async (task) => {
         try {
             console.log(`开始处理爬取任务,task=`, task);
 
             console.log(`打开网页Tab(url=${task.value}), 注入爬取逻辑`);
 
-            let tab0Href = "https://www.newrank.cn/public/info/search.html?value=" + encodeURIComponent(task.value);
+            let strEncodeUnicode = (str) => {
+
+                function checknum(value) {
+                    var Regx = /^[A-Za-z0-9]*$/;
+                    if (Regx.test(value)) {
+                        return true;
+                    }
+                    else {
+                        return false;
+                    }
+                }
+
+                let result = ""
+                for (let i = 0; i < str.length; i++) {
+                    if (checknum(str[i])) {
+                        result += str[i]
+                    } else {
+                        let ss = "%u" + str.charCodeAt(i).toString(16)
+                        result += ss;
+                    }
+                }
+                return result;
+            }
+            let word = strEncodeUnicode(task.value);
+
+
+            let tab0Href = "https://www.newrank.cn/public/info/search.html?value=" + word;
             let tab0 = new Tab(tab0Href, ["./business/script1.js"]);
             let wxhaoma = await tab0.run();
+
+            console.log("wxhaoma", wxhaoma)
 
             let tabHref = "https://www.newrank.cn/public/info/detail.html?account=" + wxhaoma;
             let tab = new Tab(tabHref, ["./business/script.js"]);
@@ -66,19 +94,20 @@ require([
             console.log(`上报爬取任务成功,task=`, task);
             await Task.resolveTask(task);
             console.log(`爬取任务完成`);
-        } catch(err) {
+        } catch (err) {
             console.error("爬取失败,err=", err);
             console.log(`上报爬取任务失败,task=`, task);
             await Task.rejectTask(task, err);
         }
     };
 
-    (async() => {
+    (async () => {
         const BEE_NAME = "wx_xingbang_list";
         const SLEEP_TIME = 10000;
         while (true) {
             let task = await Task.fetchTask(BEE_NAME);
             if (task === null) {
+                console.log("暂时没有任务")
                 await Async.sleep(SLEEP_TIME);
                 continue;
             }
