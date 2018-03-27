@@ -35,7 +35,7 @@ let run = async () => {
     await watchUpdate();
     console.log("页面加载完毕");
 
-    let items = document.querySelectorAll(".articleCard");
+    let items = document.querySelectorAll("[ga_event=feed_item_click]");
     for(let i=0;i<items.length;i++){
         let item = {
             title: "",

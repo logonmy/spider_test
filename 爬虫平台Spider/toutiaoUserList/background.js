@@ -43,6 +43,9 @@ require([
             let tab0 = new Tab(url, ["./business/script1.js"]);
             let data0 = await tab0.run();
 
+            data0.value = data0.value.replace("http", "https");
+
+            console.log(data0.value);
             let tab = new Tab(data0.value, ["./business/script.js"]);
 
             console.log(`开始爬取`);

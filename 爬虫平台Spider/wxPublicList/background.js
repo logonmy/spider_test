@@ -79,5 +79,4 @@ require([
             await runTask(task)
         }
     })();
-
 });

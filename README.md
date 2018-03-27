@@ -16,11 +16,13 @@ puppeteer里面的 BIgV是每天跑的博主更新 环境需求 redis/各种包/
 bilibili首页更新调试发现 : 去重未生效 相关 bilibiliVideoDetail/background.js
                                        _bilibili/background.js
 
-1  所有的去重做的都不好 或者说不对 filterItem 那些
+1  所有的去重做的都不好 或者说不对 filterItem 那些 待处理 所有都少了一个result.
 2  还有put那里逻辑还是没弄清楚
 3  出现错误页(无效的url)的处理方式 与 爬取失败(爬虫代码错误导致)的处理方式相同 丢了一个error
 
-4  最关键的问题 tab.js中的
+4   ////////////////////////////////
+    问题1：
+    tab.js中的
         chrome.tabs.create({url: this.url, selected: this.selected},function(tab){
                     self.tabId = tab.id;
                     self.participate();
@@ -40,9 +42,14 @@ bilibili首页更新调试发现 : 去重未生效 相关 bilibiliVideoDetail/ba
    所以被迫要经常重启chrome
    样例： toutiaoUserList 无法给 搜索李开复的页面植入脚本
 
-5  爬虫未跑通: 头条号历史
-   未开发: 梨视频丢给思远了
-   解决方案待确认: 微博每日更新(是否要上爬虫平台) 微博博主回复(是否上平台) 微博博主历史 清洗解决与入库方案 sinaPic是否要爬 微博的好像就是上不了vps啊
+   已解决： 所有的类似问题 是在于 301了 页面自动跳转了 所以 植入不进去了 常出现情况 为http升级为https 易于解决 但莫名其妙的跳转的 等到以后遇到再处理
+   ////////////////////////
+   问题2：
+   升级messageBox与tab 主要指 messageBox查询与tab中$q
+
+5  未开发: 梨视频丢给思远了
+   解决方案待确认: 微博每日更新(是否要上爬虫平台) 微博博主回复(是否上平台) 微博博主历史 清洗解决与入库方案 sinaPic是否要爬 微博的决定本机自跑
+   socket.io 添加心跳功能
 
 
 

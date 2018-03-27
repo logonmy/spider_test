@@ -6,6 +6,7 @@ setTimeout(function(){
     try{
         TemplateData.value = document.querySelector("[riot-tag=userCard] a").getAttribute("href");
         chrome.runtime.sendMessage(TemplateData);
+        window.close();
     }catch(e){
         console.log(e);
         chrome.runtime.sendMessage({
@@ -14,6 +15,6 @@ setTimeout(function(){
             url: window.location.href,
             false: true
         }, function (response) {});
-        //window.close();
+        window.close();
     }
 }, 2000)
