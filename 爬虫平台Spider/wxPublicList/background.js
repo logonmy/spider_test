@@ -17,7 +17,7 @@ require([
             keys: data.items.map(item => item.url)
         };
         let res = await Http.call(`http://bee.api.talkmoment.com/dereplicate/filter/by/history`, query);
-        data.items = data.items.filter((item, i) => (res.filter_result[i]));
+        data.items = data.items.filter((item, i) => (res.result.filter_result[i]));
     };
 
     const postDetailTasks = async(data) => {

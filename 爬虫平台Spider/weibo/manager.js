@@ -22,7 +22,8 @@ const filterItems = async(task, data) => {
         keys: data
     };
     let res = await Http.call(`http://bee.api.talkmoment.com/dereplicate/filter/by/history`, query);
-    data = data.filter((item, i) => (res.filter_result[i]));
+    res = JSON.parse(res);
+    data = data.filter((item, i) => (res.result.filter_result[i]));
 };
 
 const postDataToDereplicate = async(task, data) => {
@@ -53,8 +54,29 @@ const copyJSON = (obj) => {
 }
 
 const sleep = (s=5) => {
-    return new Promise(resolve => setTimeout(resolve, s * 1000))
+    return new Promise(resolve => setTimeout(resolve, s * c000))
 }
+
+let getUser = (() => {
+    let users = [{
+        username: "15351702865",
+        password: "cqcp815"
+    }, {
+        username: "yuchenguangfd@gmail.com",
+        password: "Washu1234"
+    }, {
+        username: "guyiyang@gmail.com",
+        password: "Washu1234"
+    }, {
+        username: "15850766679",
+        password: "xrz19940822"
+    }];
+    return () => {
+        let result = users.shift();
+        users.push(result);
+        return result;
+    }
+})();
 
 //为错误缓存做的 目前考虑 错误直接上报 包括每日更新也从后台获取 这样就不需要redis了
 // class Queue{
@@ -78,9 +100,22 @@ class Cpu{
         this.user = user;
         this.task = void 0;
         this.data = [];
+        this._status = false;
+    }
+    set status(value) {
+        if (!value){
+            this._status = false;
+        }
+        else{
+            this._status = true;
+        }
     }
 
-    init(timeout = 30) {
+    get status(){
+        return this._status;
+    }
+
+    init(timeout = 300) {
         let self = this;
         timeout = timeout * 1000;
 
@@ -113,7 +148,7 @@ class Cpu{
                             await Task.putTaskData(task);
                             await postDataToDereplicate(task, data);
                         }
-
+                        console.log("一个关键词爬取完成 开放一个puppeteer实例");
                         self.status = true;
                     }
                     case "error": {
@@ -135,18 +170,23 @@ class Cpu{
         })
 
         return new Promise((resolve, reject) =>{
-            self.worker.on("launched", () => {
-                self.worker.send({
-                    name: "user",
-                    user: self.user
-                })
+            console.log("监听启动函数注册");
+            self.worker.on("message", (msg) => {
+                if(msg.type === "launched"){
+                    console.log("puppeteer已启动 发送用户名与密码", self.user);
+                    self.worker.send({
+                        name: "user",
+                        user: self.user
+                    })
+                }else if(msg.type === "login"){
+                    console.log("登录成功， 开放一个puppeteer实例");
+                    self.status = true;
+                    self.cache = [];
+                    resolve();
+                }
             })
-            self.worker.on("login", () => {
-                self.status = true;
-                self.cache = [];
-                resolve();
-            })
-            setTimeout(() => {
+
+            setTimeout(function(){
                 reject();
             }, timeout)
         })
@@ -157,14 +197,10 @@ class Cpu{
         self.task = task;
         this.worker.send(task);
     }
-
-    get status(){
-        return this.status;
-    }
 }
 
 //有puppetter空闲时 发出轮询
-let run = async () => {
+run = async () => {
     let Puppeteers = await (async() =>{
         //array content all Cpu instance
         let Cpus = [];
@@ -172,8 +208,8 @@ let run = async () => {
         //init all Cpu and login return a Promise
         let init = async () => {
             let loginPromises = [];
-            for(let i = 0; i < 4; i++){
-                Cpus.push(new Cpu("worker.js"))
+            for(let i = 0; i < 1; i++){
+                Cpus.push(new Cpu("worker.js", getUser()));
                 loginPromises.push(Cpus[i].init());
             }
             await Promise.all(loginPromises);
@@ -182,9 +218,8 @@ let run = async () => {
         //check if there is free Cpu return a boolean
         let hasFreePuppeteer = () => {
             for(let i =0;i< Cpus.length;i++){
-                if(Cpus['i'].status === true){
+                if(Cpus[i].status === true){
                     return true;
-
                 }
             }
             return false;
@@ -204,6 +239,7 @@ let run = async () => {
         //run one task with task in json
         let runTask = (task) => {
             let puppeteer = getFreePuppeteer();
+
             if(!puppeteer) return;
 
             if(task.name === "weibo_keyword" || "weibo_bigv" || "weibo_update_everyday"){
@@ -223,7 +259,7 @@ let run = async () => {
 
         return {
             init: init,
-            hasFreePuppeteer: hasFreePuppeteer(),
+            hasFreePuppeteer: hasFreePuppeteer,
             fetchAndRunTask: fetchAndRunTask,
             runTask: runTask
         }
@@ -240,7 +276,7 @@ let run = async () => {
         const SLEEP_TIME = 10;
         //todo 更好的写法？？
         while (true) {
-            if(Puppeteers.hasFreePuppeteer){
+            if(Puppeteers.hasFreePuppeteer()){
                 let task = await Task.fetchTask(KEYWORD_BEE_NAME);
                 if (task === null) {
                     let task2  = await Task.fetchTask(BIGV_BEE_NAME);
@@ -257,12 +293,12 @@ let run = async () => {
                             continue;
                         }
                     }else{
-                        console.log("获得关键词搜索任务");
+                        console.log("获得大v历史详情任务");
                         Puppeteers.runTask(task2);
                         continue;
                     }
                 }else{
-                    console.log("获得大v历史详情任务");
+                    console.log("获得关键词搜索任务");
                     Puppeteers.runTask(task);
                     continue;
                 }
@@ -271,8 +307,6 @@ let run = async () => {
             await sleep();
         }
     })()
-
 }
-
 
 run();

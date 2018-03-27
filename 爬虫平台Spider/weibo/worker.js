@@ -36,14 +36,17 @@ process.on("message", async function (e) {
             break;
         }
         case "weibo_keyword": {
+            console.log("puppeteer收到关键词任务");
             await searchKeyword();
             break;
         }
         case "weibo_bigv": {
+            console.log("puppeteer收到微博大v任务");
             await searchBigVName();
             break;
         }
         case "weibo_update_everyday": {
+            console.log("puppeteer收到微博首页更新任务");
             await updateEveryDay();
             break;
         }
@@ -65,8 +68,8 @@ const launchBrowser = async () => {
     await pages[0].setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko)" +
         " Chrome/62.0.3202.75 Safari/537.36");
     await pages[0].setViewport({
-        width: 1920,
-        height: 1080,
+        width: 1360,
+        height: 765,
         isLandscape: true
     });
     log("打开微博首页");
@@ -135,9 +138,10 @@ const openIndex = async (user) => {
     })
 };
 
+//关键词搜索
 const searchKeyword = async () => {
     try {
-        await pages[0].goto(`http://s.weibo.com/user/${encodeURIComponent(task.value)}&Refer=focus_lx_STopic_box`);
+        await pages[0].goto(`http://s.weibo.com/weibo/${encodeURIComponent(task.value)}&Refer=index`);
     } catch (e) {
         console.log("搜索页面打开失败，正在重试！");
         console.log(e);
@@ -158,11 +162,11 @@ const searchKeyword = async () => {
     }
 
     //向下滚动
-    await curPage.evaluate(() => {
+    await pages[0].evaluate(() => {
         let interval = setInterval(function () {
             //这里增加了翻页速度 50 -> 100
-            window.scrollTo(0, document.documentElement.scrollTop + 100);
-            if (document.querySelector("div.W_pages a[bpfilter=page]")) {
+            window.scrollTo(0, document.documentElement.scrollTop + 50);
+            if (document.querySelector(".page.next.S_txt1.S_line1")) {
                 clearInterval(interval);
             }
         }, 50)
@@ -170,32 +174,33 @@ const searchKeyword = async () => {
 
     //
     try {
-        await page[0].waitForSelector("div.W_pages a[bpfilter=page]", {timeout: 30000});
+        await pages[0].waitForSelector(".page.next.S_txt1.S_line1", {timeout: 30000});
+        console.log("加载底部翻页按钮成功");
     } catch (e) {
         console.log("加载底部翻页按钮失败，正在重试");
-        await page[0].reload();
+        await pages[0].reload();
         await sleep(60);
         await searchKeyword();
         return;
     }
 
-    let blogNodes = await page[0].$$("div[action-type=feed_list_item]:not([isforward='1'])")
+    let blogNodes = await pages[0].$$("div[action-type=feed_list_item]:not([isforward='1'])")
 
     let count = 0;
-    for (let i = 0; i < blogNodes.length && i < 15; i++) {
+    for (let i = 0; i < blogNodes.length; i++) {
         let item = blogNodes[i];
-        let commentBtn = await item.$$(".line.S_line1")[2];
+        let commentBtn = await item.$("[action-type=feed_list_comment]");
         await commentBtn.click();
-        //log("点开评论" + ++count);
+        log("点开评论" + ++count);
         try {
-            await page[0].waitForFunction("document." +
+            await pages[0].waitForFunction("document." +
                 "querySelectorAll(\"div.WB_feed_like p.text" +
                 " i.W_loading:not([style='display:none;'])\").length" +
                 " == 0"
                 , {timeout: 10000});
         } catch (e) {
             await sleep();
-            let ok = await page[0].$("a[node-type=ok]");
+            let ok = await pages[0].$("a[node-type=ok]");
             if (ok) {
                 await ok.click();
             }
@@ -218,19 +223,31 @@ const searchKeyword = async () => {
             continue;
         }
         errTime = 0;
-        //log("评论" + count + "加载完毕");
+        log("评论" + count + "加载完毕");
         await sleep(1);
     }
 
+
     //点开所有点开全文 并删除点开全文/收起全文按钮
     for(let i = 0;i< blogNodes.length;i++){
-        let openButton = openButtons[i];
-        let button = await openButton.$$(".WB_text_opt")[0];
-        await openButton.click();
-        button = await openButton.$$(".WB_text_opt")[0];
-        await openButton.click();
+        let openButton = blogNodes[i];
+        try{
+            let button = await openButton.$$(".WB_text_opt");
+            if(button && button[0]) {
+                button = button[0]
+                await button.click()
+            };
+            button = await openButton.$$(".WB_text_opt");
+            if(button && button[0]) {
+                button = button[0]
+                await button.click()
+            };
+        }catch(e){
+            console.log(e);
+        }
     }
-    await page[0].evaluate(() => {
+
+    await pages[0].evaluate(() => {
         let buttons = document.querySelectorAll(".WB_text_opt");
         for(let button of buttons){
             button.remove();
@@ -327,9 +344,11 @@ const searchKeyword = async () => {
 
     task.type = "success";
     task.datas = pageResult;
+    console.log(task, "task");
     process.send(task);
 }
 
+//大v历史搜索
 const searchBigVName = async () => {
 
     const parseDom = async (html) => {
