@@ -11,7 +11,7 @@ require([
     "../service/tab"
 ], (Config, Http, Async, Task, Tab) => {
 
-    const filterItems = async(task, data) => {
+    const filterItems = async (task, data) => {
         let query = {
             partition: task.name,
             keys: data.items.map(item => item.url)
@@ -20,7 +20,7 @@ require([
         data.items = data.items.filter((item, i) => (res.filter_result[i]));
     };
 
-    const postDetailTasks = async(data) => {
+    const postDetailTasks = async (data) => {
         for (let item of data.items) {
             let query = {
                 name: "toutiao_user_detail",
@@ -33,7 +33,7 @@ require([
         }
     };
 
-    const runTask = async(task) => {
+    const runTask = async (task) => {
         try {
             console.log(`开始处理爬取任务,task=`, task);
 
@@ -68,14 +68,14 @@ require([
             console.log(`上报爬取任务成功,task=`, task);
             await Task.resolveTask(task);
             console.log(`爬取任务完成`);
-        } catch(err) {
+        } catch (err) {
             console.error("爬取失败,err=", err);
             console.log(`上报爬取任务失败,task=`, task);
             await Task.rejectTask(task, err);
         }
     };
 
-    (async() => {
+    (async () => {
         const BEE_NAME = "toutiao_user_list";
         const SLEEP_TIME = 10000;
         while (true) {
@@ -89,4 +89,32 @@ require([
         }
     })();
 
-});
+    (async () => {
+        let sleep_time = 10000;
+        let server = "http://ws.api.talkmoment.com:51179";
+        var socket = io.connect("http://ws.api.talkmoment.com:51179");
+        let postData = {
+            name: "bee_heart_beat",
+            type: "bee_heart_beat"
+        };
+        while (true) {
+            await Async.sleep(sleep_time);
+
+            console.log("❤️");
+            socket.send(JSON.stringify(postData));
+
+            socket.onerror = function (error) {
+                console.log("error", error);
+            };
+
+            socket.onclose = function (data) {
+                console.log("close", data)
+            }
+        };
+
+        socket.onmessage = function (msg) {
+            console.log("msg come");
+        };
+    })();
+
+})
