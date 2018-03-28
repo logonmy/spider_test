@@ -71,6 +71,7 @@ require([
     (async() => {
         const BEE_NAME = "wx_public_list";
         const SLEEP_TIME = 10000;
+        Socket.startHeartBeat(BEE_NAME);
         while (true) {
             let task = await Task.fetchTask(BEE_NAME);
             if (task === null) {

@@ -61,6 +61,7 @@ require([
     (async() => {
         const BEE_NAME = "toutiao_keyword_detail";
         const SLEEP_TIME = 10000;
+        Socket.startHeartBeat(BEE_NAME);
         while (true) {
             console.log("暂时没有任务");
             let task = await Task.fetchTask(BEE_NAME);
