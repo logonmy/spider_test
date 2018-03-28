@@ -25,7 +25,7 @@ require([
         for (let item of data.items) {
             let query = {
                 name: "bilibili_video_detail",
-                value: item,
+                value: item.url,
                 config: "{}",
                 scheduled_at: Date.now()
             };
@@ -74,7 +74,7 @@ require([
             Socket.log(`爬取任务完成`);
 
         } catch(err) {
-            Socket.log("爬取失败,err=", err);
+            Socket.log("爬取失败,err=", err.stack);
             Socket.log(`上报爬取任务失败,task=`, task);
             await Task.rejectTask(task, err);
         }
