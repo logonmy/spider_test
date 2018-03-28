@@ -9,8 +9,20 @@ try{
 
     for(var i=1;i< lists.length;i++){
         let href = lists[i].querySelector("a").getAttribute("href");
+        let img = lists[i].querySelector("a img");
+        let cover_img = {
+            src: img.getAttribute("src"),
+            width: img.naturalWidth,
+            height: img.naturalHeight
+        }
+        let title = lists[i].querySelector("em a").innerText;
+
         if(href.indexOf("tu.duowan.com") > -1){
-            templateData.items.push({url:href});
+            templateData.items.push({
+                url:href,
+                title: title,
+                cover_img: cover_img
+            });
         }
     }
 

@@ -69,7 +69,7 @@ let getUser = (() => {
     }
 })();
 
-let TaskHeap = () => {
+let TaskHeap = function() {
     this.tasks =  [];
     this.readyTasks = [];
 }
@@ -305,8 +305,8 @@ run = async () => {
     //轮询task 上传任务
     (async () => {
         while(true){
-            if(TaskHeap.hasReadyTask()){
-                let task = TaskHeap.getReadyTask();
+            if(taskHeap.hasReadyTask()){
+                let task = taskHeap.getReadyTask();
                 //todo taskSolve
 
                 let datas = task.datas;
@@ -333,9 +333,11 @@ run = async () => {
                 }
                 console.log("一个关键词爬取完成 开放一个puppeteer实例");
                 self.status = true;
+
+            }else{
+                console.log("暂时已完成的task");
             }
         }
     })()
 }
-
 run();

@@ -13,13 +13,24 @@ var TemplateData = {
 
 let run = async () => {
     await sleep(1);
-    var items = document.querySelectorAll(".video.matrix .info a");
-    for(let item of items){
-        if(item.getAttribute("href").indexOf("www.bilibili") > -1){
-            TemplateData.items.push({
-                url:item.getAttribute("href")
-            });
+    var lists = document.querySelectorAll(".video.matrix");
+
+    for(let li of lists){
+        let img = li.querySelector(".lazy-img img");
+        let cover_img = {
+            src: img.getAttribute("src"),
+            width: img.naturalWidth,
+            height: img.naturalHeight
         }
+
+        let title = li.querySelector(".video.matrix .info .headline.clearfix a").getAttribute("title");
+        let href = li.querySelector(".video.matrix .info .headline.clearfix a").getAttribute("href");
+        TemplateData.items.push({
+            url: href,
+            title: title,
+            cover_img: cover_img
+        })
+        console.log(TemplateData);
     }
     chrome.runtime.sendMessage(TemplateData);
     console.log(TemplateData);

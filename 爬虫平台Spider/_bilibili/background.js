@@ -20,7 +20,7 @@ require([
         for (let item of data.items) {
             let query = {
                 name: "bilibili_video_detail",
-                value: item.url,
+                value: item,
                 config: "{}",
                 scheduled_at: Date.now()
             };
