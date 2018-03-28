@@ -43,15 +43,6 @@ require([
             Socket.log(`提交爬取任务结果数据完成`);
 
             Socket.log(`发送爬取结果到消息队列topic=${task.name}`);
-            console.log("******************")
-            console.log("******************")
-            console.log("******************")
-            console.log("******************")
-            SaveFile.save(JSON.stringify(data) + "\n", "b站样板.txt")
-            console.log("******************")
-            console.log("******************")
-            console.log("******************")
-            console.log("******************")
             await postDataToMessage(task, data);
             Socket.log(`发送爬取结果到消息队列完成`);
 
@@ -59,7 +50,7 @@ require([
             await postDataToDereplicate(task, data);
             Socket.log(`添加到去重模块成功`);
 
-            Socket.log(`上报爬取任务成功,task=`, task);
+            Socket.log(`上报爬取任务成功,task=`, task.stack);
             await Task.resolveTask(task);
             Socket.log(`爬取任务完成`);
         } catch(err) {
