@@ -16,6 +16,7 @@ setTimeout(function(){
                 }
             }
             item.url = "https:" + li.querySelector("a").getAttribute("href");
+            item.title = li.querySelector("a img").getAttribute("alt");
             item.cover_img.src = li.querySelector("a img").getAttribute("src");
             item.cover_img.width = li.querySelector("a img").naturalWidth;
             item.cover_img.height = li.querySelector("a img").naturalHeight;

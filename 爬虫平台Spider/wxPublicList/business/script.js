@@ -7,40 +7,34 @@ try{
             window.scrollTo(0, document.documentElement.scrollTop + 200);
             if(document.getElementById("js_nomore").getAttribute("style").length > 20){
                 clearInterval(index);
-                // console.log("已滚动到页面底部");
-                // var titles = document.querySelectorAll(".weui_media_title");
-                // for(var i=0; i < titles.length; i++){
-                //     TemplateData.urls.push(titles[i].getAttribute("hrefs"));
-                //     console.log(1, titles[i].getAttribute("hrefs"));
-                // }
-                // chrome.runtime.sendMessage(TemplateData, function (response) {});
-                // window.close();
+
+                var titles = document.querySelectorAll(".weui_media_title");
+                var items = document.querySelectorAll(".weui_media_box.appmsg.js_appmsg");
+                for(var i=0; i < titles.length; i++){
+                    try{
+                        let item = {
+                            title: "",
+                            url: "",
+                            cover_img: ""
+                        }
+                        item.title = titles[i].innerText;
+                        item.url = titles[i].getAttribute("hrefs");
+                        var imgSrc = document.querySelectorAll(".weui_media_box.appmsg.js_appmsg")[i].querySelector("span").getAttribute("style");
+                        item.cover_img = imgSrc.split("(")[1].split(")")[0];
+
+                        TemplateData.items.push(item);
+                    }
+                    catch(e){
+                        console.log(e)
+                    }
+
+                }
+                console.log(TemplateData)
+                chrome.runtime.sendMessage(TemplateData, function (response) {});
+                window.close();
             }
         }, 50);
-        var titles = document.querySelectorAll(".weui_media_title");
-        var items = document.querySelectorAll(".weui_media_box.appmsg.js_appmsg");
-        for(var i=0; i < titles.length; i++){
-            try{
-                let item = {
-                    title: "",
-                    url: "",
-                    cover_img: ""
-                }
-                item.title = titles[i].innerText;
-                item.url = titles[i].getAttribute("hrefs");
-                var imgSrc = document.querySelectorAll(".weui_media_box.appmsg.js_appmsg")[i].querySelector("span").getAttribute("style");
-                item.cover_img = imgSrc.split("(")[1].split(")")[0];
 
-                TemplateData.items.push(item);
-            }
-            catch(e){
-                console.log(e)
-            }
-
-        }
-        console.log(TemplateData)
-        chrome.runtime.sendMessage(TemplateData, function (response) {});
-        window.close();
     }, 5000)
 }
 catch (e){

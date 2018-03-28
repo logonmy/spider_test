@@ -25,7 +25,7 @@ require([
         for (let item of data.items) {
             let query = {
                 name: "duowanPic_index_detail",
-                value: item.url,
+                value: item,
                 config: "{}",
                 scheduled_at: Date.now()
             };

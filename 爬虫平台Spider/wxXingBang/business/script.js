@@ -9,7 +9,10 @@ setTimeout(function(){
         var hrefs = document.querySelectorAll("#info_detail_article_lastest li .title a");
 
         for(var item of hrefs){
-            TemplateData.items.push({url:item.getAttribute("href")})
+            TemplateData.items.push({
+                url:item.getAttribute("href"),
+                title: item.getAttribute("title")
+            })
         }
         console.log(TemplateData)
         chrome.runtime.sendMessage(TemplateData, function (response) {});

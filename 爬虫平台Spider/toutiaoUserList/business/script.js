@@ -52,7 +52,7 @@ let run = async () => {
             console.log(item.title);
 
 
-            item.url = items[i].querySelector(".link.title").getAttribute("href")
+            item.url = items[i].querySelector(".link.title").getAttribute("src")
             item.url = "https://www.toutiao.com/i" + item.url.split("/")[2];
 
             if(items[i].querySelector(".img-wrap img")){

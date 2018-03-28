@@ -57,7 +57,7 @@ let run = async () => {
 
             if(items[i].querySelector(".img-wrap img")){
                 let img = items[i].querySelector(".img-wrap img");
-                item.cover_img.src = img.getAttribute("href");
+                item.cover_img.src = img.getAttribute("src");
                 item.cover_img.width = img.naturalWidth;
                 item.cover_img.height = img.naturalHeight;
             }
