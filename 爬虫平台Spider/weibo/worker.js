@@ -376,7 +376,7 @@ const searchBigVName = async () => {
             saveStr += JSON.stringify(obj) + "\n";
         }
         let date = new Date();
-        let dateStr = "dingding" + date.getFullYear() + (date.getMonth() + 1) + date.getDate();
+        let dateStr = "BigVName" + task.value;
         File.appendFileSync(dateStr + ".txt", saveStr);
     };
     const main = async (curPage) => {
@@ -480,6 +480,7 @@ const searchBigVName = async () => {
         let nextPage =await curPage.waitForSelector("div.W_pages a[bpfilter=page].next", {timeout: 30000});
         await nextPage.click();
 
+        //update to browser's targetchanged event or targetcreated event
         let check = async () => {
             let pages = await browser.pages();
             if (pages.length === 2) {
@@ -499,40 +500,35 @@ const searchBigVName = async () => {
     };
 
     try {
-        await page.goto(`http://s.weibo.com/user/${encodeURIComponent(blogName)}&Refer=focus_lx_STopic_box`);
+        await pages[0].goto(`http://s.weibo.com/user/${encodeURIComponent(task.value)}&Refer=focus_lx_STopic_box`);
     } catch (e) {
         console.log("搜索页面打开失败，正在重试！");
         await sleep();
-        readLocalStorage(page);
         return;
     }
 
-    try {
-        await page.waitForSelector("p.person_name a");
-    } catch (e) {
-
-    }
 
     log("搜索对应微博账号");
     await sleep();
 
-    const name = await page.$("p.person_name a");
+    const name = await pages[0].$("p.person_name a");
     await name.click();
     let curPage;
     let check = async () => {
-        let pages = await browser.pages();
-        if (pages.length === 2) {
+        let Pages = await browser.pages();
+        if (Pages.length === 2) {
             await sleep(0.1);
-            check();
+            await check();
         } else {
-            curPage = pages[2];
-            await pages[1].close();
-            main(curPage);
+            curPage = Pages[2];
+            await Pages[1].close();
+            await main(curPage);
         }
     };
-    check();
+    await check();
 }
 
+//微博每日更新
 const updateEveryDay = async () => {
 
 }

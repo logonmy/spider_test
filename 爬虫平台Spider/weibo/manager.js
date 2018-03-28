@@ -1,20 +1,11 @@
 const child_process = require("child_process");
 const http = require("http");
-const Task = require("./api/task").Task
-const Http = require("./api/http").Http
+const Task = require("./api/task").Task;
+const Http = require("./api/http").Http;
 
-/*
-    对于关键词 一个pupeteer跑一个关键词
-    对于博主 可以实现 多个puppeteer跑一个博主 但为了简单 还是一个puppeteer跑一个 以后估计也不可能优化了
-    以上意味着 一个puppeteer一个taskId
-
-    所有数据传输格式
-    {
-        name: ,
-        value: ,
-        taskId: ,
-    }
-*/
+const KEYWORD_BEE_NAME = "weibo_keyword";
+const BIGV_BEE_NAME = "weibo_bigv";
+const UPDATE_EVERY_DAY = "weibo_update_everyday";
 
 const filterItems = async(task, data) => {
     let query = {
@@ -78,22 +69,35 @@ let getUser = (() => {
     }
 })();
 
-//为错误缓存做的 目前考虑 错误直接上报 包括每日更新也从后台获取 这样就不需要redis了
-// class Queue{
-//     constructor(){
-//         this.queue = []
-//     }
-//     push(task){
-//         this.queue.push(task);
-//     }
-//     pop(){
-//         if(this.queue.length > 0){
-//             return this.queue.shift();
-//         }else {
-//             return false;
-//         }
-//     }
-// }
+let TaskHeap = () => {
+    this.tasks =  [];
+    this.readyTasks = [];
+}
+TaskHeap.prototype.getReadyTask = () => {
+    var self = this;
+    return self.readyTasks.shift();
+}
+TaskHeap.prototype.hasReadyTask = () => {
+    var self = this;
+    return self.readyTasks.length === 0 ? false : true;
+}
+TaskHeap.prototype.pushTask = (task) => {
+    var self = this;
+    switch(task.name){
+        case "weibo_keyword": {
+            self.readyTasks.push(task);
+            break;
+        }
+        case "weibo_bigv": {
+            break;
+        }
+        case "weibo_update_everyday": {
+            break;
+        }
+    }
+}
+let taskHeap = new TaskHeap();
+
 class Cpu{
     constructor(fileName, user){
         this.worker = child_process.fork(fileName);
@@ -122,46 +126,39 @@ class Cpu{
         let keywordCount = 0;
 
         self.worker.on("message", async (task) => {
-            if(task.name === "weibo_keyword"){
-                switch (task.type){
-                    case "success": {
-                        //拿detialUrl去重filter
-                        let datas = task.datas;
-                        let dataUrls = [];
+            switch (task.type){
+                //一个关键词只有一个对应的success过来
+                case "success": {
+                    taskHeap.pushTask(task);
+                    let datas = task.datas;
+                    let dataUrls = [];
+                    for(let data of datas){
+                        dataUrls.push(data.detailUrl);
+                    }
+                    await filterItems(self.task, dataUrls);
+                    let resultDatas = [];
+                    for(let dataUrl of dataUrls){
                         for(let data of datas){
-                            dataUrls.push(data.detailUrl);
-                        }
-                        await filterItems(self.task, dataUrls);
-                        let resultDatas = [];
-                        for(let dataUrl of dataUrls){
-                            for(let data of datas){
-                                if(data.detailUrl === dataUrl){
-                                    resultDatas.push(data)
-                                    break;
-                                }
+                            if(data.detailUrl === dataUrl){
+                                resultDatas.push(data)
+                                break;
                             }
                         }
+                    }
 
-                        //拿分开的data post上去 去重提交
-                        for(let data of resultDatas){
-                            task.data = JSON.stringify(data);
-                            await Task.putTaskData(task);
-                            await postDataToDereplicate(task, data);
-                        }
-                        console.log("一个关键词爬取完成 开放一个puppeteer实例");
-                        self.status = true;
+                    for(let data of resultDatas){
+                        task.data = JSON.stringify(data);
+                        await Task.putTaskData(task);
+                        await postDataToDereplicate(task, data);
                     }
-                    case "error": {
-                        await Task.rejectTask(task, "error");
-                        self.status = true;
-                    }
+                    console.log("一个关键词爬取完成 开放一个puppeteer实例");
+                    self.status = true;
                 }
-            }else if(task.name === "weibo_bigv"){
-
-            }else if(task.name === "weibo_update_everyday"){
-
+                case "error": {
+                    await Task.rejectTask(task, "error");
+                    self.status = true;
+                }
             }
-
         })
         self.worker.on("exit", async() => {
             //todo 重启 重新init
@@ -268,11 +265,8 @@ run = async () => {
     //初始化
     await Puppeteers.init();
 
-    //轮询
+    //轮询服务器 获取任务
     (async() => {
-        const KEYWORD_BEE_NAME = "weibo_keyword";
-        const BIGV_BEE_NAME = "weibo_bigv";
-        const UPDATE_EVERY_DAY = "weibo_update_everyday";
         const SLEEP_TIME = 10;
         //todo 更好的写法？？
         while (true) {
@@ -305,6 +299,41 @@ run = async () => {
             }
             console.log("暂时没有空闲puppeteer instance");
             await sleep();
+        }
+    })()
+
+    //轮询task 上传任务
+    (async () => {
+        while(true){
+            if(TaskHeap.hasReadyTask()){
+                let task = TaskHeap.getReadyTask();
+                //todo taskSolve
+
+                let datas = task.datas;
+                let dataUrls = [];
+                for(let data of datas){
+                    dataUrls.push(data.detailUrl);
+                }
+                await filterItems(self.task, dataUrls);
+
+                let resultDatas = [];
+                for(let dataUrl of dataUrls){
+                    for(let data of datas){
+                        if(data.detailUrl === dataUrl){
+                            resultDatas.push(data)
+                            break;
+                        }
+                    }
+                }
+
+                for(let data of resultDatas){
+                    task.data = JSON.stringify(data);
+                    await Task.putTaskData(task);
+                    await postDataToDereplicate(task, data);
+                }
+                console.log("一个关键词爬取完成 开放一个puppeteer实例");
+                self.status = true;
+            }
         }
     })()
 }
