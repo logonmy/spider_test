@@ -1,6 +1,6 @@
 {
     "manifest_version": 3,
-    "name": "b站点视频详情",
+    "name": "B站点视频详情",
     "version": "0.0.3",
     "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
     "permissions": [ "cookies", "unlimitedStorage", "http://*/*", "https://*/*", "file:///*/*" ],
