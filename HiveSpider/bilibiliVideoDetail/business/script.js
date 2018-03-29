@@ -19,7 +19,7 @@ var TemplateData = {
 }
 
 var index = setInterval(function(){
-    window.scrollTo(0, document.documentElement.scrollTop + 200);
+    window.scrollTo(0, document.documentElement.scrollTop + 250);
 }, 50);
 
 
@@ -70,4 +70,4 @@ setTimeout(function(){
         }, function (response) {});
         window.close();
     }
-}, 1000)
+}, 3000)

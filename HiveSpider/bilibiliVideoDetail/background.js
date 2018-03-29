@@ -44,6 +44,7 @@ require([
 
             Socket.log(`发送爬取结果到消息队列topic=${task.name}`);
             await postDataToMessage(task, data);
+            //FileControll.append("bilibiliVideoDetail", JSON.stringify(data) + "\n");
             Socket.log(`发送爬取结果到消息队列完成`);
 
             Socket.log(`添加内容url(${data.url})到去重模块的历史集合`);
