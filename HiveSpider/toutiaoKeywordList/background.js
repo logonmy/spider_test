@@ -25,7 +25,7 @@ require([
         for (let item of data.items) {
             let query = {
                 name: "toutiao_keyword_detail",
-                value: item,
+                value: item.url,
                 config: "{}",
                 scheduled_at: Date.now()
             };

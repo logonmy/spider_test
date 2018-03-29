@@ -21,16 +21,22 @@ require([
         data.items = data.items.filter((item, i) => (res.filter_result[i]));
     };
 
-    const postDetailTasks = async(data) => {
+    const postDetailTasks = async(listTask, data) => {
         for (let item of data.items) {
             let query = {
                 name: "bilibili_video_detail",
                 value: item.url,
                 config: "{}",
-                scheduled_at: Date.now()
+                scheduled_at: 9999999999999
             };
             let task = await Http.call(`http://bee.api.talkmoment.com/scheduler/task/post`, query);
             Socket.log(`向Scheduler添加task=`, task);
+            Socket.emitEvent({
+                event: "list_item_added",
+                bee_name: listTask.name,
+                item: item,
+                task: task
+            });
         }
     };
 
@@ -47,8 +53,8 @@ require([
             let pageCount = await tabCount.run();
             Socket.log("当前关键词共有"+ pageCount + "页");
 
-            let dataArray = [];
-            for(let i = 1;i <= pageCount;i++){
+            let taskData = [];
+            for(let i = 1; i <= Math.min(3, pageCount); i++){
                 let url = baseUrl + "&page=" + i;
                 let tab = new Tab(url, ["./business/script.js"]);
                 let data = await tab.run();
@@ -57,16 +63,21 @@ require([
                 await filterItems(task, data);
                 Socket.log(`过滤掉已爬取的链接后,data=`, data);
 
-                for(let da of data){
-                    dataArray.push(da);
+                for(let da of data.items) {
+                    taskData.push(da);
                 }
 
                 Socket.log(`开始添加详情页爬取任务`);
-                await postDetailTasks(data);
+                await postDetailTasks(task, data);
                 Socket.log(`详情页爬取任务添加完成`);
             }
 
-            task.data = JSON.stringify(dataArray);
+            Socket.emitEvent({
+                event: "list_item_finish",
+                bee_name: task.name
+            });
+
+            task.data = JSON.stringify(taskData);
             Socket.log(`提交爬取任务结果数据`);
             await Task.putTaskData(task);
             Socket.log(`提交爬取任务结果数据完成`);

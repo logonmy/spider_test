@@ -25,7 +25,7 @@ require([
         for (let item of data.items) {
             let query = {
                 name: "bilibili_video_detail",
-                value: item,
+                value: item.url,
                 config: "{}",
                 scheduled_at: Date.now()
             };
@@ -50,7 +50,7 @@ require([
             Socket.log("共有" + pageCount + "页");
 
             let dataArray = [];
-            for(let i=1;i <= pageCount;i++){
+            for(let i=1;i <= Math.min(3, pageCount);i++){
                 let tab = new Tab(data0.value + "?page=" + i, ["./business/script.js"]);
                 Socket.log(`开始爬取`);
                 let data = await tab.run();
