@@ -10,7 +10,8 @@ require([
     "../api/task",
     "../api/socket",
     "../service/tab",
-], (Config, Http, Async, Task, Socket, Tab) => {
+    "../api/fileControll",
+], (Config, Http, Async, Task, Socket, Tab, FileControll) => {
 
     const postDataToMessage = async(task, data) => {
         await Http.call(`http://bee.api.talkmoment.com/message/publish?topic=${task.name}`, data);
@@ -41,6 +42,7 @@ require([
             Socket.log(`提交爬取任务结果数据完成`);
 
             Socket.log(`发送爬取结果到消息队列topic=${task.name}`);
+            //FileControll.append("wxPublicDetail", JSON.stringify(data) + "\n");
             await postDataToMessage(task, data);
             Socket.log(`发送爬取结果到消息队列完成`);
 

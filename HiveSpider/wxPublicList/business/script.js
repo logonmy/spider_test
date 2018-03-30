@@ -4,7 +4,7 @@ var TemplateData = {
 try{
     setTimeout(function(){
         var index = setInterval(function(){
-            window.scrollTo(0, document.documentElement.scrollTop + 200);
+            window.scrollTo(0, document.documentElement.scrollTop + 100);
             if(document.getElementById("js_nomore").getAttribute("style").length > 20){
                 clearInterval(index);
 
@@ -33,7 +33,7 @@ try{
                 chrome.runtime.sendMessage(TemplateData, function (response) {});
                 window.close();
             }
-        }, 50);
+        }, 100);
 
     }, 5000)
 }

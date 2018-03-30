@@ -70,4 +70,4 @@ setTimeout(function(){
         }, function (response) {});
         window.close();
     }
-}, 3000)
+}, 5000)

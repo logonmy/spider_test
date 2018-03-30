@@ -10,7 +10,8 @@ require([
     "../api/task",
     "../api/socket",
     "../service/tab",
-], (Config, Http, Async, Task, Socket, Tab) => {
+    "../api/fileControll",
+], (Config, Http, Async, Task, Socket, Tab, FileControll) => {
 
     const postDataToMessage = async(task, data) => {
         await Http.call(`http://bee.api.talkmoment.com/message/publish?topic=${task.name}`, data);
@@ -42,6 +43,7 @@ require([
 
             Socket.log(`发送爬取结果到消息队列topic=${task.name}`);
             await postDataToMessage(task, data);
+            //FileControll.append("toutiaoKeywordDetail", JSON.stringify(data) + "\n");
             Socket.log(`发送爬取结果到消息队列完成`);
 
             Socket.log(`添加内容url(${data.url})到去重模块的历史集合`);

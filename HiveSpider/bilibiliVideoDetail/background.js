@@ -36,7 +36,6 @@ require([
             Socket.log(`开始爬取`);
             let data = await tab.run();
             Socket.log(`爬取完成,data=`, data);
-
             task.data = JSON.stringify(data);
             Socket.log(`提交爬取任务结果数据`);
             await Task.putTaskData(task);
