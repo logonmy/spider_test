@@ -19,6 +19,8 @@ const rmAnnotation = (str) => {
     }
 };
 
+const debug = false;
+
 let errTime = 0;
 let bottomErrTime = 0;
 let pages = [void 0, void 0];
@@ -32,7 +34,15 @@ process.on("message", async function (e) {
     task  = e;
     switch (e.name) {
         case "user": {
-            await openIndex(e.user);
+            if(debug){
+                console.log("debugING");
+                console.log("跳过登录");
+                process.send({
+                    type: "login"
+                })
+            }else{
+                await openIndex(e.user);
+            }
             break;
         }
         case "weibo_keyword": {
@@ -91,13 +101,24 @@ const launchBrowser = async () => {
 //登陆
 const openIndex = async (user) => {
     log("开始登陆");
+    try{
+        await pages[0].waitForFunction("document.querySelector('title').innerHTML.indexOf('我的首页')>=0");
+        log("登录成功");
+        process.send({
+            type: "login"
+        })
+        return;
+    }catch (e){
+
+    }
+
     try {
         await pages[0].waitForSelector("input[name=username]");
     } catch (e) {
         console.log("打开主页失败，正在重试");
         await pages[0].reload();
         await sleep();
-        openIndex(pages[0]);
+        await openIndex(pages[0]);
         return;
     }
     const userName = await pages[0].$("input[name=username]");
@@ -344,7 +365,6 @@ const searchKeyword = async () => {
 
     task.type = "success";
     task.datas = pageResult;
-    console.log(task, "task");
     process.send(task);
 }
 

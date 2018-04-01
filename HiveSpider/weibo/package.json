@@ -12,8 +12,7 @@
     "jquery": "^3.3.1",
     "jsdom": "^11.6.2",
     "lei-stream": "^1.4.2",
-    "node-fetch": "^2.0.0",
-    "puppeteer": "^1.1.1",
-    "redis": "^2.8.0"
+    "ms": "^2.1.1",
+    "puppeteer": "^1.1.1"
   }
 }

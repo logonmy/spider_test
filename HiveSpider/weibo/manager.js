@@ -2,22 +2,29 @@ const child_process = require("child_process");
 const http = require("http");
 const Task = require("./api/task").Task;
 const Http = require("./api/http").Http;
+const Socket = require("./api/socket").Socket;
+
+//todo 微博目前线不考虑 emit与num_item_limit
 
 const KEYWORD_BEE_NAME = "weibo_keyword";
 const BIGV_BEE_NAME = "weibo_bigv";
 const UPDATE_EVERY_DAY = "weibo_update_everyday";
 
-const filterItems = async(task, data) => {
+const filterItems = async (task, data) => {
     let query = {
         partition: task.name,
-        keys: data
+        keys: data.map((item)=>{return item.detailUrl})
     };
     let res = await Http.call(`http://bee.api.talkmoment.com/dereplicate/filter/by/history`, query);
     res = JSON.parse(res);
     data = data.filter((item, i) => (res.result.filter_result[i]));
 };
 
-const postDataToDereplicate = async(task, data) => {
+const postDataToMessage = async(task, data) => {
+    await Http.call(`http://bee.api.talkmoment.com/message/publish?topic=${task.name}`, data);
+};
+
+const postDataToDereplicate = async (task, data) => {
     let query = {
         partition: task.name,
         key: data.detailUrl
@@ -27,25 +34,25 @@ const postDataToDereplicate = async(task, data) => {
 
 const copyJSON = (obj) => {
     var answerObject = {};
-    if(Object.prototype.toString.call(obj) === '[object Array]'){
+    if (Object.prototype.toString.call(obj) === '[object Array]') {
         var answer = [];
-        for(var i = 0;i< obj.length;i++){
+        for (var i = 0; i < obj.length; i++) {
             answer.push(obj[i]);
         }
         return answer;
     }
-    if(typeof(obj) === "object"){
-        for(var name in obj){
-            answerObject[name] = copyObject(obj[name]);
+    if (typeof(obj) === "object") {
+        for (var name in obj) {
+            answerObject[name] = copyJSON(obj[name]);
         }
         return answerObject
-    }else{
+    } else {
         return obj
     }
 }
 
-const sleep = (s=5) => {
-    return new Promise(resolve => setTimeout(resolve, s * c000))
+const sleep = (s = 5) => {
+    return new Promise(resolve => setTimeout(resolve, s * 1000))
 }
 
 let getUser = (() => {
@@ -69,22 +76,23 @@ let getUser = (() => {
     }
 })();
 
-let TaskHeap = function() {
-    this.tasks =  [];
+let TaskHeap = function () {
+    this.tasks = [];
     this.readyTasks = [];
 }
-TaskHeap.prototype.getReadyTask = () => {
+TaskHeap.prototype.getReadyTask = function() {
     var self = this;
     return self.readyTasks.shift();
 }
-TaskHeap.prototype.hasReadyTask = () => {
+TaskHeap.prototype.hasReadyTask = function() {
     var self = this;
     return self.readyTasks.length === 0 ? false : true;
 }
-TaskHeap.prototype.pushTask = (task) => {
+TaskHeap.prototype.pushTask = function(task) {
     var self = this;
-    switch(task.name){
+    switch (task.name) {
         case "weibo_keyword": {
+
             self.readyTasks.push(task);
             break;
         }
@@ -98,8 +106,8 @@ TaskHeap.prototype.pushTask = (task) => {
 }
 let taskHeap = new TaskHeap();
 
-class Cpu{
-    constructor(fileName, user){
+class Cpu {
+    constructor(fileName, user) {
         this.worker = child_process.fork(fileName);
         this.user = user;
         this.task = void 0;
@@ -107,18 +115,16 @@ class Cpu{
         this._status = false;
     }
     set status(value) {
-        if (!value){
+        if (!value) {
             this._status = false;
         }
-        else{
+        else {
             this._status = true;
         }
     }
-
-    get status(){
+    get status() {
         return this._status;
     }
-
     init(timeout = 300) {
         let self = this;
         timeout = timeout * 1000;
@@ -126,33 +132,13 @@ class Cpu{
         let keywordCount = 0;
 
         self.worker.on("message", async (task) => {
-            switch (task.type){
+            switch (task.type) {
                 //一个关键词只有一个对应的success过来
+                //一个微博博主历史有博主历史页数个success过来
                 case "success": {
-                    taskHeap.pushTask(task);
-                    let datas = task.datas;
-                    let dataUrls = [];
-                    for(let data of datas){
-                        dataUrls.push(data.detailUrl);
-                    }
-                    await filterItems(self.task, dataUrls);
-                    let resultDatas = [];
-                    for(let dataUrl of dataUrls){
-                        for(let data of datas){
-                            if(data.detailUrl === dataUrl){
-                                resultDatas.push(data)
-                                break;
-                            }
-                        }
-                    }
-
-                    for(let data of resultDatas){
-                        task.data = JSON.stringify(data);
-                        await Task.putTaskData(task);
-                        await postDataToDereplicate(task, data);
-                    }
                     console.log("一个关键词爬取完成 开放一个puppeteer实例");
                     self.status = true;
+                    taskHeap.pushTask(task);
                 }
                 case "error": {
                     await Task.rejectTask(task, "error");
@@ -160,22 +146,22 @@ class Cpu{
                 }
             }
         })
-        self.worker.on("exit", async() => {
+        self.worker.on("exit", async () => {
             //todo 重启 重新init
             //暂时不知道怎么做
             //cpu应该是无法接触到puppeteers的 同时也就无法接触到其中的Cpus数组
         })
 
-        return new Promise((resolve, reject) =>{
+        return new Promise((resolve, reject) => {
             console.log("监听启动函数注册");
             self.worker.on("message", (msg) => {
-                if(msg.type === "launched"){
+                if (msg.type === "launched") {
                     console.log("puppeteer已启动 发送用户名与密码", self.user);
                     self.worker.send({
                         name: "user",
                         user: self.user
                     })
-                }else if(msg.type === "login"){
+                } else if (msg.type === "login") {
                     console.log("登录成功， 开放一个puppeteer实例");
                     self.status = true;
                     self.cache = [];
@@ -183,13 +169,13 @@ class Cpu{
                 }
             })
 
-            setTimeout(function(){
+            setTimeout(function () {
                 reject();
             }, timeout)
         })
     }
 
-    work(task){
+    work(task) {
         let self = this;
         self.task = task;
         this.worker.send(task);
@@ -198,14 +184,14 @@ class Cpu{
 
 //有puppetter空闲时 发出轮询
 run = async () => {
-    let Puppeteers = await (async() =>{
+    let Puppeteers = await (async () => {
         //array content all Cpu instance
         let Cpus = [];
 
         //init all Cpu and login return a Promise
         let init = async () => {
             let loginPromises = [];
-            for(let i = 0; i < 1; i++){
+            for (let i = 0; i < 1; i++) {
                 Cpus.push(new Cpu("worker.js", getUser()));
                 loginPromises.push(Cpus[i].init());
             }
@@ -214,8 +200,8 @@ run = async () => {
 
         //check if there is free Cpu return a boolean
         let hasFreePuppeteer = () => {
-            for(let i =0;i< Cpus.length;i++){
-                if(Cpus[i].status === true){
+            for (let i = 0; i < Cpus.length; i++) {
+                if (Cpus[i].status === true) {
                     return true;
                 }
             }
@@ -224,8 +210,8 @@ run = async () => {
 
         //return one free Cpu instance or false
         let getFreePuppeteer = () => {
-            for(let i = 0; i< Cpus.length; i++){
-                if(Cpus[i].status === true){
+            for (let i = 0; i < Cpus.length; i++) {
+                if (Cpus[i].status === true) {
                     Cpus[i].status === false;
                     return Cpus[i]
                 }
@@ -237,11 +223,11 @@ run = async () => {
         let runTask = (task) => {
             let puppeteer = getFreePuppeteer();
 
-            if(!puppeteer) return;
+            if (!puppeteer) return;
 
-            if(task.name === "weibo_keyword" || "weibo_bigv" || "weibo_update_everyday"){
+            if (task.name === "weibo_keyword" || "weibo_bigv" || "weibo_update_everyday") {
                 getFreePuppeteer().work(task);
-            }else{
+            } else {
                 console.log("unKnow TaskName");
             }
         }
@@ -249,7 +235,7 @@ run = async () => {
         //ask for tasks and run them 目测不需要这个东西了 命令由gettask下发过来都 所以不需要puppeteers去请求 把请求又从puppeteers里面分割出来了
         let fetchAndRunTask = async () => {
             let tasks = await getTask();
-            for(let i = 0;i<tasks.length;i++){
+            for (let i = 0; i < tasks.length; i++) {
                 runTask(tasks[i].name, tasks[i].value, tasks[i].taskId);
             }
         }
@@ -266,32 +252,33 @@ run = async () => {
     await Puppeteers.init();
 
     //轮询服务器 获取任务
-    (async() => {
+    (async () => {
+        console.log("轮询服务器启动");
         const SLEEP_TIME = 10;
         //todo 更好的写法？？
         while (true) {
-            if(Puppeteers.hasFreePuppeteer()){
+            if (Puppeteers.hasFreePuppeteer()) {
                 let task = await Task.fetchTask(KEYWORD_BEE_NAME);
                 if (task === null) {
-                    let task2  = await Task.fetchTask(BIGV_BEE_NAME);
-                    if(task2 === null){
+                    let task2 = await Task.fetchTask(BIGV_BEE_NAME);
+                    if (task2 === null) {
                         let task3 = await Task.fetchTask(UPDATE_EVERY_DAY);
-                        if(task3 === null){
+                        if (task3 === null) {
                             console.log("暂时没有任务");
 
                             await sleep(SLEEP_TIME);
                             continue;
-                        }else{
+                        } else {
                             console.log("获得每日更新任务");
                             Puppeteers.runTask(task3);
                             continue;
                         }
-                    }else{
+                    } else {
                         console.log("获得大v历史详情任务");
                         Puppeteers.runTask(task2);
                         continue;
                     }
-                }else{
+                } else {
                     console.log("获得关键词搜索任务");
                     Puppeteers.runTask(task);
                     continue;
@@ -300,44 +287,51 @@ run = async () => {
             console.log("暂时没有空闲puppeteer instance");
             await sleep();
         }
-    })()
+    })();
 
-    //轮询task 上传任务
+    //轮询task 获取已完成任务 并上传
     (async () => {
-        while(true){
-            if(taskHeap.hasReadyTask()){
+        console.log("轮询Task队列启动");
+        while (true) {
+            if (taskHeap.hasReadyTask()) {
                 let task = taskHeap.getReadyTask();
                 //todo taskSolve
 
-                let datas = task.datas;
-                let dataUrls = [];
-                for(let data of datas){
-                    dataUrls.push(data.detailUrl);
-                }
-                await filterItems(self.task, dataUrls);
+                await filterItems(task, task.datas);
 
-                let resultDatas = [];
-                for(let dataUrl of dataUrls){
-                    for(let data of datas){
-                        if(data.detailUrl === dataUrl){
-                            resultDatas.push(data)
-                            break;
-                        }
-                    }
-                }
+                for(let data of task.datas){
+                    let taskCopy = copyJSON(task);
+                    taskCopy.data = JSON.stringify(data);
+                    delete taskCopy.datas;
+                    await Task.putTaskData(taskCopy);
+                    Socket.log(`提交爬取任务结果数据完成`);
 
-                for(let data of resultDatas){
-                    task.data = JSON.stringify(data);
-                    await Task.putTaskData(task);
+                    Socket.log(`发送爬取结果到消息队列topic=${task.name}`);
+                    await postDataToMessage(task, data);
+                    Socket.log(`发送爬取结果到消息队列完成`);
+
+                    Socket.log(`添加内容url(${data.url})到去重模块的历史集合`);
                     await postDataToDereplicate(task, data);
-                }
-                console.log("一个关键词爬取完成 开放一个puppeteer实例");
-                self.status = true;
+                    Socket.log(`添加到去重模块成功`);
 
-            }else{
-                console.log("暂时已完成的task");
+                    Socket.log(`上报爬取任务成功,task=`, task.stack);
+                    await Task.resolveTask(task);
+                }
+
+                // Socket.emitEvent({
+                //     event: "list_item_finish",
+                //     bee_name: task.name
+                // });
+
+                console.log("一个关键词爬取完成 开放一个puppeteer实例");
+
+                await sleep(5);
+
+            } else {
+                await sleep(10);
+                console.log("暂时没有已完成的task");
             }
         }
-    })()
+    })();
 }
 run();

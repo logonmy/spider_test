@@ -2,7 +2,6 @@ const http = require("http");
 let Http = {};
 Http.call = async (path, args) => {
     let data = args || {};
-    console.log(data)
     let postData = JSON.stringify(data);
     let options = {
         protocol: path.split(":")[0] + ":",
@@ -15,7 +14,6 @@ Http.call = async (path, args) => {
             'Content-Length': Buffer.byteLength(postData)
         }
     };
-    console.log(options)
     return new Promise((resolve, reject) => {
 
         let req = http.request(options, (res) => {

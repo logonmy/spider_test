@@ -1,9 +1,11 @@
-const Http = require("http").Http;
+const Http = require("../api/http").Http;
 
 let Task = {};
 
 Task.fetchTask = async(name) => {
     let task = await Http.call(`http://bee.api.talkmoment.com/scheduler/task/fetch?name=${name}`);
+    task = JSON.parse(task);
+    task = task.result;
     if (task.id === 0) return null;
     return task;
 };
