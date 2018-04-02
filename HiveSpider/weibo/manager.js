@@ -5,6 +5,7 @@ const Http = require("./api/http").Http;
 const Socket = require("./api/socket").Socket;
 
 //todo 微博目前线不考虑 emit与num_item_limit
+//todo 微博要把filterItem里面的 url清理干净 ？后面的都踢掉
 
 const KEYWORD_BEE_NAME = "weibo_keyword";
 const BIGV_BEE_NAME = "weibo_bigv";
@@ -79,6 +80,7 @@ let getUser = (() => {
 let TaskHeap = function () {
     this.tasks = [];
     this.readyTasks = [];
+    this.weiboBigVCache = {};
 }
 TaskHeap.prototype.getReadyTask = function() {
     var self = this;
@@ -97,9 +99,29 @@ TaskHeap.prototype.pushTask = function(task) {
             break;
         }
         case "weibo_bigv": {
+            if(self.weiboBigVCache[task.name]){
+                self.weiboBigVCache[task.name].push(task);
+            }else{
+                self.weiboBigVCache[task.name] = [];
+                self.weiboBigVCache[task.name].push(task);
+            }
+            if(task.end){
+                delete task.end;
+                let datas = [];
+                for(let tk of self.weiboBigVCache){
+                    for(let data of tk.datas){
+                        datas.push(data);
+                    }
+                }
+                task.datas = datas;
+                self.readyTasks.push(task);
+
+                delete self.weiboBigVCache[task.name];
+            }
             break;
         }
         case "weibo_update_everyday": {
+            //todo
             break;
         }
     }
@@ -136,7 +158,7 @@ class Cpu {
                 //一个关键词只有一个对应的success过来
                 //一个微博博主历史有博主历史页数个success过来
                 case "success": {
-                    console.log("一个关键词爬取完成 开放一个puppeteer实例");
+                    console.log(task);
                     self.status = true;
                     taskHeap.pushTask(task);
                 }

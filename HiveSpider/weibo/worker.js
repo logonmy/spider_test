@@ -318,7 +318,7 @@ const searchKeyword = async () => {
                     TemplateData.created_at = created_at.getTime();
                 }
             }catch(e){
-                let created_at = new Date().getTime();
+                TemplateData.created_at = new Date().getTime();
             }
 
             if(blogNode.querySelector(".comment_txt[node-type=feed_list_content_full]")){
@@ -370,7 +370,7 @@ const searchKeyword = async () => {
 
 //大v历史搜索
 const searchBigVName = async () => {
-
+    //main
     const parseDom = async (html) => {
         html += "";
         let d = new jsdom.JSDOM(html);
@@ -418,6 +418,7 @@ const searchBigVName = async () => {
             return window.location.href;
         });
 
+        //检测并跳转到原创页
         if (currentUrl.indexOf("is_ori=1") < 0) {
             console.log(currentUrl);
             console.log("此页非原创页面");
@@ -435,6 +436,7 @@ const searchBigVName = async () => {
             return;
         }
 
+        //点开所有评论 展现全部页面
         await curPage.evaluate(() => {
             let interval = setInterval(function () {
                 window.scrollTo(0, document.documentElement.scrollTop + 50);
@@ -453,7 +455,6 @@ const searchBigVName = async () => {
             return;
         }
         log("已滚动到页面底部");
-
         let blogNodes = await curPage.$$("div[action-type=feed_list_item]");
         let count = 0;
         for (let i = 0; i < blogNodes.length; i++) {
@@ -491,32 +492,124 @@ const searchBigVName = async () => {
             await sleep(1);
         }
 
-        let htmlStr = await curPage.$eval('div.WB_frame_c', e => e.outerHTML);
+        let pageResult = await curPage.evaluate(function(){
+            var blogNodes = document.querySelectorAll("div[action-type=feed_list_item]:not([isforward='1'])");
+            var result = []
+            for(var blogNode of blogNodes){
+                var TemplateData = {
+                    content: "",
+                    transmieCount: 0,
+                    commentCount: 0,
+                    agreeCount: 0,
+                    created_at: 0,
+                    comments: [],
+                    imgs: [],
+                    video: {
+                        src: "",
+                        cover_img: {
+                            url: "",
+                            width: 0,
+                            height: 0
+                        }
+                    },
+                    detailUrl: ""
+                }
+                let existAndReturn = (str) => {
+                    if(blogNode.querySelectorAll(str)[1]){
+                        return parseInt(blogNode.querySelectorAll(str)[1].innerText.trim())
+                    }else{
+                        return 0;
+                    }
+                }
+                TemplateData.transmieCount = existAndReturn("[action-type=fl_forward] .line.S_line1 em");
+                TemplateData.commentCount = existAndReturn("[action-type=fl_comment] .line.S_line1 em");
+                TemplateData.agreeCount = existAndReturn("[action-type=fl_like] .line.S_line1 em");
 
-        await parseDom(htmlStr);
+                try{
+                    let created_at = new Date(blogNode.querySelector(".feed_list_item_date em").innerText);
+                    if(created_at == "Invalid Date"){
+                        throw new Error("时间格式不对");
+                    }else{
+                        TemplateData.created_at = created_at.getTime();
+                    }
+                }catch(e){
+                    TemplateData.created_at = new Date().getTime();
+                }
 
-        console.log(`已完成 ${await curPage.title()} 的爬取,进入下一个博主！`);
+                if(blogNode.querySelector("[node-type=feed_list_content_full]")){
+                    TemplateData.content = blogNode.querySelector("[node-type=feed_list_content_full]").innerText;
+                }else if(blogNode.querySelector("[node-type=feed_list_content]")){
+                    TemplateData.content = blogNode.querySelector("[node-type=feed_list_content]").innerText;
+                }
+                TemplateData.detailUrl = blogNode.querySelector("[node-type=feed_list_item_date]").getAttribute("href");
 
-        let nextPage =await curPage.waitForSelector("div.W_pages a[bpfilter=page].next", {timeout: 30000});
-        await nextPage.click();
+                //comment
+                //上次写到这里了
+                var comments = blogNode.querySelectorAll("[node-type=feed_list_commentList] list_con a");
+                for(var comment of comments){
+                    TemplateData.comments.push(comment.innerText);
+                }
+                //img
+                var imgs= blogNode.querySelectorAll(".WB_pic.S_bg2.bigcursor img");
+                for(var img of imgs){
+                    var tempImg = {
+                        url: "",
+                        width: 0,
+                        height: 0
+                    };
+                    tempImg.url = img.getAttribute("src");
+                    tempImg.width = img.naturalWidth;
+                    tempImg.height = img.naturalHeight;
+                    TemplateData.imgs.push(tempImg)
+                }
 
-        //update to browser's targetchanged event or targetcreated event
-        let check = async () => {
-            let pages = await browser.pages();
-            if (pages.length === 2) {
-                await sleep(0.1);
-                check();
-            } else {
-                curPage = pages[2];
-                await pages[1].close();
-                main(curPage);
+                //video
+                if(blogNode.querySelector(".media_box_video_1")){
+                    var video = blogNode.querySelector(".media_box_video_1");
+                    TemplateData.video.cover_img.url = video.querySelector(".con-1.hv-pos img").getAttribute("src");
+                    TemplateData.video.cover_img.width = video.querySelector(".con-1.hv-pos img").naturalWidth;
+                    TemplateData.video.cover_img.height = video.querySelector(".con-1.hv-pos img").naturalHeight;
+                    TemplateData.video.src = video.querySelector("video").getAttribute("src");
+                }
+
+                result.push(TemplateData);
             }
-        };
-        check();
-        currentPage += 1;
-        currentUrl = currentUrl.split("?")[0] + "?is_ori=1&page=" + currentPage;
-        console.log(currentUrl);
-        await main(curPage);
+
+            return result;
+        })
+
+        let allPageCount = await curPage.evaluate(function(){
+            let str = document.querySelector("[action-type=feed_list_page_more]").getAttribute("action-data");
+            let pageCount = parseInt(str.split("&")[1].split("=")[1]);
+            return pageCount;
+        });
+        let findInHref = (key, str) => {
+            let  hrefToJson = (str) => {
+                let json = {};
+                let arr = str.split("?")[1].split("&");
+                for(let part of arr){
+                    json[part.split("=")[0]] = part.split("=")[1];
+                }
+                return json;
+            }
+            let json = hrefToJson(str);
+            for(let keyWord in json){
+                if(keyWord === key){
+                    return json[keyWord];
+                }
+            }
+            return null;
+        }
+        let currentPageCount = parseInt(findInHref("page", window.location.href));
+        if(currentPageCount === allPageCount){
+            task.end = true;
+        }else{
+            task.end = false;
+        }
+        task.type = "success";
+        task.datas = pageResult;
+        process.send(task);
+
     };
 
     try {
@@ -526,7 +619,6 @@ const searchBigVName = async () => {
         await sleep();
         return;
     }
-
 
     log("搜索对应微博账号");
     await sleep();

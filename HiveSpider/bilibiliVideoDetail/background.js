@@ -53,6 +53,12 @@ require([
             Socket.log(`上报爬取任务成功,task=`, task.stack);
             await Task.resolveTask(task);
             Socket.log(`爬取任务完成`);
+
+            Socket.emitEvent({
+                event: "detail_item_finish",
+                bee_name: task.name,
+                bee_id: task.id
+            });
         } catch(err) {
             Socket.log("爬取失败,err=", err);
             Socket.log(`上报爬取任务失败,task=`, task);

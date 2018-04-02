@@ -22,6 +22,11 @@ Task.resolveTask = async(task) => {
     await Http.call(`http://bee.api.talkmoment.com/scheduler/task/resolve?task_id=${task.id}`);
 };
 
+//todo
+Task.callClean = async(task) => {
+    await Http.call(`http://bee.api.talkmoment.com/scheduler/task/resolve?task_id=${task.id}`);
+}
+
 Task.rejectTask = async(task, err) => {
     let query = {
         task_id: task.id,
