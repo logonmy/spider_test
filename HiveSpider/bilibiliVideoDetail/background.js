@@ -15,23 +15,23 @@ require([
 ], (Config, Http, Async, Task, Socket, Tab, SaveFile, FileControll) => {
 
     const postDataToMessage = async(task, data) => {
-        await Http.call(`http://bee.api.talkmoment.com/message/publish?topic=${task.name}`, data);
-
-        let query = {
-            name: "wash_bee_data",
+        await Http.call(`http://bee.api.talkmoment.com/message/publish?topic=bilibili_video_detail`, data);
+        let washTask = {
+            name: "wash_corpus",
             value: "",
             config: JSON.stringify({
-                bee_source: "bilibili_video_detail",
-                msg_topic: "bilibili_video_detail",
+                bee_source: "bilibili",
+                msg_topic: "wash_bilibili_video_detail",
                 brick_id: JSON.parse(task.config)["brick_id"]
-            })
-        }
-        await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", query)
+            }),
+            scheduled_at: Date.now()
+        };
+        await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", washTask);
     };
 
     const postDataToDereplicate = async(task) => {
         let query = {
-            partition: task.name,
+            partition: "bilibili_video_detail",
             key: task.value
         };
         await Http.call(`http://bee.api.talkmoment.com/dereplicate/history/add`, query);
@@ -81,7 +81,7 @@ require([
                 task_id: task.id
             });
         } catch(err) {
-            Socket.error("爬取失败,err=", err);
+            Socket.error("爬取失败,err=", err.stack);
             Socket.log(`上报爬取任务失败,task=`, task);
             await Task.rejectTask(task, err);
         }
