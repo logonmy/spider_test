@@ -14,25 +14,32 @@ require([
 
     const filterItems = async(task, data) => {
         let query = {
-            partition: task.name,
+            partition: "bilibili_video_detail",
             keys: data.items.map(item => item.url)
         };
         let res = await Http.call(`http://bee.api.talkmoment.com/dereplicate/filter/by/history`, query);
         data.items = data.items.filter((item, i) => (res.filter_result[i]));
     };
 
-    const postDetailTasks = async(task, data) => {
+    const postDetailTasks = async(listTask, data) => {
         for (let item of data.items) {
             let query = {
                 name: "bilibili_video_detail",
                 value: item.url,
-                config: {
-                    up_name: task.value
-                },
-                scheduled_at: Date.now()
+                config: JSON.stringify({
+                    up_name: listTask.value,
+                    brick_id: listTask.config.brick_id
+                }),
+                scheduled_at: 9999999999999
             };
             let task = await Http.call(`http://bee.api.talkmoment.com/scheduler/task/post`, query);
-            Socket.log(`向Scheduler添加task=`, task);
+
+            Socket.emitEvent({
+                event: "list_item_added",
+                bee_name: listTask.name,
+                item: item,
+                task: task
+            });
         }
     };
 
