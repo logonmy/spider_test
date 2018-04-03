@@ -40,20 +40,21 @@ require([
             Socket.log(`开始处理爬取任务,task=`, task);
 
             Socket.log(`打开网页Tab(url=${task.value}), 注入爬取逻辑`);
-            let urlIndex = "https://www.qdaily.com/";
+            let urlIndex = "http://www.pearvideo.com/";
             let tab = new Tab(urlIndex, ["./business/script.js"]);
 
             Socket.log(`开始爬取`);
             let data = await tab.run();
             Socket.log(`爬取完成,data=`, data);
 
-            FileControll.append("pearIndexDetail", JSON.stringify(data) + "\n");
+            //FileControll.append("pearIndexDetail", JSON.stringify(data) + "\n");
 
             Socket.log(`开始过滤`);
             await filterItems(task, data);
             Socket.log(`过滤掉已爬取的链接后,data=`, data);
 
             Socket.log(`开始添加详情页爬取任务`);
+            console.log(data);
             await postDetailTasks(data);
             Socket.log(`详情页爬取任务添加完成`);
 

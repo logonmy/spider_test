@@ -4,36 +4,15 @@ var templateData = {
 }
 
 try{
-    var datas = [];
-
-    for(let  i = 0;i< document.querySelectorAll(".slick-track a").length;i++){
-        let str = "https://www.qdaily.com/" +document.querySelectorAll(".slick-track a")[i].getAttribute("href")
-        if(str.indexOf("article") > -1){
-            templateData.items.push({url:str});
-        }
-        datas.push(str);
+    var datas = []
+    for(let i=0;i<document.querySelectorAll(".actcont-list li").length;i++){
+        datas.push({url:"http://www.pearvideo.com/" + document.querySelectorAll(".actcont-list li")[i].querySelector("a").getAttribute("href")})
+    }
+    for(let i=0;i<document.querySelectorAll(".vervideo-bd").length;i++){
+        datas.push({url: "http://www.pearvideo.com/" + document.querySelectorAll(".vervideo-bd")[0].querySelector("a").getAttribute("href")});
     }
 
-    var fansiwola = "http://www.qdaily.com" + document.querySelector(".packery-stamp.papers-banner a").getAttribute("href");
-    if(fansiwola.indexOf("article") > -1){
-        datas.push(fansiwola);
-    }
-
-
-    let items = document.querySelectorAll(".packery-item");
-    for(var item of items){
-        let str = "http://www.qdaily.com" + item.querySelector("a").getAttribute("href");
-        if(str.indexOf("article") > -1){
-            templateData.items.push({url:str});
-        }
-    }
-
-    for(let data of datas){
-        if(data != null){
-            templateData.items.push({url:data});
-        }
-    }
-    console.log(templateData);
+    templateData.items = datas;
 
     chrome.runtime.sendMessage(templateData);
     window.close()

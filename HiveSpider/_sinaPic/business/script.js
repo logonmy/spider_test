@@ -24,9 +24,13 @@ setTimeout(function () {
                     likeCount: 0,
                     url: "",
                     src: "",
+                    height: 0,
+                    width: 0,
                     comments: [],
                 }
                 templateData.src = templateData.url = blocks[i].querySelector(".gif_img img").getAttribute("src");
+                templateData.width = blocks[i].querySelector(".gif_img img").naturalWidth;
+                templateData.height = blocks[i].querySelector(".gif_img img").naturalHeight;
                 templateData.title = blocks[i].querySelector("h2").innerText;
                 templateData.tag = blocks[i].querySelector(".gif_tags a").innerText;
                 templateData.likeCount = blocks[i].querySelector(".gif_like").innerText;

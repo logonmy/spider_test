@@ -1,7 +1,7 @@
 var TemplateData = {
-    Type: "",
+    type: "",
     title: "",
-    source: "",
+    url: "",
     cover_img: {
         src: "",
         height: 0,
@@ -13,16 +13,16 @@ var TemplateData = {
 }
 try{
     TemplateData.type = document.getElementById("select").children[0].textContent;
-    TemplateData.title  = TemplateData.C;
-    TemplateData.source = window.location.href;
+    TemplateData.title  = document.getElementsByClassName("video-tt")[0].textContent
+    TemplateData.url = window.location.href;
     TemplateData.cover_img.src = document.getElementById("poster").children[0].src;
-    TemplateData.videoSource = document.getElementsByTagName("script")[10].textContent.split('"')[19];
+    TemplateData.video_source = document.getElementsByTagName("script")[10].textContent.split('"')[19];
     TemplateData.created_at = new Date(document.querySelectorAll(".brief-box .date")[0].textContent.split(" ")).getTime();
     for(var i=0; i<document.getElementsByClassName("comm-cont").length; i++){
-        TemplateData.R.comments.push(document.getElementsByClassName("comm-cont")[i].textContent);
+        TemplateData.comments.push(document.getElementsByClassName("comm-cont")[i].textContent);
     }
     for(var i=0; i<document.getElementsByClassName("cmrpct").length; i++){
-        TemplateData.R.comments.push(document.getElementsByClassName("cmrpct")[i].textContent);
+        TemplateData.comments.push(document.getElementsByClassName("cmrpct")[i].textContent);
     }
     var width = 786;
     var height;
@@ -30,8 +30,8 @@ try{
         var img = new Image;
         img.onload = function(){
             height = width/this.width * this.height;
-            TemplateData.R.cover_img.width = 786;
-            TemplateData.R.cover_img.height = parseInt(height);
+            TemplateData.cover_img.width = 786;
+            TemplateData.cover_img.height = parseInt(height);
             chrome.runtime.sendMessage(TemplateData, function (response) {});
             window.close();
         }
@@ -43,6 +43,11 @@ try{
     getSize();
 }
 catch (e){
-    chrome.runtime.sendMessage(false, function (response) {});
+    chrome.runtime.sendMessage({
+        error:e,
+        data: templateData,
+        url: window.location.href,
+        false: true
+    }, function (response) {});
     window.close();
 }
