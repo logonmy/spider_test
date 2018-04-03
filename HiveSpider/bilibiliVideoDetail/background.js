@@ -19,6 +19,7 @@ require([
 
         let query = {
             name: "wash_bee_data",
+            value: "",
             config: JSON.stringify({
                 bee_source: "bilibili_video_detail",
                 msg_topic: "bilibili_video_detail",

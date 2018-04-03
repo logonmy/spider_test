@@ -38,10 +38,10 @@ setTimeout(function(){
 
         TemplateData.cover_img.src = document.querySelector("meta[itemprop=image]").getAttribute("content");
 
-        TemplateData.playCount = viewBox.querySelector(".number .v.play").getAttribute("title").substr(4);
-        TemplateData.collectCount = viewBox.querySelector(".number .u.fav").getAttribute("title").substr(4);
-        TemplateData.coinCount = viewBox.querySelector(".number .u.coin").getAttribute("title").substr(5);
-        TemplateData.danmuCount = viewBox.querySelector(".number .v.dm").getAttribute("title").substr(4);
+        TemplateData.play_count = viewBox.querySelector(".number .v.play").getAttribute("title").substr(4);
+        TemplateData.collect_count = viewBox.querySelector(".number .u.fav").getAttribute("title").substr(4);
+        TemplateData.coin_count = viewBox.querySelector(".number .u.coin").getAttribute("title").substr(5);
+        TemplateData.danmu_count = viewBox.querySelector(".number .v.dm").getAttribute("title").substr(4);
 
         let crumbs = viewBox.querySelectorAll(".crumb");
         for(let i=0;i<crumbs.length;i++){
@@ -54,7 +54,7 @@ setTimeout(function(){
         }
 
         let comments = document.querySelector(".common");
-        TemplateData.commentCount = comments.querySelector(".b-head-t.results").innerText;
+        TemplateData.comment_count = comments.querySelector(".b-head-t.results").innerText;
 
         comments = comments.querySelectorAll(".list-item.reply-wrap");
         for(let i=0;i< comments.length;i++){
