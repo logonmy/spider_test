@@ -18,10 +18,10 @@ require([
         await Http.call(`http://bee.api.talkmoment.com/message/publish?topic=${task.name}`, data);
     };
 
-    const postDataToDereplicate = async(task, data) => {
+    const postDataToDereplicate = async(task) => {
         let query = {
             partition: task.name,
-            key: data.url
+            key: task.value
         };
         await Http.call(`http://bee.api.talkmoment.com/dereplicate/history/add`, query);
     };
@@ -56,8 +56,8 @@ require([
 
             //FileControll.append("bilibiliVideoDetail", JSON.stringify(data) + "\n");
 
-            Socket.log(`添加内容url(${data.url})到去重模块的历史集合`);
-            await postDataToDereplicate(task, data);
+            Socket.log(`添加内容url(${task.value})到去重模块的历史集合`);
+            await postDataToDereplicate(task);
             Socket.log(`添加到去重模块成功`);
 
             Socket.log(`上报爬取任务成功,task=`, task.stack);
