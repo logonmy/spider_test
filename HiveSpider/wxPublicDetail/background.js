@@ -61,7 +61,7 @@ require([
             Socket.log(`提交爬取任务结果数据完成`);
 
             Socket.log(`发送爬取结果到消息队列topic=${task.name}`);
-            //FileControll.append("wxPublicDetail", JSON.stringify(data) + "\n");
+            FileControll.append("wxPublicDetail", JSON.stringify(data) + "\n");
             await postDataToMessage(task, data);
             Socket.log(`发送爬取结果到消息队列完成`);
 
@@ -84,6 +84,7 @@ require([
         const SLEEP_TIME = 10000;
         Socket.startHeartBeat(BEE_NAME);
         while (true) {
+            console.log("暂时没有任务");
             let task = await Task.fetchTask(BEE_NAME);
             if (task === null) {
                 await Async.sleep(SLEEP_TIME);

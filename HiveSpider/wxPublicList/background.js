@@ -18,19 +18,19 @@ require([
             keys: data.items.map(item => item.url)
         };
         let res = await Http.call(`http://bee.api.talkmoment.com/dereplicate/filter/by/history`, query);
-        data.items = data.items.filter((item, i) => (res.result.filter_result[i]));
+        console.log(res);
+        data.items = data.items.filter((item, i) => (res.filter_result[i]));
     };
 
     const postDetailTasks = async(listTask, data) => {
         for (let item of data.items) {
             let query = {
                 name: "wx_public_detail",
-                value: item,
+                value: item.url,
                 config: JSON.stringify({
-                    up_name: listTask.value,
-                    birck_id: listTask.config.brick_id
+                    birck_id: JSON.parse(listTask.config).brick_id
                 }),
-                scheduled_at: 9999999999999
+                scheduled_at: new Date().getTime()
             };
             let task = await Http.call(`http://bee.api.talkmoment.com/scheduler/task/post`, query);
 

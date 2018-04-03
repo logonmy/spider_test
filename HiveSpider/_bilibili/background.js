@@ -20,7 +20,7 @@ require([
         for (let item of data.items) {
             let query = {
                 name: "bilibili_video_detail",
-                value: item,
+                value: item.url,
                 config: {
                     from_index: true
                 },

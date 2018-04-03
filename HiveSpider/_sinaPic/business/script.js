@@ -27,6 +27,7 @@ setTimeout(function () {
                     height: 0,
                     width: 0,
                     comments: [],
+                    created_at: new Date().getTime()
                 }
                 templateData.src = templateData.url = blocks[i].querySelector(".gif_img img").getAttribute("src");
                 templateData.width = blocks[i].querySelector(".gif_img img").naturalWidth;

@@ -170,7 +170,7 @@ function _BeeUtils() {
                             continue;
                         }
                     } else {
-                        image.src =  node.getAttribute("data-src");
+                        image.src =  node.getAttribute("src");
                         image.width = node.clientWidth;
                         image.height = node.clientHeight;
                     }

@@ -115,8 +115,6 @@ function _BeeUtils() {
 
         recursiveFormat(htmlNode);
 
-        console.log(result, "after recursive");
-
         contentListToJson();
 
         return jsonResult;
@@ -268,10 +266,11 @@ var TemplateData = {
 try{
     setTimeout(function(){
         TemplateData.title = document.querySelector(".rich_media_title").innerText;
-        TemplateData.date = new Date(document.querySelector("[id=post-date]").innerText).getTime();
+        TemplateData.created_at = new Date(document.querySelector("[id=post-date]").innerText).getTime();
         TemplateData.url = window.location.href;
         TemplateData.content = JSON.stringify(BeeUtils.htmlToJson(document.getElementsByClassName("rich_media_content")[0]));
-        console.log(TemplateData);
+        console.log(JSON.stringify(TemplateData));
+
         chrome.runtime.sendMessage(TemplateData, function (response) {});
         window.close();
     }, 5000)
@@ -285,3 +284,6 @@ catch (e){
     }, function (response) {});
     window.close();
 }
+
+
+
