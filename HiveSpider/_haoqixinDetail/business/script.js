@@ -282,12 +282,13 @@ setTimeout(function () {
                 }else{
                     if(document.querySelector(".full-banner-bd.imgcover img")){
                         var image = document.querySelector(".full-banner-bd.imgcover img");
+                        templateData.title = image.getAttribute("alt");
+                        templateData.cover_img.src = image.getAttribute("src");
+                        templateData.cover_img.width = image.naturalWidth;
+                        templateData.cover_img.height = image.naturalHeight;
                     }
                     templateData.title = document.querySelector("h2.title").innerText;
-                    templateData.title = image.getAttribute("alt");
-                    templateData.cover_img.src = image.getAttribute("src");
-                    templateData.cover_img.width = image.naturalWidth;
-                    templateData.cover_img.height = image.naturalHeight;
+
                 }
 
                 templateData.created_at = new Date(document.querySelector(".date.smart-date").getAttribute("data-origindate")).getTime();

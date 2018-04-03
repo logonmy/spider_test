@@ -25,6 +25,7 @@ let run = async () => {
 
         let title = li.querySelector(".video.matrix .info .headline.clearfix a").getAttribute("title");
         let href = li.querySelector(".video.matrix .info .headline.clearfix a").getAttribute("href");
+        href = href.split("?")[0] + "/";
         TemplateData.items.push({
             url: href,
             title: title,
