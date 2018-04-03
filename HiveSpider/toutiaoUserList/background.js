@@ -30,7 +30,7 @@ require([
                     up_name: listTask.value,
                     birck_id: listTask.config.brick_id
                 }),
-                scheduled_at: new Date().getTime()
+                scheduled_at: 9999999999999
             };
             let task = await Http.call(`http://bee.api.talkmoment.com/scheduler/task/post`, query);
 

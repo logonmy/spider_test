@@ -1,7 +1,6 @@
 
 try{
-
-    var hrefs= []
+    var hrefs= [];
     var lists = document.querySelectorAll(".word-list li");
     for(let i =0;i< lists.length; i++){
         var as = lists[i].querySelectorAll("dd a");
