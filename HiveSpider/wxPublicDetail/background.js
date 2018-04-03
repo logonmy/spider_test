@@ -47,6 +47,14 @@ require([
             let data = await tab.run();
             Socket.log(`爬取完成,data=`, data);
 
+            let taskConfig = JSON.parse(task.config);
+            if (taskConfig.up_name) {
+                data.up_name = taskConfig.up_name;
+            } else if (taskConfig.keyword) {
+                data.keyword = taskConfig.keyword;
+            }
+            data.brick_id = taskConfig.brick_id || 0;
+
             task.data = JSON.stringify(data);
             Socket.log(`提交爬取任务结果数据`);
             await Task.putTaskData(task);

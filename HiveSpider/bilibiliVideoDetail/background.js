@@ -39,7 +39,7 @@ require([
     const runTask = async(task) => {
         try {
             Socket.log(`开始处理爬取任务,task=`, task);
-            task.config = JSON.parse(task.config);
+            let taskConfig = JSON.parse(task.config);
 
             Socket.log(`打开网页Tab(url=${task.value}), 注入爬取逻辑`);
             let tab = new Tab(task.value, ["./business/script.js"]);
@@ -48,12 +48,12 @@ require([
             let data = await tab.run();
             Socket.log(`爬取完成,data=`, data);
 
-            if (task.config.up_name) {
-                data.up_name = task.config.up_name;
-            } else if (task.config.keyword) {
-                data.keyword = task.config.keyword;
+            if (taskConfig.up_name) {
+                data.up_name = taskConfig.up_name;
+            } else if (taskConfig.keyword) {
+                data.keyword = taskConfig.keyword;
             }
-            data.brick_id = task.config.brick_id || 0;
+            data.brick_id = taskConfig.brick_id || 0;
 
             task.data = JSON.stringify(data);
             Socket.log(`提交爬取任务结果数据`);
