@@ -27,6 +27,7 @@ try{
     }
 
     chrome.runtime.sendMessage(templateData);
+    window.close();
 
 }catch(e){
     chrome.runtime.sendMessage({

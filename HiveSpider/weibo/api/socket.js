@@ -18,6 +18,10 @@ Socket.error = Socket.log = function() {
     mSocket.emit("bee_log", data);
 };
 
+Socket.emitEvent = function(data) {
+    mSocket.emit("bee_event", data);
+};
+
 function formatDevLog(logArgs) {
     let parts = Array.prototype.map.call(logArgs, (log) => {
         if (typeof log === "string") return log;

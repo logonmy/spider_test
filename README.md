@@ -96,3 +96,10 @@ wxPublicDetail
 
 
 爬虫: 点赞 like
+
+
+index_update
+index_update 的触发
+list页面 emit(listadd)(不需要) num_item_limit(不需要)
+detail页面 emit个over(暂时不知道) 带上keyword/upname(不需要)
+             s

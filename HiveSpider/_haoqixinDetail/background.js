@@ -9,8 +9,9 @@ require([
     "../api/async",
     "../api/task",
     "../api/socket",
+    "../api/fileControll",
     "../service/tab",
-], (Config, Http, Async, Task, Socket, Tab) => {
+], (Config, Http, Async, Task, Socket, FileControll, Tab) => {
 
 
     const postDataToMessage = async(task, data) => {
@@ -18,10 +19,12 @@ require([
     };
 
     const postDataToDereplicate = async(task, data) => {
+
         let query = {
             partition: task.name,
             key: data.url
         };
+
         await Http.call(`http://bee.api.talkmoment.com/dereplicate/history/add`, query);
     };
 
@@ -41,6 +44,8 @@ require([
             await Task.putTaskData(task);
             Socket.log(`提交爬取任务结果数据完成`);
 
+            //FileControll.append("haoqixinIndexDetail", JSON.stringify(data) + "\n");
+
             Socket.log(`发送爬取结果到消息队列topic=${task.name}`);
             await postDataToMessage(task, data);
             Socket.log(`发送爬取结果到消息队列完成`);
@@ -52,6 +57,13 @@ require([
             Socket.log(`上报爬取任务成功,task=`, task);
             await Task.resolveTask(task);
             Socket.log(`爬取任务完成`);
+
+            Socket.emitEvent({
+                event: "detail_item_finish",
+                bee_name: task.name,
+                bee_id: task.id
+            });
+
         } catch(err) {
             Socket.error("爬取失败,err=", err.stack);
             Socket.log(`上报爬取任务失败,task=`, task);

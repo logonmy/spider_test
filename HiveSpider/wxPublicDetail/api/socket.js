@@ -11,6 +11,10 @@ define([], () => {
         }, 5000);
     };
 
+    Socket.emitEvent = function(data) {
+        mSocket.emit("bee_event", data);
+    };
+
     Socket.error = Socket.log = function() {
         let data = formatDevLog(arguments);
         console.log(data);

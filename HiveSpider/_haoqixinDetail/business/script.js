@@ -169,9 +169,9 @@ function _BeeUtils() {
                             continue;
                         }
                     } else {
-                        image.src = "https:" + node.getAttribute("data-src");
-                        image.width = node.clientWidth;
-                        image.height = node.clientHeight;
+                        image.src = node.getAttribute("data-src");
+                        image.width = node.clientWidth || node.width;
+                        image.height = node.clientHeight || node.height;
                     }
                     if (image.src.indexOf("http") != 0) {
                         continue;
@@ -271,7 +271,7 @@ setTimeout(function () {
         var timeCount = 0;
         var index = setInterval(function () {
             window.scrollTo(0, document.documentElement.scrollTop + 200);
-            if (document.querySelectorAll(".comment-text").length > 20 || timeCount === 200) {
+            if (document.querySelectorAll(".comment-text").length > 20 || timeCount >= 150) {
                 clearInterval(index);
                 if(document.querySelector(".article-detail-hd img")){
                     var image = document.querySelector(".article-detail-hd img");
@@ -280,17 +280,24 @@ setTimeout(function () {
                     templateData.cover_img.width = image.naturalWidth;
                     templateData.cover_img.height = image.naturalHeight;
                 }else{
+                    if(document.querySelector(".full-banner-bd.imgcover img")){
+                        var image = document.querySelector(".full-banner-bd.imgcover img");
+                    }
                     templateData.title = document.querySelector("h2.title").innerText;
+                    templateData.title = image.getAttribute("alt");
+                    templateData.cover_img.src = image.getAttribute("src");
+                    templateData.cover_img.width = image.naturalWidth;
+                    templateData.cover_img.height = image.naturalHeight;
                 }
 
-                templateData.created_at = new Date(document.querySelector(".date.smart-date").getAttribute("date-origindata")).getTime();
+                templateData.created_at = new Date(document.querySelector(".date.smart-date").getAttribute("data-origindate")).getTime();
                 templateData.url = window.location.href;
                 templateData.content = JSON.stringify(BeeUtils.htmlToJson(document.querySelector(".detail")));
 
                 let comments = document.querySelectorAll(".comment-text");
 
                 for(comment of comments){
-                    templateData.comments.push(comment)
+                    templateData.comments.push(comment.innerText);
                 }
 
                 chrome.runtime.sendMessage(templateData);

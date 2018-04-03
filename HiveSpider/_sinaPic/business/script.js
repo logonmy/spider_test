@@ -23,9 +23,10 @@ setTimeout(function () {
                     tag: "",
                     likeCount: 0,
                     url: "",
+                    src: "",
                     comments: [],
                 }
-                templateData.url = blocks[i].querySelector(".gif_img img").getAttribute("src");
+                templateData.src = templateData.url = blocks[i].querySelector(".gif_img img").getAttribute("src");
                 templateData.title = blocks[i].querySelector("h2").innerText;
                 templateData.tag = blocks[i].querySelector(".gif_tags a").innerText;
                 templateData.likeCount = blocks[i].querySelector(".gif_like").innerText;
@@ -38,6 +39,8 @@ setTimeout(function () {
             }
 
             console.log(TemplateData);
+            chrome.runtime.sendMessage(TemplateData);
+            window.close();
 
         }, 10000)
     }

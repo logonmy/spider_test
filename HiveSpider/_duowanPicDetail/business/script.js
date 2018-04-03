@@ -1,7 +1,9 @@
 var templateData = {
     title: "",
-    href: "",
+    src: "",
     url: "",
+    width: 0,
+    height: 0,
     type: "",
     comments: [],
     created_at: new Date().getTime()
@@ -9,7 +11,7 @@ var templateData = {
 
 var count = 0
 var index = setInterval(() => {
-    if(count === 300){
+    if(count >= 150){
         clearInterval(index);
 
         try{
@@ -18,8 +20,11 @@ var index = setInterval(() => {
                 var img = document.querySelector("#image-show .show-img img");
 
                 templateData.title = img.getAttribute("alt")
-                templateData.href = img.getAttribute("src")
+                templateData.src = img.getAttribute("src")
+                templateData.width = img.naturalWidth;
+                templateData.height = img.naturalHeight;
                 templateData.url = window.location.href;
+                templateData.type = "img";
 
                 let comments = document.querySelectorAll(".dw-comment-comment_list li .comment_text");
                 for(let comment of comments){
@@ -31,15 +36,16 @@ var index = setInterval(() => {
                 var video = document.querySelector("#image-show .show-img video");
 
                 templateData.title = video.getAttribute("alt")
-                templateData.href = video.querySelector("source").getAttribute("src");
+                templateData.src = video.querySelector("source").getAttribute("src");
                 templateData.type = "video/mp4";
+                templateData.width = video.offsetWidth;
+                templateData.height = video.offsetHeight;
                 templateData.url = window.location.href;
 
                 let comments = document.querySelectorAll(".dw-comment-comment_list li .comment_text");
                 for(let comment of comments){
                     templateData.comments.push(comment.innerText);
                 }
-
             }
 
             console.log(templateData)
@@ -56,6 +62,7 @@ var index = setInterval(() => {
         }
     }else{
         count ++;
+        console.log(count);
         window.scrollTo(0, document.documentElement.scrollTop + 200);
         if(document.querySelector(".dw-comment-more_comment")){
             document.querySelector(".dw-comment-more_comment").click();

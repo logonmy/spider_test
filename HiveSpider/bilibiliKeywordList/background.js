@@ -26,11 +26,12 @@ require([
             let query = {
                 name: "bilibili_video_detail",
                 value: item.url,
-                config: "{}",
-                scheduled_at: 9999999999999
+                config: JSON.stringify({keyword: listTask.value}),
+                scheduled_at: Date.now()
             };
             let task = await Http.call(`http://bee.api.talkmoment.com/scheduler/task/post`, query);
             Socket.log(`向Scheduler添加task=`, task);
+
             Socket.emitEvent({
                 event: "list_item_added",
                 bee_name: listTask.name,
@@ -45,6 +46,8 @@ require([
             Socket.log(`开始处理爬取任务,task=`, task);
 
             Socket.log(`打开网页Tab(url=${task.value}), 注入爬取逻辑`);
+
+            let num_item_limit = JSON.parse(task.config).num_item_limit;
 
             let baseUrl = "https://search.bilibili.com/all?keyword=" + task.value;
 
@@ -63,14 +66,31 @@ require([
                 await filterItems(task, data);
                 Socket.log(`过滤掉已爬取的链接后,data=`, data);
 
-                for(let da of data.items) {
-                    taskData.push(da);
-                }
+                let needCount = num_item_limit - taskData.length;
 
-                Socket.log(`开始添加详情页爬取任务`);
-                await postDetailTasks(task, data);
-                Socket.log(`详情页爬取任务添加完成`);
+                if(0 < needCount && needCount <= data.items.length){
+                    data.items = data.items.slice(0, needCount);
+
+                    for(let da of data.items) {
+                        taskData.push(da);
+                    }
+
+                    Socket.log(`开始添加详情页爬取任务`);
+                    await postDetailTasks(task, data);
+                    Socket.log(`详情页爬取任务添加完成`);
+                    break;
+
+                }else if(needCount > data.items.length){
+                    for(let da of data.items) {
+                        taskData.push(da);
+                    }
+                    Socket.log(`开始添加详情页爬取任务`);
+                    await postDetailTasks(task, data);
+                }else if(0 >= needCount){
+                    break;
+                }
             }
+
 
             Socket.emitEvent({
                 event: "list_item_finish",

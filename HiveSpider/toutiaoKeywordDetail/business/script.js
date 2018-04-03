@@ -273,7 +273,7 @@ setTimeout(function(){
             //阳光视频
             TemplateData.title= document.querySelector(".abs-title").innerText;
             TemplateData.url= window.location.href;
-            TemplateData.videoSrc = document.querySelector("video").getAttribute("src");
+            TemplateData.video_source = document.querySelector("video").getAttribute("src");
 
             console.log(TemplateData);
             chrome.runtime.sendMessage(TemplateData, function (response) {});
@@ -288,7 +288,7 @@ setTimeout(function(){
             }
 
             TemplateData.title = document.querySelector(".article-title").innerText
-            TemplateData.date = new Date(document.querySelectorAll(".article-sub span")[1].innerText).getTime();
+            TemplateData.created_at = new Date(document.querySelectorAll(".article-sub span")[1].innerText).getTime();
             TemplateData.url = window.location.href;
             TemplateData.content = JSON.stringify(BeeUtils.htmlToJson(document.querySelector(".article-content")));
 

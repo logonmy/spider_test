@@ -21,12 +21,14 @@ require([
         data.items = data.items.filter((item, i) => (res.filter_result[i]));
     };
 
-    const postDetailTasks = async(data) => {
+    const postDetailTasks = async(task, data) => {
         for (let item of data.items) {
             let query = {
                 name: "bilibili_video_detail",
                 value: item.url,
-                config: "{}",
+                config: {
+                    up_name: task.value
+                },
                 scheduled_at: Date.now()
             };
             let task = await Http.call(`http://bee.api.talkmoment.com/scheduler/task/post`, query);

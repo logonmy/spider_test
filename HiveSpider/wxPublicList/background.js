@@ -21,7 +21,7 @@ require([
         data.items = data.items.filter((item, i) => (res.result.filter_result[i]));
     };
 
-    const postDetailTasks = async(data) => {
+    const postDetailTasks = async(listTask, data) => {
         for (let item of data.items) {
             let query = {
                 name: "wx_public_detail",
@@ -31,6 +31,12 @@ require([
             };
             let task = await Http.call(`http://bee.api.talkmoment.com/scheduler/task/post`, query);
             Socket.log(`向Scheduler添加task=`, task);
+            Socket.emitEvent({
+                event: "list_item_added",
+                bee_name: listTask.name,
+                item: item,
+                task: task
+            });
         }
     };
 
@@ -50,7 +56,7 @@ require([
             Socket.log(`过滤掉已爬取的链接后,data=`, data);
 
             Socket.log(`开始添加详情页爬取任务`);
-            await postDetailTasks(data);
+            await postDetailTasks(task, data);
             Socket.log(`详情页爬取任务添加完成`);
 
             task.data = JSON.stringify(data);

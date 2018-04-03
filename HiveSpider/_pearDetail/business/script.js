@@ -1,26 +1,22 @@
 var TemplateData = {
-    C: "",
     Type: "",
-    R: {
-        title: "",
-        source: "",
-        cover_img: {
-            src: "",
-            height: 0,
-            width: 0
-        },
-        videoSource: "",
-        comments: []
+    title: "",
+    source: "",
+    cover_img: {
+        src: "",
+        height: 0,
+        width: 0
     },
+    video_source: "",
+    comments: [],
     created_at: 0
 }
 try{
-    TemplateData.Type = document.getElementById("select").children[0].textContent;
-    TemplateData.C = document.getElementsByClassName("video-tt")[0].textContent;
-    TemplateData.R.title  = TemplateData.C;
-    TemplateData.R.source = window.location.href;
-    TemplateData.R.cover_img.src = document.getElementById("poster").children[0].src;
-    TemplateData.R.videoSource = document.getElementsByTagName("script")[10].textContent.split('"')[19];
+    TemplateData.type = document.getElementById("select").children[0].textContent;
+    TemplateData.title  = TemplateData.C;
+    TemplateData.source = window.location.href;
+    TemplateData.cover_img.src = document.getElementById("poster").children[0].src;
+    TemplateData.videoSource = document.getElementsByTagName("script")[10].textContent.split('"')[19];
     TemplateData.created_at = new Date(document.querySelectorAll(".brief-box .date")[0].textContent.split(" ")).getTime();
     for(var i=0; i<document.getElementsByClassName("comm-cont").length; i++){
         TemplateData.R.comments.push(document.getElementsByClassName("comm-cont")[i].textContent);

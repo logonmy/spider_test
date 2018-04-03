@@ -8,14 +8,14 @@ var TemplateData = {
         width: "",
         height: ""
     },
-    coinCount: 0,
-    collectCount: 0,
-    playCount: 0,
-    danmuCount: 0,
+    coin_count: 0,
+    collect_count: 0,
+    play_count: 0,
+    danmu_count: 0,
     classify: [],
     tags: [],
-    commentCount: 0,
-    comments: []
+    comment_count: 0,
+    comments: [],
 }
 
 var index = setInterval(function(){
@@ -29,7 +29,7 @@ setTimeout(function(){
         let viewBox= document.querySelector("#viewbox_report");
 
         TemplateData.title = viewBox.querySelector("h1").getAttribute("title");
-        TemplateData.date = new Date(viewBox.querySelector("time").innerText).getTime();
+        TemplateData.created_at = new Date(viewBox.querySelector("time").innerText).getTime();
         TemplateData.url = window.location.href;
 
         TemplateData.video_source = document.querySelector(".bilibili-player-video video").getAttribute("src");

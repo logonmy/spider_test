@@ -9,8 +9,9 @@ require([
     "../api/async",
     "../api/task",
     "../api/socket",
+    "../api/fileControll",
     "../service/tab",
-], (Config, Http, Async, Task, Socket, Tab) => {
+], (Config, Http, Async, Task, Socket, FileControll,Tab) => {
 
     const postDataToMessage = async(task, data) => {
         await Http.call(`http://bee.api.talkmoment.com/message/publish?topic=${task.name}`, data);
@@ -25,10 +26,31 @@ require([
     };
 
     const runTask = async(task) => {
+
+        let arrayDulicate = (arr) => {
+            let checkIn = (str, arr) => {
+                for(let a of arr){
+                    if(str === a){
+                        return true;
+                    }
+                }
+                return false;
+            }
+            let result = [];
+
+            for(let a of arr){
+                if(!checkIn(a,result)){
+                    result.push(a);
+                }
+            }
+            return result;
+        }
+
         try {
             Socket.log(`开始处理爬取任务,task=`, task);
 
             Socket.log(`打开网页Tab(url=${task.value}), 注入爬取逻辑`);
+            let baseUrl = task.value;
 
             let tab0 = new Tab(task.value, ["./business/script1.js"]);
             let pageCount = await tab0.run();
@@ -36,23 +58,25 @@ require([
 
             let dataArray = []
             for(let i=1;i <= pageCount;i++){
-                let tab = new Tab(task.value, ["./business/script.js"]);
+                let pageUrl = task.value;
+                pageUrl = pageUrl + "#p" + i;
+                let tab = new Tab(pageUrl, ["./business/script.js"]);
 
                 Socket.log(`开始爬取`);
                 let data = await tab.run();
                 Socket.log(`爬取完成,data=`, data);
+                data.comments = arrayDulicate(data.comments);
                 dataArray.push(data);
 
+                task.data = JSON.stringify(data);
                 Socket.log(`发送爬取结果到消息队列topic=${task.name}`);
                 await postDataToMessage(task, data);
+                //FileControll.append("_duowanPicDetail", JSON.stringify(data) + "\n");
                 Socket.log(`发送爬取结果到消息队列完成`);
-
-                Socket.log(`添加内容url(${data.url})到去重模块的历史集合`);
-                await postDataToDereplicate(task, data);
-                Socket.log(`添加到去重模块成功`);
-
             }
-            //todo 类似的还有 只是现在反应过来
+
+            await postDataToDereplicate(task, {url: baseUrl});
+            Socket.log(`添加到去重模块成功`);
 
             task.data = JSON.stringify(dataArray);
             Socket.log(`提交爬取任务结果数据`);
@@ -62,6 +86,12 @@ require([
             Socket.log(`上报爬取任务成功,task=`, task);
             await Task.resolveTask(task);
             Socket.log(`爬取任务完成`);
+
+            Socket.emitEvent({
+                event: "detail_item_finish",
+                bee_name: task.name,
+                bee_id: task.id
+            });
         } catch(err) {
             Socket.error("爬取失败,err=", err.stack);
             Socket.log(`上报爬取任务失败,task=`, task);

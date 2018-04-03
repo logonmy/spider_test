@@ -9,8 +9,9 @@ require([
     "../api/async",
     "../api/task",
     "../api/socket",
+    "../api/fileControll",
     "../service/tab",
-], (Config, Http, Async, Task, Socket, Tab) => {
+], (Config, Http, Async, Task, Socket, FileControll,Tab) => {
 
     const filterItems = async(task, data) => {
         let query = {
@@ -46,6 +47,8 @@ require([
             let data = await tab.run();
             Socket.log(`爬取完成,data=`, data);
 
+            FileControll.append("pearIndexDetail", JSON.stringify(data) + "\n");
+
             Socket.log(`开始过滤`);
             await filterItems(task, data);
             Socket.log(`过滤掉已爬取的链接后,data=`, data);
@@ -53,6 +56,7 @@ require([
             Socket.log(`开始添加详情页爬取任务`);
             await postDetailTasks(data);
             Socket.log(`详情页爬取任务添加完成`);
+
 
             task.data = JSON.stringify(data);
             Socket.log(`提交爬取任务结果数据`);

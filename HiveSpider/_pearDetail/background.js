@@ -9,14 +9,18 @@ require([
     "../api/async",
     "../api/task",
     "../api/socket",
+    "../api/fileControll",
     "../service/tab",
-], (Config, Http, Async, Task, Socket, Tab) => {
+], (Config, Http, Async, Task, Socket, FileControll, Tab) => {
 
     const postDataToMessage = async(task, data) => {
         await Http.call(`http://bee.api.talkmoment.com/message/publish?topic=${task.name}`, data);
     };
 
     const postDataToDereplicate = async(task, data) => {
+        console.log("###############################")
+        console.log(data.url);
+        console.log("###############################")
         let query = {
             partition: task.name,
             key: data.url
@@ -32,9 +36,11 @@ require([
 
             let pearIndexUrl = "http://www.pearvideo.com";
 
-            let tab = new Tab(pearIndexUrl, ["./business/script"]);
+            let tab = new Tab(pearIndexUrl, ["./business/script.js"]);
 
             let data = await tab.run();
+
+
 
             task.data = JSON.stringify(data);
             Socket.log(`提交爬取任务结果数据`);
@@ -44,6 +50,13 @@ require([
             Socket.log(`上报爬取任务成功,task=`, task);
             await Task.resolveTask(task);
             Socket.log(`爬取任务完成`);
+
+            Socket.emitEvent({
+                event: "detail_item_finish",
+                bee_name: task.name,
+                bee_id: task.id
+            });
+
         } catch(err) {
             Socket.error("爬取失败,err=", err.stack);
             Socket.log(`上报爬取任务失败,task=`, task);

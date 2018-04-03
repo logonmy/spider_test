@@ -21,7 +21,9 @@ require([
             let query = {
                 name: "bilibili_video_detail",
                 value: item,
-                config: "{}",
+                config: {
+                    from_index: true
+                },
                 scheduled_at: Date.now()
             };
             let task = await Http.call(`http://bee.api.talkmoment.com/scheduler/task/post`, query);
