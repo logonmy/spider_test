@@ -14,6 +14,17 @@ require([
 
     const postDataToMessage = async(task, data) => {
         await Http.call(`http://bee.api.talkmoment.com/message/publish?topic=${task.name}`, data);
+
+        let query = {
+            name: "wash_bee_data",
+            config: JSON.stringify({
+                bee_source: "toutiao_user_detail",
+                msg_topic: "toutiao_user_detail",
+                brick_id: JSON.parse(task.config)["brick_id"]
+            })
+        }
+        await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", query)
+
     };
 
     const postDataToDereplicate = async(task, data) => {

@@ -102,4 +102,20 @@ index_update
 index_update 的触发
 list页面 emit(listadd)(不需要) num_item_limit(不需要)
 detail页面 emit个over(暂时不知道) 带上keyword/upname(不需要)
-             s
+
+
+
+duowanPic_index_detail
+haoqixin_index_detail
+pear_index_detail
+sina_index_update
+bilibili_video_detail
+toutiao_keyword_detail
+toutiao_user_detail
+wx_public_detail
+
+{
+  "name": "wash_bee_data",
+  "config": '{\"bee_source\":duowanPic_index_detail", \"msg_topic\":\"wash_bee_sina_gif\",\"brick_id\":11450}',
+}
+

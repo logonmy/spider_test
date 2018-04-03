@@ -26,6 +26,5 @@ define(["./http"], function(Http){
         };
         await Http.call(`http://bee.api.talkmoment.com/scheduler/task/reject`, query);
     };
-
     return Task;
 });
