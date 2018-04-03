@@ -53,7 +53,7 @@ let run = async () => {
 
 
             item.url = items[i].querySelector(".link.title").getAttribute("href")
-            item.url = "https://www.toutiao.com/i" + item.url.split("/")[2];
+            item.url = "https://www.toutiao.com/i" + item.url.split("/")[2] + "/";
 
             if(items[i].querySelector(".img-wrap img")){
                 let img = items[i].querySelector(".img-wrap img");

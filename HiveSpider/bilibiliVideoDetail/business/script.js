@@ -32,7 +32,7 @@ setTimeout(function(){
         TemplateData.created_at = new Date(viewBox.querySelector("time").innerText).getTime();
         let naturalUrl = window.location.href;
         naturalUrl = naturalUrl.split("?")[0];
-        TemplateData.url = naturalUrl + "/";
+        TemplateData.url = naturalUrl;
 
         TemplateData.video_source = document.querySelector(".bilibili-player-video video").getAttribute("src");
 
