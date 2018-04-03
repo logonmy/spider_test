@@ -29,6 +29,7 @@ require([
     const runTask = async(task) => {
         try {
             Socket.log(`开始处理爬取任务,task=`, task);
+            task.config = JSON.parse(task.config);
 
             Socket.log(`打开网页Tab(url=${task.value}), 注入爬取逻辑`);
             let tab = new Tab(task.value, ["./business/script.js"]);
@@ -37,11 +38,12 @@ require([
             let data = await tab.run();
             Socket.log(`爬取完成,data=`, data);
 
-            if(task.config.up_name){
+            if (task.config.up_name) {
                 data.up_name = task.config.up_name;
-            }else if(task.config.keyword){
+            } else if (task.config.keyword) {
                 data.keyword = task.config.keyword;
             }
+            data.brick_id = task.config.brick_id || 0;
 
             task.data = JSON.stringify(data);
             Socket.log(`提交爬取任务结果数据`);
@@ -50,8 +52,9 @@ require([
 
             Socket.log(`发送爬取结果到消息队列topic=${task.name}`);
             await postDataToMessage(task, data);
-            //FileControll.append("bilibiliVideoDetail", JSON.stringify(data) + "\n");
             Socket.log(`发送爬取结果到消息队列完成`);
+
+            //FileControll.append("bilibiliVideoDetail", JSON.stringify(data) + "\n");
 
             Socket.log(`添加内容url(${data.url})到去重模块的历史集合`);
             await postDataToDereplicate(task, data);
@@ -64,10 +67,10 @@ require([
             Socket.emitEvent({
                 event: "detail_item_finish",
                 bee_name: task.name,
-                bee_id: task.id
+                task_id: task.id
             });
         } catch(err) {
-            Socket.log("爬取失败,err=", err);
+            Socket.error("爬取失败,err=", err);
             Socket.log(`上报爬取任务失败,task=`, task);
             await Task.rejectTask(task, err);
         }
@@ -80,7 +83,7 @@ require([
         while (true) {
             let task = await Task.fetchTask(BEE_NAME);
             if (task === null) {
-                console.log("暂时没有任务");
+                Socket.log("暂时没有任务");
                 await Async.sleep(SLEEP_TIME);
                 continue;
             }
