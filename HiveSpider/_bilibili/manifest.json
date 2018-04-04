@@ -8,6 +8,8 @@
     "background": {
       "page": "background.html",
       "matches": ["<all_urls>"]},
-    "content_scripts": [
-    ]
-} 
+    "content_scripts": [],
+    "browser_action": {
+        "default_icon": "static/z.jpg"
+    }
+}

@@ -10,7 +10,7 @@ try{
 
     for(let i=0;i<trs.length;i++){
         let key = trs[i].querySelector("td a").innerText;
-        let content = trs[i].querySelectorAll("td")[2].getAttribute("title");
+        let content = trs[i].querySelectorAll("td")[2].innerText;
         result.push({C: key, R: content});
     }
 

@@ -45,19 +45,15 @@ define([], function(){
         chrome.tabs.create({url: this.url, selected: this.selected},function(tab){
             self.tabId = tab.id;
             self.participate();
-            setTimeout(function(){
-                try{
+            chrome.tabs.onUpdated.addListener(function (TABID, changeInfo, TAB) {
+                if (changeInfo.status == 'complete' && TABID == tab.id) {
                     for(var i =0;i<self.script.length;i++){
                         chrome.tabs.executeScript(tab.id, {
                             file: self.script[i]
                         });
                     }
                 }
-                catch(e){
-                    console.log("execute失败了");
-                    self.deferred.reject.call(self.deferred, e)
-                }
-            }, 1000)
+            });
         })
         return this.deferred.promise;
     };

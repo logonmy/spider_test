@@ -139,5 +139,3 @@ var postData = {
 liteAjax(sendTaskUrl, function(data){
     console.log(data)
 }, "POST", JSON.stringify(postData))
-
-

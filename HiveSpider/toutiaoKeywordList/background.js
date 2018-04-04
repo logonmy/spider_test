@@ -45,11 +45,22 @@ require([
 
     const runTask = async(task) => {
         try {
+
+            let G = {
+
+            }
+
+
             Socket.log(`开始处理爬取任务,task=`, task);
 
             Socket.log(`打开网页Tab(url=${task.value}), 注入爬取逻辑`);
             let keyUrl = "https://www.toutiao.com/search/?keyword=" + task.value;
-            let tab = new Tab(keyUrl, ["./business/script.js"]);
+            //todo tab 添加植入变量函数
+
+            task.config = JSON.parse(task.config);
+            let numItemLimit = task.config.num_item_limit || 10;
+
+            let tab = new Tab(keyUrl, ["window.numItemLimit=" + numItemLimit,"./business/script.js"]);
 
             Socket.log(`开始爬取`);
             let data = await tab.run();

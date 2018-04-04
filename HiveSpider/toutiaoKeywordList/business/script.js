@@ -9,12 +9,12 @@ var scroll = setInterval(function(){
 },50)
 
 let watchUpdate = async () => {
-    let articleCount = document.querySelectorAll("[ga_event=feed_item_click]").length;
-    if(articleCount === articleCountCache){
+    let articleCount = document.querySelectorAll(".articleCard").length;
+    if(articleCount === articleCountCache || articleCount >= numItemLimit){
         count += 1;
-        console.log(count)
+        console.log(count);
 
-        if(count === 20){
+        if(count === 5){
             console.log("clear");
             clearInterval(scroll);
             return ;
@@ -22,7 +22,7 @@ let watchUpdate = async () => {
     }else{
         count = 0;
     }
-    articleCountCache = document.querySelectorAll("[ga_event=feed_item_click]").length;
+    articleCountCache = document.querySelectorAll(".articleCard").length;
     await sleep();
     await watchUpdate();
 }
@@ -32,6 +32,7 @@ var TemplateData = {
 }
 
 let run = async () => {
+    console.log(window.numItemLimit, "duasdkjusahdjkhasjkdhfjkldhfakhjsdfgkalsg")
     await watchUpdate();
     console.log("页面加载完毕");
 

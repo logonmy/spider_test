@@ -17,7 +17,7 @@ require(["../api/fileControll","./config", "../service/tab"], function(fileContr
             let result = await tab.run();
             for(let re of result){
                 console.log(re);
-                fileControll.append("wangci", JSON.stringify(re) + "\n");
+                fileControll.append("wangci2", JSON.stringify(re) + "\n");
             }
         }
     }
