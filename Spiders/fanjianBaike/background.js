@@ -8,6 +8,7 @@ require(["../api/fileControll","./config", "../service/tab"], function(fileContr
         let results = [];
         let tab = new Tab("http://www.fanjian.net/jbk", ["./business/script.js"]);
         let hrefs = await tab.run();
+        hrefs.reverse();
 
         for(let href of hrefs){
             let tab = new Tab(href, ["./business/script2.js"]);

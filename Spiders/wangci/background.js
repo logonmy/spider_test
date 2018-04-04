@@ -5,18 +5,20 @@ require.config({
 require(["../api/fileControll","./config", "../service/tab"], function(fileControll, config, Tab) {
 
     let run = async () => {
-        let urlArray = ["http://wangci.net/word.html", ""]
-        for()
-        let results = [];
-        let tab = new Tab("http://www.fanjian.net/jbk", ["./business/script.js"]);
-        let hrefs = await tab.run();
+        let urlArray = ["http://wangci.net/word.html", "http://wangci.net/word_2.html","http://wangci.net/word_3.html",
+            "http://wangci.net/word_4.html","http://wangci.net/word_5.html","http://wangci.net/word_6.html",
+            "http://wangci.net/word_7.html","http://wangci.net/word_8.html","http://wangci.net/word_9.html","http://wangci.net/word_10.html"];
 
-        for(let href of hrefs){
-            let tab = new Tab(href, ["./business/script2.js"]);
+        let hrefs = [];
+        let results = [];
+
+        for(let url of urlArray){
+            let tab = new Tab(url, ["./business/script.js"]);
             let result = await tab.run();
-            console.log(result);
-            fileControll.append("fanjianBaike", JSON.stringify(result) + "\n");
-            results.push(result);
+            for(let re of result){
+                console.log(re);
+                fileControll.append("wangci", JSON.stringify(re) + "\n");
+            }
         }
     }
     run();
