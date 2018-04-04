@@ -13,30 +13,35 @@ require([
     "../service/tab",
 ], (Config, Http, Async, Task, Socket, FileControll,Tab) => {
 
-    const postDataToMessage = async(task, data) => {
-        await Http.call(`http://bee.api.talkmoment.com/message/publish?topic=${task.name}`, data);
+    const DETAIL_BEE_NAME = "duowanPic_index_detail";
 
-        let query = {
-            name: "wash_bee_data",
+    const postDataToMessage = async(task, data) => {
+        await Http.call(`http://bee.api.talkmoment.com/message/publish?topic=${DETAIL_BEE_NAME}`, data);
+    };
+
+    const postWashTask = async(detailTask) => {
+        let washTask = {
+            name: "wash_corpus",
+            value: "",
             config: JSON.stringify({
-                bee_source: "duowanPic_index_detail",
-                msg_topic: "duowanPic_index_detail",
-                brick_id: JSON.parse(task.config)["brick_id"]
-            })
-        }
-        await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", query)
+                bee_source: DETAIL_BEE_NAME,
+                msg_topic: "wash_" + DETAIL_BEE_NAME,
+                brick_id: JSON.parse(detailTask.config).brick_id
+            }),
+            scheduled_at: Date.now()
+        };
+        await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", washTask)
     };
 
     const postDataToDereplicate = async(task, data) => {
         let query = {
-            partition: task.name,
+            partition: DETAIL_BEE_NAME,
             key: data.url
         };
         await Http.call(`http://bee.api.talkmoment.com/dereplicate/history/add`, query);
     };
 
     const runTask = async(task) => {
-
         let arrayDulicate = (arr) => {
             let checkIn = (str, arr) => {
                 for(let a of arr){
@@ -54,7 +59,7 @@ require([
                 }
             }
             return result;
-        }
+        };
 
         try {
             Socket.log(`开始处理爬取任务,task=`, task);
@@ -66,7 +71,7 @@ require([
             let pageCount = await tab0.run();
             Socket.log("当前图库有"+ pageCount + "张图片");
 
-            let dataArray = []
+            let dataArray = [];
             for(let i=1;i <= pageCount;i++){
                 let pageUrl = task.value;
                 pageUrl = pageUrl + "#p" + i;
@@ -82,7 +87,8 @@ require([
                 Socket.log(`发送爬取结果到消息队列topic=${task.name}`);
                 await postDataToMessage(task, data);
                 //FileControll.append("_duowanPicDetail", JSON.stringify(data) + "\n");
-                Socket.log(`发送爬取结果到消息队列完成`);
+                Socket.log(`发起清洗任务`);
+                await postWashTask(task);
             }
 
             await postDataToDereplicate(task, {url: baseUrl});
@@ -110,14 +116,12 @@ require([
     };
 
     (async() => {
-        const BEE_NAME = "duowanPic_index_detail";
-        const SLEEP_TIME = 10000;
-        Socket.startHeartBeat(BEE_NAME);
+        Socket.startHeartBeat(DETAIL_BEE_NAME);
         while (true) {
-            let task = await Task.fetchTask(BEE_NAME);
+            let task = await Task.fetchTask(DETAIL_BEE_NAME);
             if (task === null) {
-                console.log("暂时没有任务");
-                await Async.sleep(SLEEP_TIME);
+                Socket.log("暂时没有任务");
+                await Async.sleep(10000);
                 continue;
             }
             await runTask(task);
