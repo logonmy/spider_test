@@ -58,7 +58,7 @@ function liteAjax(url, callback, method, postBody, aSync) {
 
         if (method == "POST") {
             //rqst.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-            rqst.setRequestHeader('Content-type', 'application/json');
+            //rqst.setRequestHeader('Content-type', 'application/json');
         }
         rqst.send(postBody);
     }
@@ -75,6 +75,7 @@ let httpCall = (path, args) => {
     return new Promise((resolve, reject) => {
         let data = (args) ? JSON.stringify(args) : "";
         liteAjax(path, (data) => {
+            console.log(data);
             try {
                 let res = JSON.parse(data);
                 if (res.err_no !== 0) throw new Error(res.stack.join("\n"));
@@ -90,9 +91,12 @@ const filterItems = async(data) => {
         partition: "toutiao_keyword_detail",
         keys: data.items.map(item => item.url)
     };
-    console.log(query,"888888888888");
-    let res = await httpCall(`http://bee.api.talkmoment.com/dereplicate/filter/by/history`, query);
-    data.items = data.items.filter((item, i) => (res.filter_result[i]));
+    try {
+        let res = await httpCall(`http://bee.api.talkmoment.com/dereplicate/filter/by/history`, query);
+        data.items = data.items.filter((item, i) => (res.filter_result[i]));
+    }catch (e){
+        console.log(e)
+    }
 };
 
 
@@ -109,7 +113,7 @@ let watchUpdate = async () => {
         item.url = "https://www.toutiao.com/i" + item.url.split("/")[2] + "/";
         data.items.push(item);
     }
-    //await filterItems(data);
+    await filterItems(data);
     let readyLength = data.length;
 
     if(articleCount === articleCountCache || readyLength >= numItemLimit){
