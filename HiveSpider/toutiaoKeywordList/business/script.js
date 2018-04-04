@@ -99,7 +99,6 @@ const filterItems = async(data) => {
     }
 };
 
-
 let watchUpdate = async () => {
     let articleCount = document.querySelectorAll(".articleCard").length;
 

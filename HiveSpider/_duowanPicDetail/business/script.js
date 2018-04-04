@@ -36,8 +36,8 @@ var index = setInterval(() => {
                 var video = document.querySelector("#image-show .show-img video");
 
                 templateData.title = video.getAttribute("alt")
-                templateData.src = video.querySelector("source").getAttribute("src");
-                templateData.type = "video/mp4";
+                templateData.src =  document.querySelectorAll(".fr a")[1].getAttribute("href");
+                templateData.type = "img";
                 templateData.width = video.offsetWidth;
                 templateData.height = video.offsetHeight;
                 templateData.url = window.location.href;
