@@ -54,7 +54,7 @@ require([
             task.config = JSON.parse(task.config);
             let numItemLimit = task.config.num_item_limit || 10;
 
-            let tab = new Tab(keyUrl, ["window.numItemLimit=" + 100, "./business/script.js"]);
+            let tab = new Tab(keyUrl, ["window.numItemLimit=" + numItemLimit, "./business/script.js"]);
 
             Socket.log(`开始爬取`);
             let data = await tab.run();
