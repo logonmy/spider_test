@@ -13,28 +13,31 @@ require([
     "../service/tab",
 ], (Config, Http, Async, Task, Socket, FileControll, Tab) => {
 
+    const DETAIL_BEE_NAME = "haoqixin_index_detail";
 
     const postDataToMessage = async(task, data) => {
-        await Http.call(`http://bee.api.talkmoment.com/message/publish?topic=${task.name}`, data);
+        await Http.call(`http://bee.api.talkmoment.com/message/publish?topic=${DETAIL_BEE_NAME}`, data);
+    };
 
-        let query = {
-            name: "wash_bee_data",
+    const postWashTask = async(detailTask) => {
+        let washTask = {
+            name: "wash_corpus",
+            value: "",
             config: JSON.stringify({
-                bee_source: "haoqixin_index_detail",
-                msg_topic: "haoqixin_index_detail",
-                brick_id: JSON.parse(task.config)["brick_id"]
-            })
-        }
-        await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", query)
+                bee_source: DETAIL_BEE_NAME,
+                msg_topic: "wash_" + DETAIL_BEE_NAME,
+                brick_id: JSON.parse(detailTask.config).brick_id
+            }),
+            scheduled_at: Date.now()
+        };
+        await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", washTask)
     };
 
     const postDataToDereplicate = async(task, data) => {
-
         let query = {
-            partition: task.name,
+            partition: DETAIL_BEE_NAME,
             key: data.url
         };
-
         await Http.call(`http://bee.api.talkmoment.com/dereplicate/history/add`, query);
     };
 
@@ -49,20 +52,23 @@ require([
             let data = await tab.run();
             Socket.log(`爬取完成,data=`, data);
 
-            task.data = JSON.stringify(data);
-            Socket.log(`提交爬取任务结果数据`);
-            await Task.putTaskData(task);
-            Socket.log(`提交爬取任务结果数据完成`);
-
             //FileControll.append("haoqixinIndexDetail", JSON.stringify(data) + "\n");
 
             Socket.log(`发送爬取结果到消息队列topic=${task.name}`);
             await postDataToMessage(task, data);
             Socket.log(`发送爬取结果到消息队列完成`);
 
+            Socket.log(`发起清洗任务`);
+            await postWashTask(task);
+
             Socket.log(`添加内容url(${data.url})到去重模块的历史集合`);
             await postDataToDereplicate(task, data);
             Socket.log(`添加到去重模块成功`);
+
+            task.data = JSON.stringify(data);
+            Socket.log(`提交爬取任务结果数据`);
+            await Task.putTaskData(task);
+            Socket.log(`提交爬取任务结果数据完成`);
 
             Socket.log(`上报爬取任务成功,task=`, task);
             await Task.resolveTask(task);
@@ -82,14 +88,12 @@ require([
     };
 
     (async() => {
-        const BEE_NAME = "haoqixin_index_detail";
-        const SLEEP_TIME = 10000;
-        Socket.startHeartBeat(BEE_NAME);
+        Socket.startHeartBeat(DETAIL_BEE_NAME);
         while (true) {
-            let task = await Task.fetchTask(BEE_NAME);
+            let task = await Task.fetchTask(DETAIL_BEE_NAME);
             if (task === null) {
-                console.log("暂时没有任务")
-                await Async.sleep(SLEEP_TIME);
+                Socket.log("暂时没有任务");
+                await Async.sleep(10000);
                 continue;
             }
             await runTask(task);

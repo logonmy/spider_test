@@ -12,9 +12,12 @@ require([
     "../service/tab",
 ], (Config, Http, Async, Task, Socket, Tab) => {
 
+    const LIST_BEE_NAME = "haoqixin_index_update";
+    const DETAIL_BEE_NAME = "haoqixin_index_detail";
+
     const filterItems = async(task, data) => {
         let query = {
-            partition: task.name,
+            partition: DETAIL_BEE_NAME,
             keys: data.items.map(item => item.url)
         };
         let res = await Http.call(`http://bee.api.talkmoment.com/dereplicate/filter/by/history`, query);
@@ -24,20 +27,34 @@ require([
     const postDetailTasks = async(listTask, data) => {
         for (let item of data.items) {
             let query = {
-                name: "haoqixin_index_detail",
+                name: DETAIL_BEE_NAME,
                 value: item.url,
-                config: "{}",
+                config: JSON.stringify({
+                    brick_id: JSON.parse(listTask.config).brick_id
+                }),
                 scheduled_at: Date.now()
             };
             let task = await Http.call(`http://bee.api.talkmoment.com/scheduler/task/post`, query);
             Socket.log(`向Scheduler添加task=`, task);
             Socket.emitEvent({
                 event: "list_item_added",
-                bee_name: listTask.name,
+                bee_name: LIST_BEE_NAME,
                 item: item,
                 task: task
             });
         }
+    };
+
+    const repostTask = async(listTask) => {
+        let timegap = JSON.parse(listTask.config).timegap;
+        let nextScheduledAt = Date.now() + timegap;
+        let query = {
+            task_id: listTask.id,
+            scheduled_at: nextScheduledAt
+        };
+        Socket.log(`发布下一次定时爬取任务`);
+        let task = await Http.call(`http://bee.api.talkmoment.com/scheduler/task/repost`, query);
+        Socket.log(`下一次定时爬取任务发布成功,task=`, task);
     };
 
     const runTask = async(task) => {
@@ -45,8 +62,8 @@ require([
             Socket.log(`开始处理爬取任务,task=`, task);
 
             Socket.log(`打开网页Tab(url=${task.value}), 注入爬取逻辑`);
-            let urlIndex = "https://www.qdaily.com/";
-            let tab = new Tab(urlIndex, ["./business/script.js"]);
+
+            let tab = new Tab(task.value, ["./business/script.js"]);
 
             Socket.log(`开始爬取`);
             let data = await tab.run();
@@ -65,25 +82,22 @@ require([
             await Task.putTaskData(task);
             Socket.log(`提交爬取任务结果数据完成`);
 
-            Socket.log(`上报爬取任务成功,task=`, task);
-            await Task.resolveTask(task);
+            await repostTask(task);
             Socket.log(`爬取任务完成`);
         } catch(err) {
             Socket.error("爬取失败,err=", err.stack);
             Socket.log(`上报爬取任务失败,task=`, task);
-            await Task.rejectTask(task, err);
+            await repostTask(task);
         }
     };
 
     (async() => {
-        const BEE_NAME = "haoqixin_index_update";
-        const SLEEP_TIME = 10000;
-        Socket.startHeartBeat(BEE_NAME);
+        Socket.startHeartBeat(LIST_BEE_NAME);
         while (true) {
-            let task = await Task.fetchTask(BEE_NAME);
+            let task = await Task.fetchTask(LIST_BEE_NAME);
             if (task === null) {
-                console.log("暂时没有任务")
-                await Async.sleep(SLEEP_TIME);
+                Socket.log("暂时没有任务")
+                await Async.sleep(10000);
                 continue;
             }
             await runTask(task)
