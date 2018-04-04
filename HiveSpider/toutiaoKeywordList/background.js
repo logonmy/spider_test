@@ -45,12 +45,6 @@ require([
 
     const runTask = async(task) => {
         try {
-
-            let G = {
-
-            }
-
-
             Socket.log(`开始处理爬取任务,task=`, task);
 
             Socket.log(`打开网页Tab(url=${task.value}), 注入爬取逻辑`);
@@ -60,7 +54,7 @@ require([
             task.config = JSON.parse(task.config);
             let numItemLimit = task.config.num_item_limit || 10;
 
-            let tab = new Tab(keyUrl, ["window.numItemLimit=" + numItemLimit,"./business/script.js"]);
+            let tab = new Tab(keyUrl, ["window.numItemLimit=" + 100, "./business/script.js"]);
 
             Socket.log(`开始爬取`);
             let data = await tab.run();
@@ -69,6 +63,11 @@ require([
             Socket.log(`开始过滤`);
             await filterItems(task, data);
             Socket.log(`过滤掉已爬取的链接后,data=`, data);
+
+            if(data.items.length >= numItemLimit){
+                data.items = data.items.slice(0, numItemLimit);
+            }
+
 
             Socket.log(`开始添加详情页爬取任务`);
             await postDetailTasks(task, data);

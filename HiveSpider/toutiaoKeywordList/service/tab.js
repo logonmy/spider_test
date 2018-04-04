@@ -9,13 +9,30 @@ define([], function () {
         addListener: function () {
             var self = this;
 
-            chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab){
+            chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
                 if (changeInfo.status == 'complete' && tabId == G.tabId) {
-                    for(var i =0;i<G.script.length;i++){
-                        chrome.tabs.executeScript(G.tabId, {
-                            file: G.script[i]
-                        });
+
+                    function implantation(index) {
+                        if (G.script[index].indexOf(".js") > -1) {
+                            chrome.tabs.executeScript(G.tabId, {
+                                file: G.script[index]
+                            }, function () {
+                                if (G.script[index + 1]) {
+                                    implantation(index + 1);
+                                }
+                            })
+                        } else {
+                            chrome.tabs.executeScript(G.tabId, {
+                                code: G.script[index]
+                            }, function () {
+                                if (G.script[index + 1]) {
+                                    implantation(index + 1);
+                                }
+                            })
+                        }
                     }
+                    implantation(0);
+
                 }
             });
 
