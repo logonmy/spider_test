@@ -96,7 +96,7 @@ require([
         while (true) {
             let task = await Task.fetchTask(LIST_BEE_NAME);
             if (task === null) {
-                Socket.log("暂时没有任务")
+                Socket.log("暂时没有任务");
                 await Async.sleep(10000);
                 continue;
             }
