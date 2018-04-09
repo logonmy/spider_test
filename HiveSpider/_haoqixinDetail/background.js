@@ -43,10 +43,10 @@ require([
         await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", washTask)
     };
 
-    const postDataToDereplicate = async(task, data) => {
+    const postDataToDereplicate = async(task) => {
         let query = {
             partition: DETAIL_BEE_NAME,
-            key: data.url
+            key: task.value
         };
         await Http.call(`http://bee.api.talkmoment.com/dereplicate/history/add`, query);
     };
@@ -74,7 +74,7 @@ require([
                 await postWashTask(task, data);
 
                 Socket.log(`添加内容url(${data.url})到去重模块的历史集合`);
-                await postDataToDereplicate(task, data);
+                await postDataToDereplicate(task);
                 Socket.log(`添加到去重模块成功`);
 
                 task.data = JSON.stringify(data);
