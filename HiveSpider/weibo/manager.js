@@ -176,12 +176,8 @@ class Cpu {
         let self = this;
         timeout = timeout * 1000;
 
-        let keywordCount = 0;
-
         self.worker.on("message", async (task) => {
             switch (task.type) {
-                //一个关键词只有一个对应的success过来
-                //一个微博博主历史有博主历史页数个success过来
                 case "success": {
                     self.status = true;
                     taskHeap.pushTask(task);
@@ -190,6 +186,11 @@ class Cpu {
                 case "error": {
                     await Task.rejectTask(task, "error");
                     self.status = true;
+                    break;
+                }
+                case "bigVError": {
+                    delete task.type;
+                    taskHeap.addBigVTask(task);
                     break;
                 }
                 case "bigVInit": {
@@ -207,8 +208,12 @@ class Cpu {
             }
         })
         self.worker.on("exit", async () => {
+            let self = this;
+            self.status = false;
             //todo 重启 重新init
             //暂时不知道怎么做
+            self.worker = new child_process.fork(fileName);
+            await self.init();
         })
 
         return new Promise((resolve, reject) => {

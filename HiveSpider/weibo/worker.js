@@ -28,7 +28,9 @@ let task;
 
 //调度机
 process.on("uncaughtError", async function(){
-
+    task.type = "bigVError";
+    process.send(task);
+    process.exit(0);
 })
 
 process.on("message", async function (e) {
@@ -459,6 +461,8 @@ const searchBigVName = async () => {
                 log("评论" + count + "加载失败，正在重试");
                 if (errTime === 20) {
                     log("出错超过20次！");
+                    task.type = "bigVError";
+                    process.send(task);
                     process.exit(0);
                     return;
                 }
