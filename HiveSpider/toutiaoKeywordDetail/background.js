@@ -13,25 +13,40 @@ require([
     "../api/fileControll",
 ], (Config, Http, Async, Task, Socket, Tab, FileControll) => {
 
-    const postDataToMessage = async(task, data) => {
-        await Http.call(`http://bee.api.talkmoment.com/message/publish?topic=${task.name}`, data);
+    const DETAIL_BEE_NAME = "toutiao_keyword_detail";
 
+    const filterItem = async(task) => {
         let query = {
-            name: "wash_bee_data",
-            config: JSON.stringify({
-                bee_source: "toutiao_keyword_detail",
-                msg_topic: "toutiao_keyword_detail",
-                brick_id: JSON.parse(task.config)["brick_id"]
-            })
-        }
-        await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", query)
-
+            partition: DETAIL_BEE_NAME,
+            keys: [task.value]
+        };
+        let res = await Http.call(`http://bee.api.talkmoment.com/dereplicate/filter/by/history`, query);
+        return res.filter_result[0];
     };
 
-    const postDataToDereplicate = async(task, data) => {
+    const postDataToMessage = async(task, data) => {
+        await Http.call(`http://bee.api.talkmoment.com/message/publish?topic=${DETAIL_BEE_NAME}`, data);
+    };
+
+    const postWashTask = async(detailTask, data) => {
+        let washTask = {
+            name: "wash_corpus",
+            value: "",
+            config: JSON.stringify({
+                bee_source: DETAIL_BEE_NAME,
+                brick_id: JSON.parse(detailTask.config).brick_id,
+                publish: true
+            }),
+            data: JSON.stringify(data),
+            scheduled_at: Date.now()
+        };
+        await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", washTask)
+    };
+
+    const postDataToDereplicate = async(task) => {
         let query = {
-            partition: task.name,
-            key: data.url
+            partition: DETAIL_BEE_NAME,
+            key: task.value
         };
         await Http.call(`http://bee.api.talkmoment.com/dereplicate/history/add`, query);
     };
@@ -40,36 +55,47 @@ require([
         try {
             Socket.log(`开始处理爬取任务,task=`, task);
 
-            let taskConfig = JSON.parse(task.config);
+            let filter = await filterItem(task);
+            if (!filter) {
+                Socket.log(`网页(url=${task.value})已经爬取过, 跳过`);
+            } else {
+                let config = JSON.parse(task.config);
 
-            Socket.log(`打开网页Tab(url=${task.value}), 注入爬取逻辑`);
-            let tab = new Tab(task.value, ["./business/script.js"]);
+                Socket.log(`打开网页Tab(url=${task.value}), 注入爬取逻辑`);
+                let tab = new Tab(task.value, ["./business/script.js"]);
 
-            Socket.log(`开始爬取`);
-            let data = await tab.run();
-            Socket.log(`爬取完成,data=`, data);
+                Socket.log(`开始爬取`);
+                let data = await tab.run();
+                Socket.log(`爬取完成,data=`, data);
 
-            if (taskConfig.up_name) {
-                data.up_name = taskConfig.up_name;
-            } else if (taskConfig.keyword) {
-                data.keyword = taskConfig.keyword;
+                if (config.up_name) {
+                    data.up_name = config.up_name;
+                } else if (config.keyword) {
+                    data.keyword = config.keyword;
+                }
+                data.brick_id = config.brick_id;
+
+                Socket.log(`发送爬取结果到消息队列topic=${task.name}`);
+                await postDataToMessage(task, data);
+                Socket.log(`发送爬取结果到消息队列完成`);
+
+                Socket.log(`发起清洗任务`);
+                await postWashTask(task, data);
+
+                Socket.log(`添加内容url(${data.url})到去重模块的历史集合`);
+                await postDataToDereplicate(task, data);
+                Socket.log(`添加到去重模块成功`);
+
+                task.data = JSON.stringify(data);
+                Socket.log(`提交爬取任务结果数据`);
+                await Task.putTaskData(task);
+                Socket.log(`提交爬取任务结果数据完成`);
             }
-            data.brick_id = taskConfig.brick_id || 0;
-
-            task.data = JSON.stringify(data);
-            Socket.log(`提交爬取任务结果数据`);
-            await Task.putTaskData(task);
-            Socket.log(`提交爬取任务结果数据完成`);
-
-            Socket.log(`发送爬取结果到消息队列topic=${task.name}`);
-            await postDataToMessage(task, data);
-            //FileControll.append("toutiaoKeywordDetail", JSON.stringify(data) + "\n");
-            Socket.log(`发送爬取结果到消息队列完成`);
-
-            Socket.log(`添加内容url(${data.url})到去重模块的历史集合`);
-            await postDataToDereplicate(task, data);
-            Socket.log(`添加到去重模块成功`);
-
+            Socket.emitEvent({
+                event: "detail_item_finish",
+                bee_name: task.name,
+                task_id: task.id
+            });
             Socket.log(`上报爬取任务成功,task=`, task);
             await Task.resolveTask(task);
             Socket.log(`爬取任务完成`);
@@ -81,14 +107,12 @@ require([
     };
 
     (async() => {
-        const BEE_NAME = "toutiao_keyword_detail";
-        const SLEEP_TIME = 10000;
-        Socket.startHeartBeat(BEE_NAME);
+        Socket.startHeartBeat(DETAIL_BEE_NAME);
         while (true) {
-            Socket.log("暂时没有任务");
-            let task = await Task.fetchTask(BEE_NAME);
+            let task = await Task.fetchTask(DETAIL_BEE_NAME);
             if (task === null) {
-                await Async.sleep(SLEEP_TIME);
+                Socket.log("暂时没有任务");
+                await Async.sleep(10000);
                 continue;
             }
             await runTask(task);
