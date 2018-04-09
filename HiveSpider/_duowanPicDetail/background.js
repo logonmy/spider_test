@@ -43,10 +43,10 @@ require([
         await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", washTask)
     };
 
-    const postDataToDereplicate = async(task, data) => {
+    const postDataToDereplicate = async(task) => {
         let query = {
             partition: DETAIL_BEE_NAME,
-            key: data.url
+            key: task.value
         };
         await Http.call(`http://bee.api.talkmoment.com/dereplicate/history/add`, query);
     };
