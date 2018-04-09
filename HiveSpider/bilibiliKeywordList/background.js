@@ -30,7 +30,7 @@ require([
                 name: DETAIL_BEE_NAME,
                 value: item.url,
                 config: JSON.stringify({
-                    brick_id: listTask.config.brick_id,
+                    brick_id: JSON.parse(listTask.config).brick_id,
                     keyword: listTask.value
                 }),
                 scheduled_at: 9999999999999
