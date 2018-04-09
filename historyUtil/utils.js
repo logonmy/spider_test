@@ -131,11 +131,17 @@ function liteAjax(url, callback, method, postBody, aSync) {
     }}
 var sendTaskUrl = "http://bee.api.talkmoment.com/scheduler/task/post";
 var postData = {
-    name: "pear_index_update",
-    value: "",
+    name: "weibo_bigv",
+    value: "乐华_AUDITION ",
     config: "{}",
     scheduled_at: new Date().getTime()
 }
 liteAjax(sendTaskUrl, function(data){
     console.log(data)
 }, "POST", JSON.stringify(postData))
+
+
+let button = document.querySelectorAll("[action-type=feed_list_item] .W_ficon.ficon_repeat.S_ficon");
+for(let bu of button){
+    bu.click();
+}

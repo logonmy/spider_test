@@ -1,7 +1,5 @@
 const puppeteer = require('puppeteer');
 const File = require("fs");
-const jq = require("jquery");
-const jsdom = require("jsdom");
 //add
 //navigation Timeout 事件捕获
 const log = (str) => {
@@ -29,12 +27,15 @@ let browser;
 let task;
 
 //调度机
+process.on("uncaughtError", async function(){
+
+})
+
 process.on("message", async function (e) {
-    console.log("收到爸爸的指导", e);
     task  = e;
     switch (e.name) {
         case "user": {
-            if(debug){
+            if(false){
                 console.log("debugING");
                 console.log("跳过登录");
                 process.send({
@@ -51,9 +52,15 @@ process.on("message", async function (e) {
             break;
         }
         case "weibo_bigv": {
-            console.log("puppeteer收到微博大v任务");
-            await searchBigVName();
-            break;
+            if(task.page){
+                console.log("puppeteer收到微博大v任务");
+                await searchBigVName();
+                break;
+            }else{
+                console.log("puppeteer初始化微博大v任务");
+                await initBigVName();
+                break;
+            }
         }
         case "weibo_update_everyday": {
             console.log("puppeteer收到微博首页更新任务");
@@ -193,7 +200,6 @@ const searchKeyword = async () => {
         }, 50)
     });
 
-    //
     try {
         await pages[0].waitForSelector(".page.next.S_txt1.S_line1", {timeout: 30000});
         console.log("加载底部翻页按钮成功");
@@ -212,7 +218,6 @@ const searchKeyword = async () => {
         let item = blogNodes[i];
         let commentBtn = await item.$("[action-type=feed_list_comment]");
         await commentBtn.click();
-        log("点开评论" + ++count);
         try {
             await pages[0].waitForFunction("document." +
                 "querySelectorAll(\"div.WB_feed_like p.text" +
@@ -244,7 +249,6 @@ const searchKeyword = async () => {
             continue;
         }
         errTime = 0;
-        log("评论" + count + "加载完毕");
         await sleep(1);
     }
 
@@ -292,7 +296,7 @@ const searchKeyword = async () => {
                 video: {
                     src: "",
                     cover_img: {
-                        url: "",
+                        src: "",
                         width: 0,
                         height: 0
                     }
@@ -300,8 +304,12 @@ const searchKeyword = async () => {
                 detailUrl: ""
             }
             let existAndReturn = (str) => {
-                if(blogNode.querySelector(str)){
-                    return parseInt(blogNode.querySelector(str).innerText.trim())
+                if(blogNode.querySelectorAll(str)[1]){
+                    let result = parseInt(blogNode.querySelectorAll(str)[1].innerText.trim());
+                    if(result === null){
+                        return 0
+                    }
+                    return result;
                 }else{
                     return 0;
                 }
@@ -327,7 +335,7 @@ const searchKeyword = async () => {
                 TemplateData.content = blogNode.querySelector(".comment_txt[node-type=feed_list_content]").innerText;
             }
             TemplateData.title =  blogNode.querySelector(".feed_content.wbcon .W_texta.W_fb").getAttribute("title");
-            TemplateData.detailUrl = blogNode.querySelector(".W_textb [node-type=feed_list_item_date]").getAttribute("href");
+            TemplateData.detailUrl = "http:" + blogNode.querySelector(".W_textb [node-type=feed_list_item_date]").getAttribute("href");
 
             //comment
             var comments = blogNode.querySelectorAll("[node-type=feed_list_commentList] dl .WB_text a");
@@ -338,11 +346,11 @@ const searchKeyword = async () => {
             var imgs= blogNode.querySelectorAll(".WB_pic.S_bg2.bigcursor img");
             for(var img of imgs){
                 var tempImg = {
-                    url: "",
+                    src: "",
                     width: 0,
                     height: 0
                 };
-                tempImg.url = img.getAttribute("src");
+                tempImg.src = "http:" + img.getAttribute("src");
                 tempImg.width = img.naturalWidth;
                 tempImg.height = img.naturalHeight;
                 TemplateData.imgs.push(tempImg)
@@ -351,7 +359,7 @@ const searchKeyword = async () => {
             //video
             if(blogNode.querySelector(".media_box_video_1")){
                 var video = blogNode.querySelector(".media_box_video_1");
-                TemplateData.video.cover_img.url = video.querySelector(".con-1.hv-pos img").getAttribute("src");
+                TemplateData.video.cover_img.src = "http:" + video.querySelector(".con-1.hv-pos img").getAttribute("src");
                 TemplateData.video.cover_img.width = video.querySelector(".con-1.hv-pos img").naturalWidth;
                 TemplateData.video.cover_img.height = video.querySelector(".con-1.hv-pos img").naturalHeight;
                 TemplateData.video.src = video.querySelector("video").getAttribute("src");
@@ -370,35 +378,9 @@ const searchKeyword = async () => {
 
 //大v历史搜索
 const searchBigVName = async () => {
-    //main
-    const parseDom = async (html) => {
-        html += "";
-        let d = new jsdom.JSDOM(html);
-        let $ = jq(d.window);
-        let wbList = $("div[action-type=feed_list_item]:not([isforward='1'])");
-        let saveStr = "";
-        for (let wb of wbList) {
-            let $$ = $(wb);
-            let blogId = $$.attr("mid");
-            let infoHTML = $$.find(".WB_feed_detail .WB_from").html().trim();
-            let contentHTML = $$.find(".WB_feed_detail .WB_text").html().trim();
-            let mediaHTML = rmAnnotation($$.find(".WB_feed_detail .WB_media_wrap").html());
-            let commentsHTML = rmAnnotation($$.find("div.list_box").html());
-            let obj = {
-                blogId: blogId,
-                blogName: blogName,
-                infoHTML: infoHTML,
-                contentHTML: contentHTML,
-                mediaHTML: mediaHTML,
-                commentsHTML: commentsHTML,
-                created_at: Date.now()
-            };
-            saveStr += JSON.stringify(obj) + "\n";
-        }
-        let date = new Date();
-        let dateStr = "BigVName" + task.value;
-        File.appendFileSync(dateStr + ".txt", saveStr);
-    };
+
+    let currentUrl = task.currentUrl;
+
     const main = async (curPage) => {
         curPage.goto(currentUrl);
         try {
@@ -454,14 +436,12 @@ const searchBigVName = async () => {
             main(curPage);
             return;
         }
-        log("已滚动到页面底部");
         let blogNodes = await curPage.$$("div[action-type=feed_list_item]");
         let count = 0;
         for (let i = 0; i < blogNodes.length; i++) {
             let item = blogNodes[i];
             let commentBtn = await item.$("a[action-type=fl_comment]");
             await commentBtn.click();
-            log("点开评论" + ++count);
             try {
                 await curPage.waitForFunction("document." +
                     "querySelectorAll(\"div.WB_feed_like p.text" +
@@ -488,7 +468,6 @@ const searchBigVName = async () => {
                 continue;
             }
             errTime = 0;
-            log("评论" + count + "加载完毕");
             await sleep(1);
         }
 
@@ -507,7 +486,7 @@ const searchBigVName = async () => {
                     video: {
                         src: "",
                         cover_img: {
-                            url: "",
+                            src: "",
                             width: 0,
                             height: 0
                         }
@@ -516,7 +495,11 @@ const searchBigVName = async () => {
                 }
                 let existAndReturn = (str) => {
                     if(blogNode.querySelectorAll(str)[1]){
-                        return parseInt(blogNode.querySelectorAll(str)[1].innerText.trim())
+                        let result = parseInt(blogNode.querySelectorAll(str)[1].innerText.trim());
+                        if(result === null){
+                            return 0
+                        }
+                        return result;
                     }else{
                         return 0;
                     }
@@ -541,23 +524,24 @@ const searchBigVName = async () => {
                 }else if(blogNode.querySelector("[node-type=feed_list_content]")){
                     TemplateData.content = blogNode.querySelector("[node-type=feed_list_content]").innerText;
                 }
-                TemplateData.detailUrl = blogNode.querySelector("[node-type=feed_list_item_date]").getAttribute("href");
+                TemplateData.detailUrl = "http:" + blogNode.querySelector("[node-type=feed_list_item_date]").getAttribute("href");
 
                 //comment
-                //上次写到这里了
-                var comments = blogNode.querySelectorAll("[node-type=feed_list_commentList] list_con a");
-                for(var comment of comments){
-                    TemplateData.comments.push(comment.innerText);
+                //todo 这里为了拿到博主回复可能还需要再修改
+                let splits = blogNode.querySelectorAll("[node-type=feed_list_commentList] .list_con[node-type=replywrap]");
+                for(let split of splits){
+                    TemplateData.comments.push(split.querySelector(".WB_text").innerText);
                 }
+
                 //img
                 var imgs= blogNode.querySelectorAll(".WB_pic.S_bg2.bigcursor img");
                 for(var img of imgs){
                     var tempImg = {
-                        url: "",
+                        src: "",
                         width: 0,
                         height: 0
                     };
-                    tempImg.url = img.getAttribute("src");
+                    tempImg.src = "http:" + img.getAttribute("src");
                     tempImg.width = img.naturalWidth;
                     tempImg.height = img.naturalHeight;
                     TemplateData.imgs.push(tempImg)
@@ -566,7 +550,7 @@ const searchBigVName = async () => {
                 //video
                 if(blogNode.querySelector(".media_box_video_1")){
                     var video = blogNode.querySelector(".media_box_video_1");
-                    TemplateData.video.cover_img.url = video.querySelector(".con-1.hv-pos img").getAttribute("src");
+                    TemplateData.video.cover_img.src = "http:" + video.querySelector(".con-1.hv-pos img").getAttribute("src");
                     TemplateData.video.cover_img.width = video.querySelector(".con-1.hv-pos img").naturalWidth;
                     TemplateData.video.cover_img.height = video.querySelector(".con-1.hv-pos img").naturalHeight;
                     TemplateData.video.src = video.querySelector("video").getAttribute("src");
@@ -577,6 +561,135 @@ const searchBigVName = async () => {
 
             return result;
         })
+
+        let allPageCount = task.pageCount;
+        let findInHref = (key, str) => {
+            let  hrefToJson = (str) => {
+                let json = {};
+                let arr = str.split("?")[1].split("&");
+                for(let part of arr){
+                    json[part.split("=")[0]] = part.split("=")[1];
+                }
+                return json;
+            }
+            let json = hrefToJson(str);
+            for(let keyWord in json){
+                if(keyWord === key){
+                    return json[keyWord];
+                }
+            }
+            return null;
+        }
+        let currentPageCount = task.page;
+        if(currentPageCount === allPageCount){
+            task.end = true;
+        }else{
+            task.end = false;
+        }
+        task.type = "success";
+        task.datas = pageResult;
+        process.send(task);
+
+    };
+
+    try {
+        await pages[0].goto(`http://s.weibo.com/user/${encodeURIComponent(task.value)}&Refer=focus_lx_STopic_box`);
+    } catch (e) {
+        console.log("搜索页面打开失败，正在重试！");
+        await sleep();
+        return;
+    }
+
+    await sleep();
+
+    const name = await pages[0].$("p.person_name a");
+    await name.click();
+    let curPage;
+    let check = async () => {
+        let Pages = await browser.pages();
+        if (Pages.length === 2) {
+            await sleep(0.1);
+            await check();
+        } else {
+            pages[0] = Pages[2];
+            await Pages[1].close();
+            if(debug){
+                if(task.page === 2){
+                    task.end = true;
+                }else{
+                    task.end = false;
+                }
+                task.type = "success";
+                task.datas = {
+                    debug: true,
+                    detailUrl: "https://www.baidu.com"
+                };
+                process.send(task);
+            }else{
+                await main(pages[0]);
+            }
+        }
+    };
+    await check();
+}
+
+//大v历史搜索初始化
+const initBigVName = async () => {
+
+    console.log("开始大v历史搜索初始化");
+
+    let currentUrl = `http://s.weibo.com/user/${encodeURIComponent(task.value)}&Refer=focus_lx_STopic_box`;
+
+    const main = async (curPage) => {
+        try {
+            await curPage.waitForSelector("div.WB_frame_c");
+        } catch (e) {
+            console.log("博主页面加载失败，正在重试");
+            await curPage.reload();
+            await sleep();
+            main(curPage);
+            return;
+        }
+        log("进入博主 " + await curPage.title());
+
+        await sleep(1);
+
+        currentUrl = await curPage.evaluate(() => {
+            return window.location.href;
+        });
+
+        //检测并跳转到原创页
+        if (currentUrl.indexOf("is_ori=1") < 0) {
+            currentUrl = currentUrl.substr(0, currentUrl.indexOf("?") + 1);
+            currentUrl += "is_ori=1";
+            try {
+                await curPage.goto(currentUrl);
+            } catch (e) {
+
+            }
+            await sleep();
+            main(curPage);
+            return;
+        }
+
+        await curPage.evaluate(() => {
+            let interval = setInterval(function () {
+                window.scrollTo(0, document.documentElement.scrollTop + 50);
+                if (document.querySelector("div.W_pages a[bpfilter=page]")) {
+                    clearInterval(interval);
+                }
+            }, 50)
+        });
+        try {
+            await curPage.waitForSelector("div.W_pages a[bpfilter=page]", {timeout: 30000});
+        } catch (e) {
+            console.log("加载底部翻页按钮失败，正在重试");
+            await curPage.reload();
+            await sleep(60);
+            main(curPage);
+            return;
+        }
+        log("已滚动到页面底部");
 
         let allPageCount = await curPage.evaluate(function(){
             let str = document.querySelector("[action-type=feed_list_page_more]").getAttribute("action-data");
@@ -600,20 +713,22 @@ const searchBigVName = async () => {
             }
             return null;
         }
-        let currentPageCount = parseInt(findInHref("page", window.location.href));
+
+        let currentPageCount = parseInt(findInHref("page", currentUrl));
         if(currentPageCount === allPageCount){
             task.end = true;
         }else{
             task.end = false;
         }
-        task.type = "success";
-        task.datas = pageResult;
+        task.type = "bigVInit";
+        task.pageCount = allPageCount;
+        task.baseUrl = currentUrl.split("?")[0] + "?is_ori=1";
         process.send(task);
 
     };
 
     try {
-        await pages[0].goto(`http://s.weibo.com/user/${encodeURIComponent(task.value)}&Refer=focus_lx_STopic_box`);
+        await pages[0].goto(currentUrl);
     } catch (e) {
         console.log("搜索页面打开失败，正在重试！");
         await sleep();
@@ -625,16 +740,22 @@ const searchBigVName = async () => {
 
     const name = await pages[0].$("p.person_name a");
     await name.click();
-    let curPage;
     let check = async () => {
         let Pages = await browser.pages();
         if (Pages.length === 2) {
             await sleep(0.1);
             await check();
         } else {
-            curPage = Pages[2];
+            pages[0] = Pages[2];
             await Pages[1].close();
-            await main(curPage);
+            if(debug){
+                task.type = "bigVInit";
+                task.pageCount = 2;
+                task.baseUrl = "https://weibo.com/u/6049590367" + "?is_ori=1";
+                process.send(task);
+            }else{
+                await main(pages[0]);
+            }
         }
     };
     await check();

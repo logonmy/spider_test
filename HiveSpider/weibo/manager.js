@@ -1,8 +1,8 @@
 const child_process = require("child_process");
-const http = require("http");
 const Task = require("./api/task").Task;
 const Http = require("./api/http").Http;
 const Socket = require("./api/socket").Socket;
+const File = require("fs")
 
 //todo 微博目前线不考虑 emit与num_item_limit
 //todo 微博要把filterItem里面的 url清理干净 ？后面的都踢掉
@@ -12,12 +12,15 @@ const BIGV_BEE_NAME = "weibo_bigv";
 const UPDATE_EVERY_DAY = "weibo_update_everyday";
 
 const filterItems = async (task, data) => {
+    console.log(data);
     let query = {
         partition: task.name,
         keys: data.map((item)=>{return item.detailUrl})
     };
+    console.log(query);
     let res = await Http.call(`http://bee.api.talkmoment.com/dereplicate/filter/by/history`, query);
     res = JSON.parse(res);
+    console.log(res);
     data = data.filter((item, i) => (res.result.filter_result[i]));
 };
 
@@ -58,6 +61,9 @@ const sleep = (s = 5) => {
 
 let getUser = (() => {
     let users = [{
+            username: "15850766679",
+            password: "xrz19940822"
+        },{
         username: "15351702865",
         password: "cqcp815"
     }, {
@@ -66,9 +72,6 @@ let getUser = (() => {
     }, {
         username: "guyiyang@gmail.com",
         password: "Washu1234"
-    }, {
-        username: "15850766679",
-        password: "xrz19940822"
     }];
     return () => {
         let result = users.shift();
@@ -81,6 +84,7 @@ let TaskHeap = function () {
     this.tasks = [];
     this.readyTasks = [];
     this.weiboBigVCache = {};
+    this.weiboBigVTask = [];
 }
 TaskHeap.prototype.getReadyTask = function() {
     var self = this;
@@ -99,22 +103,29 @@ TaskHeap.prototype.pushTask = function(task) {
             break;
         }
         case "weibo_bigv": {
-            if(self.weiboBigVCache[task.name]){
-                self.weiboBigVCache[task.name].push(task);
+
+            if(self.weiboBigVCache[task.value]){
+                self.weiboBigVCache[task.value].push(task);
             }else{
-                self.weiboBigVCache[task.name] = [];
-                self.weiboBigVCache[task.name].push(task);
+                self.weiboBigVCache[task.value] = [];
+                self.weiboBigVCache[task.value].push(task);
             }
             if(task.end){
+                //todo 每页返回的都是一个task
                 delete task.end;
                 let datas = [];
-                for(let tk of self.weiboBigVCache){
-                    for(let data of tk.datas){
-                        datas.push(data);
+                for(let tk in self.weiboBigVCache){
+                    for(let data of self.weiboBigVCache[tk]){
+                        for(da of data.datas){
+                            datas.push(da);
+                        }
                     }
                 }
                 task.datas = datas;
+
+                File.appendFileSync("task.txt", JSON.stringify(task));
                 self.readyTasks.push(task);
+                console.log(self.readyTasks.length, "LLLLLLLLLL");
 
                 delete self.weiboBigVCache[task.name];
             }
@@ -126,6 +137,20 @@ TaskHeap.prototype.pushTask = function(task) {
         }
     }
 }
+TaskHeap.prototype.addBigVTask = function(task){
+    var self = this;
+    self.weiboBigVTask.push(task);
+}
+TaskHeap.prototype.hasBigVTask = function(){
+    var self = this;
+    return self.weiboBigVTask.length > 0 ? true : false;
+}
+TaskHeap.prototype.getBigVTask = function(){
+    var self = this;
+    console.log("###########目前的TASK队列", self.weiboBigVTask.length);
+    return self.weiboBigVTask.shift();
+}
+
 let taskHeap = new TaskHeap();
 
 class Cpu {
@@ -158,20 +183,32 @@ class Cpu {
                 //一个关键词只有一个对应的success过来
                 //一个微博博主历史有博主历史页数个success过来
                 case "success": {
-                    console.log(task);
                     self.status = true;
                     taskHeap.pushTask(task);
+                    break;
                 }
                 case "error": {
                     await Task.rejectTask(task, "error");
                     self.status = true;
+                    break;
+                }
+                case "bigVInit": {
+                    self.status = true;
+
+                    for(let i = 1;i< task.pageCount + 1; i++){
+                        let taskCopy = copyJSON(task);
+                        taskCopy.currentUrl = task.baseUrl + "&page=" + i;
+                        taskCopy.page = i;
+                        taskHeap.addBigVTask(taskCopy);
+                    }
+
+                    break;
                 }
             }
         })
         self.worker.on("exit", async () => {
             //todo 重启 重新init
             //暂时不知道怎么做
-            //cpu应该是无法接触到puppeteers的 同时也就无法接触到其中的Cpus数组
         })
 
         return new Promise((resolve, reject) => {
@@ -199,6 +236,7 @@ class Cpu {
 
     work(task) {
         let self = this;
+        self.status = false;
         self.task = task;
         this.worker.send(task);
     }
@@ -213,7 +251,7 @@ run = async () => {
         //init all Cpu and login return a Promise
         let init = async () => {
             let loginPromises = [];
-            for (let i = 0; i < 1; i++) {
+            for (let i = 0; i < 4; i++) {
                 Cpus.push(new Cpu("worker.js", getUser()));
                 loginPromises.push(Cpus[i].init());
             }
@@ -280,33 +318,40 @@ run = async () => {
         //todo 更好的写法？？
         while (true) {
             if (Puppeteers.hasFreePuppeteer()) {
-                let task = await Task.fetchTask(KEYWORD_BEE_NAME);
-                if (task === null) {
-                    let task2 = await Task.fetchTask(BIGV_BEE_NAME);
-                    if (task2 === null) {
-                        let task3 = await Task.fetchTask(UPDATE_EVERY_DAY);
-                        if (task3 === null) {
-                            console.log("暂时没有任务");
+                if(taskHeap.hasBigVTask()){
+                    let task = taskHeap.getBigVTask();
+                    Puppeteers.runTask(task);
+                }else{
+                    let task = await Task.fetchTask(KEYWORD_BEE_NAME);
+                    if (task === null) {
+                        let task2 = await Task.fetchTask(BIGV_BEE_NAME);
+                        if (task2 === null) {
+                            let task3 = await Task.fetchTask(UPDATE_EVERY_DAY);
+                            if (task3 === null) {
+                                //console.log("暂时没有任务");
 
-                            await sleep(SLEEP_TIME);
-                            continue;
+                                await sleep(SLEEP_TIME);
+                                continue;
+                            } else {
+                                console.log("获得每日更新任务");
+                                Puppeteers.runTask(task3);
+                                continue;
+                            }
                         } else {
-                            console.log("获得每日更新任务");
-                            Puppeteers.runTask(task3);
+                            console.log("获得大v历史详情任务");
+                            Puppeteers.runTask(task2);
                             continue;
                         }
                     } else {
-                        console.log("获得大v历史详情任务");
-                        Puppeteers.runTask(task2);
+                        console.log("获得关键词搜索任务");
+                        Puppeteers.runTask(task);
                         continue;
                     }
-                } else {
-                    console.log("获得关键词搜索任务");
-                    Puppeteers.runTask(task);
-                    continue;
                 }
+
+            }else{
+                console.log("暂时没有空闲puppeteer instance");
             }
-            console.log("暂时没有空闲puppeteer instance");
             await sleep();
         }
     })();
@@ -315,14 +360,17 @@ run = async () => {
     (async () => {
         console.log("轮询Task队列启动");
         while (true) {
+            console.log("轮询Task队列队列队列");
             if (taskHeap.hasReadyTask()) {
                 let task = taskHeap.getReadyTask();
                 //todo taskSolve
+                console.log("todooooo")
 
                 await filterItems(task, task.datas);
 
                 for(let data of task.datas){
                     let taskCopy = copyJSON(task);
+                    console.log(data);
                     taskCopy.data = JSON.stringify(data);
                     delete taskCopy.datas;
                     await Task.putTaskData(taskCopy);
@@ -350,8 +398,8 @@ run = async () => {
                 await sleep(5);
 
             } else {
-                await sleep(10);
                 console.log("暂时没有已完成的task");
+                await sleep(10);
             }
         }
     })();
