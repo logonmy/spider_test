@@ -4,7 +4,7 @@ require([
     "../api/async",
     "../api/task",
     "../api/socket",
-    "../service/tab",
+    "../api/tab",
 ], (Config, Http, Async, Task, Socket, Tab) => {
 
     const LIST_BEE_NAME = "bilibili_index_update";
@@ -55,8 +55,6 @@ require([
 
     const runTask = async(task) => {
         try {
-            Socket.log(`开始处理爬取任务,task=`, task);
-
             Socket.log(`打开网页Tab(url=${task.value}), 注入爬取逻辑`);
             let indexUrl = "https://www.bilibili.com/";
             let tab = new Tab(indexUrl, ["./business/script.js"]);

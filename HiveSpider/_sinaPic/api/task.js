@@ -1,10 +1,16 @@
-define(["./http"], function(Http){
+define(["./http", "./socket"], function(Http, Socket){
     let Task = {};
 
     Task.fetchTask = async(name) => {
-        let task = await Http.call(`http://bee.api.talkmoment.com/scheduler/task/fetch?name=${name}`);
-        if (task.id === 0) return null;
-        return task;
+        try {
+            let task = await Http.call(`http://bee.api.talkmoment.com/scheduler/task/fetch?name=${name}`);
+            if (task.id === 0) return null;
+            Socket.log(`取得任务,task=`, task);
+            return task;
+        } catch(err) {
+            Socket.error("获取任务失败, err=", err.stack);
+            return null;
+        }
     };
 
     Task.putTaskData = async(task) => {
@@ -26,6 +32,5 @@ define(["./http"], function(Http){
         };
         await Http.call(`http://bee.api.talkmoment.com/scheduler/task/reject`, query);
     };
-
     return Task;
 });
