@@ -106,7 +106,7 @@ require([
                     await postWashTask(task, data);
                 }
 
-                Socket.log(`添加内容url(${data.url})到去重模块的历史集合`);
+                Socket.log(`添加内容url(${baseUrl})到去重模块的历史集合`);
                 await postDataToDereplicate(task, {url: baseUrl});
                 Socket.log(`添加到去重模块成功`);
 
