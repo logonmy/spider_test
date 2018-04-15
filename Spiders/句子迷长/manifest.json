@@ -1,0 +1,13 @@
+{
+    "manifest_version": 3,
+    "name": "长句子",
+    "version": "0.0.1",
+    "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
+    "permissions": [ "cookies", "unlimitedStorage", "http://*/*", "https://*/*", "file:///*/*" ],
+    "description": "extension description",
+    "background": {
+      "page": "background.html",
+      "matches": ["<all_urls>"]},
+    "content_scripts": [
+    ]
+} 
