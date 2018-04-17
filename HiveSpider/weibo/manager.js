@@ -100,11 +100,17 @@ TaskHeap.prototype.pushTask = function (task) {
     var self = this;
     switch (task.name) {
         case "weibo_keyword": {
-
+            for(let data of task.datas){
+                data.keyword = task.value;
+            }
             self.readyTasks.push(task);
             break;
         }
         case "weibo_bigv": {
+
+            for(let data of task.datas){
+                data.upName = task.value;
+            }
 
             if (self.weiboBigVCache[task.value]) {
                 self.weiboBigVCache[task.value].push(task);
@@ -134,6 +140,11 @@ TaskHeap.prototype.pushTask = function (task) {
             break;
         }
         case "weibo_bigv_all": {
+
+            for(let data of task.datas){
+                data.upName = task.value;
+            }
+
             if (self.weiboAllBigVCache[task.value]) {
                 self.weiboAllBigVCache[task.value].push(task);
             } else {
@@ -227,6 +238,12 @@ class Cpu {
             switch (task.type) {
                 case "success": {
                     self.status = true;
+                    Socket.log("一页爬完");
+
+                    for(let data of task.datas){
+                        Socket.log(data.content);
+                    }
+
                     Socket.log(task);
                     taskHeap.pushTask(task);
                     break;
@@ -440,6 +457,7 @@ run = async () => {
             if (taskHeap.hasReadyTask()) {
                 let task = taskHeap.getReadyTask();
                 //todo taskSolve
+
                 await filterItems(task, task.datas);
 
                 for (let data of task.datas) {
@@ -454,7 +472,7 @@ run = async () => {
                     await postDataToMessage(task, data);
                     Socket.log(`发送爬取结果到消息队列完成`);
 
-                    Socket.log(`添加内容url(${data.url})到去重模块的历史集合`);
+                    Socket.log(`添加内容url(${data.detailUrl})到去重模块的历史集合`);
                     await postDataToDereplicate(task, data);
                     Socket.log(`添加到去重模块成功`);
 

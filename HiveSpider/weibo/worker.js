@@ -323,8 +323,8 @@ const searchKeyword = async () => {
                 detailUrl: ""
             }
             let existAndReturn = (str) => {
-                if(blogNode.querySelectorAll(str)[1]){
-                    let result = parseInt(blogNode.querySelectorAll(str)[1].innerText.trim());
+                if(blogNode.querySelector(str)){
+                    let result = parseInt(blogNode.querySelector(str).innerText.trim());
                     if(result === null){
                         return 0
                     }
@@ -357,7 +357,7 @@ const searchKeyword = async () => {
             TemplateData.detailUrl = "http:" + blogNode.querySelector(".W_textb [node-type=feed_list_item_date]").getAttribute("href");
 
             //comment
-            var comments = blogNode.querySelectorAll("[node-type=feed_list_commentList] dl .WB_text a");
+            var comments = blogNode.querySelectorAll("[node-type=feed_list_commentList] dl .WB_text");
             for(var comment of comments){
                 TemplateData.comments.push(comment.innerText);
             }
