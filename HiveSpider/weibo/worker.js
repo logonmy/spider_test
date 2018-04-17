@@ -33,6 +33,12 @@ process.on("uncaughtError", async function(){
     process.exit(0);
 })
 
+process.on("exit", function(){
+    task.type = "error";
+    console.log("exit之前执行一下");
+    process.send(task);
+})
+
 process.on("message", async function (e) {
     task  = e;
     switch (e.name) {
@@ -68,6 +74,17 @@ process.on("message", async function (e) {
             console.log("puppeteer收到微博首页更新任务");
             await updateEveryDay();
             break;
+        }
+        case "weibo_bigv_all": {
+            if(task.page){
+                console.log("puppeteer收到微博大v全部任务");
+                await searchAllBigVName();
+                break;
+            }else{
+                console.log("puppeteer初始化微博大v全部任务");
+                await initAllBigVName();
+                break;
+            }
         }
     }
 })
@@ -420,6 +437,8 @@ const searchBigVName = async () => {
             return;
         }
 
+
+
         //点开所有评论 展现全部页面
         await curPage.evaluate(() => {
             let interval = setInterval(function () {
@@ -461,8 +480,6 @@ const searchBigVName = async () => {
                 log("评论" + count + "加载失败，正在重试");
                 if (errTime === 20) {
                     log("出错超过20次！");
-                    task.type = "bigVError";
-                    process.send(task);
                     process.exit(0);
                     return;
                 }
@@ -756,6 +773,429 @@ const initBigVName = async () => {
                 task.type = "bigVInit";
                 task.pageCount = 2;
                 task.baseUrl = "https://weibo.com/u/6049590367" + "?is_ori=1";
+                process.send(task);
+            }else{
+                await main(pages[0]);
+            }
+        }
+    };
+    await check();
+}
+
+//大v全部历史搜索
+const searchAllBigVName = async () => {
+
+    let currentUrl = task.currentUrl;
+
+    const main = async (curPage) => {
+        curPage.goto(currentUrl);
+        try {
+            await curPage.waitForSelector("div.WB_frame_c", {timeout: 60000});
+        } catch (e) {
+            console.log("博主页面加载失败，正在重试");
+            await curPage.reload();
+            await sleep();
+            main(curPage);
+            return;
+        }
+        log("进入博主 " + await curPage.title());
+
+        await sleep(1);
+
+        currentUrl = curPage.url();
+
+        //检测并跳转到全部页
+        if (currentUrl.indexOf("is_all=1") < 0) {
+            console.log("此页非全部页面");
+            currentUrl = currentUrl.substr(0, currentUrl.indexOf("?") + 1);
+            currentUrl += "is_all=1";
+            try {
+                await curPage.goto(currentUrl);
+            } catch (e) {
+
+            }
+            await sleep();
+            main(curPage);
+            return;
+        }
+
+        //点开所有评论 展现全部页面
+        await curPage.evaluate(() => {
+            let interval = setInterval(function () {
+                window.scrollTo(0, document.documentElement.scrollTop + 50);
+                if (document.querySelector("div.W_pages a[bpfilter=page]")) {
+                    clearInterval(interval);
+                }
+            }, 50)
+        });
+        try {
+            await curPage.waitForSelector("div.W_pages a[bpfilter=page]", {timeout: 60000});
+        }
+        catch (e) {
+            console.log("加载底部翻页按钮失败，正在重试");
+            await curPage.reload();
+            await sleep(10);
+            main(curPage);
+            return;
+        }
+        let blogNodes = await curPage.$$("div[action-type=feed_list_item]");
+        let count = 0;
+        for (let i = 0; i < blogNodes.length; i++) {
+            let item = blogNodes[i];
+            let commentBtn = await item.$("a[action-type=fl_comment]");
+            await commentBtn.click();
+            try {
+                await curPage.waitForFunction("document." +
+                    "querySelectorAll(\"div.WB_feed_like p.text" +
+                    " i.W_loading:not([style='display:none;'])\").length" +
+                    " == 0"
+                    , {timeout: 10000});
+            } catch (e) {
+                await sleep();
+                let ok = await curPage.$("a[node-type=ok]");
+                if (ok) {
+                    await ok.click();
+                }
+                await sleep(2);
+                await commentBtn.click();
+                log("评论" + count + "加载失败，正在重试");
+                if (errTime === 20) {
+                    log("出错超过20次！");
+                    process.exit(0);
+                    return;
+                }
+                errTime++;
+                i--;
+                count--;
+                continue;
+            }
+            errTime = 0;
+            await sleep(1);
+        }
+
+        let pageResult = await curPage.evaluate(function(){
+
+            var blogNodes = document.querySelectorAll("div[action-type=feed_list_item]");
+            var result = []
+            for(var blogNode of blogNodes){
+
+                blockNode = blogNode;
+                let existAndReturn = (str) => {
+                    if(blogNode.querySelectorAll(str)[1]){
+                        let result = parseInt(blogNode.querySelectorAll(str)[1].innerText.trim());
+                        if(result === null){
+                            return 0
+                        }
+                        return result;
+                    }else{
+                        return 0;
+                    }
+                }
+
+                var TemplateData = {
+                    content: "",
+                    transmieCount: 0,
+                    commentCount: 0,
+                    agreeCount: 0,
+                    created_at: 0,
+                    comments: [],
+                    imgs: [],
+                    video: {
+                        src: "",
+                        cover_img: {
+                            src: "",
+                            width: 0,
+                            height: 0
+                        }
+                    },
+                    detailUrl: ""
+                }
+
+                if(blogNode.getAttribute("isforward")){
+
+                    var expandNode = blogNode.querySelector(".WB_expand");
+
+                    console.log("为转发内容");
+                    TemplateData.forward = {
+                        content: "",
+                        transmieCount: 0,
+                        commentCount: 0,
+                        agreeCount: 0,
+                        created_at: "",
+                        imgs: [],
+                        video: {
+                            src: "",
+                            cover_img: {
+                                src: "",
+                                width: 0,
+                                height: 0
+                            }
+                        },
+                        detailUrl: "",
+                        source: ""
+                    }
+                    TemplateData.forward.content = expandNode.querySelector(".WB_text[node-type=feed_list_reason]").innerText;
+
+                    var handles = expandNode.querySelectorAll(".WB_handle.W_fr li");
+
+                    TemplateData.forward.transmieCount = handles[0].innerText;
+                    TemplateData.forward.commentCount = handles[1].innerText;
+                    TemplateData.forward.agreeCount = handles[2].innerText;
+                    TemplateData.forward.created_at = expandNode.querySelector(".WB_from.S_txt2 a").getAttribute("date")
+
+                    var imgs = expandNode.querySelectorAll(".media_box img");
+                    for(let img of imgs){
+                        TemplateData.forward.imgs.push({
+                            src: img.getAttribute("src"),
+                            width: img.naturalWidth,
+                            height: img.naturalHeight
+                        })
+                    }
+
+                    var video = expandNode.querySelector(".WB_h5video");
+                    if(video){
+                        TemplateData.forward.video.src = expandNode.querySelector(".WB_h5video video").getAttribute("src");
+                        TemplateData.forward.video.cover_img.src = expandNode.querySelector(".con-1 img").getAttribute("src");
+                        TemplateData.forward.video.cover_img.width = expandNode.querySelector(".con-1 img").naturalWidth;
+                        TemplateData.forward.video.cover_img.height = expandNode.querySelector(".con-1 img").naturalHeight;
+                    }
+
+                    TemplateData.forward.detailUrl = "https://weibo.com" +  expandNode.querySelector(".WB_from.S_txt2 a").getAttribute("href");
+                    TemplateData.forward.source = expandNode.querySelector(".W_fb.S_txt1").getAttribute("title")
+                }
+
+                TemplateData.transmieCount = existAndReturn("[action-type=fl_forward] .line.S_line1 em");
+                TemplateData.commentCount = existAndReturn("[action-type=fl_comment] .line.S_line1 em");
+                TemplateData.agreeCount = existAndReturn("[action-type=fl_like] .line.S_line1 em");
+
+                TemplateData.created_at = blogNode.querySelector(".WB_from.S_txt2 a").getAttribute("date");
+
+
+                if(blogNode.querySelector("[node-type=feed_list_content_full]")){
+                    TemplateData.content = blogNode.querySelector("[node-type=feed_list_content_full]").innerText;
+                }else if(blogNode.querySelector("[node-type=feed_list_content]")){
+                    TemplateData.content = blogNode.querySelector("[node-type=feed_list_content]").innerText;
+                }
+                TemplateData.detailUrl = "https://weibo.com" + blogNode.querySelector("[node-type=feed_list_item_date]").getAttribute("href");
+
+                //comment
+                var root_comments = blogNode.querySelectorAll("[node-type=root_comment]");
+                for(var root_comment of root_comments){
+                    let commentsArr = [];
+                    let comments = root_comment.querySelectorAll(".WB_text");
+                    for(let comment of comments){
+                        commentsArr.push(comment.innerText);
+                    }
+                    TemplateData.comments.push(commentsArr);
+                }
+
+                //img
+                var imgs= blogNode.querySelectorAll(".media_box img");
+                for(var img of imgs){
+                    var tempImg = {
+                        src: "",
+                        width: 0,
+                        height: 0
+                    };
+                    tempImg.src = "http:" + img.getAttribute("src");
+                    tempImg.width = img.naturalWidth;
+                    tempImg.height = img.naturalHeight;
+                    TemplateData.imgs.push(tempImg)
+                }
+
+                //video
+                var video = blogNode.querySelector(".WB_h5video");
+                if(video){
+                    TemplateData.video.src = blogNode.querySelector(".con-2 video").getAttribute("src");
+                    TemplateData.video.cover_img.src = blogNode.querySelector(".con-1 img").getAttribute("src");
+                    TemplateData.video.cover_img.width = blogNode.querySelector(".con-1 img").naturalWidth;
+                    TemplateData.video.cover_img.height = blogNode.querySelector(".con-1 img").naturalHeight;
+
+                    TemplateData.imgs = [];
+                }
+
+                result.push(TemplateData);
+            }
+
+            return result;
+        })
+
+        let allPageCount = task.pageCount;
+        let currentPageCount = task.page;
+
+        File.appendFileSync("result.txt", JSON.stringify(pageResult) + "\n");
+
+        if(currentPageCount === allPageCount){
+            task.end = true;
+        }else{
+            task.end = false;
+        }
+        task.type = "success";
+        task.datas = pageResult;
+        process.send(task);
+
+    };
+
+    try {
+        await pages[0].goto(`http://s.weibo.com/user/${encodeURIComponent(task.value)}&Refer=focus_lx_STopic_box`);
+    } catch (e) {
+        console.log("搜索页面打开失败，正在重试！");
+        await sleep();
+        return;
+    }
+
+    await sleep();
+
+    const name = await pages[0].$("p.person_name a");
+    await name.click();
+    let curPage;
+    let check = async () => {
+        let Pages = await browser.pages();
+        if (Pages.length === 2) {
+            await sleep(0.1);
+            await check();
+        } else {
+            pages[0] = Pages[2];
+            await Pages[1].close();
+            if(debug){
+                if(task.page === 2){
+                    task.end = true;
+                }else{
+                    task.end = false;
+                }
+                task.type = "success";
+                task.datas = {
+                    debug: true,
+                    detailUrl: "https://www.baidu.com"
+                };
+                process.send(task);
+            }else{
+                await main(pages[0]);
+            }
+        }
+    };
+    await check();
+}
+
+//大v全部历史搜索初始化
+const initAllBigVName = async () => {
+
+    console.log("开始大v全部历史搜索初始化");
+
+    let currentUrl = `http://s.weibo.com/user/${encodeURIComponent(task.value)}&Refer=focus_lx_STopic_box`;
+
+    const main = async (curPage) => {
+        try {
+            await curPage.waitForSelector("div.WB_frame_c");
+        } catch (e) {
+            console.log("博主页面加载失败，正在重试");
+            await curPage.reload();
+            await sleep();
+            main(curPage);
+            return;
+        }
+        log("进入博主 " + await curPage.title());
+
+        await sleep(1);
+
+        currentUrl = await curPage.evaluate(() => {
+            return window.location.href;
+        });
+
+        //检测并跳转到全部页
+        if (currentUrl.indexOf("is_all=1") < 0) {
+            currentUrl = currentUrl.substr(0, currentUrl.indexOf("?") + 1);
+            currentUrl += "is_all=1";
+            try {
+                await curPage.goto(currentUrl);
+            } catch (e) {
+
+            }
+            await sleep();
+            main(curPage);
+            return;
+        }
+
+        await curPage.evaluate(() => {
+            let interval = setInterval(function () {
+                window.scrollTo(0, document.documentElement.scrollTop + 50);
+                if (document.querySelector("div.W_pages a[bpfilter=page]")) {
+                    clearInterval(interval);
+                }
+            }, 50)
+        });
+        try {
+            await curPage.waitForSelector("div.W_pages a[bpfilter=page]", {timeout: 30000});
+        } catch (e) {
+            console.log("加载底部翻页按钮失败，正在重试");
+            await curPage.reload();
+            await sleep(60);
+            main(curPage);
+            return;
+        }
+        log("已滚动到页面底部");
+
+        let allPageCount = await curPage.evaluate(function(){
+            let str = document.querySelector("[action-type=feed_list_page_more]").getAttribute("action-data");
+            let pageCount = parseInt(str.split("&")[1].split("=")[1]);
+            return pageCount;
+        });
+        let findInHref = (key, str) => {
+            let  hrefToJson = (str) => {
+                let json = {};
+                let arr = str.split("?")[1].split("&");
+                for(let part of arr){
+                    json[part.split("=")[0]] = part.split("=")[1];
+                }
+                return json;
+            }
+            let json = hrefToJson(str);
+            for(let keyWord in json){
+                if(keyWord === key){
+                    return json[keyWord];
+                }
+            }
+            return null;
+        }
+
+        let currentPageCount = parseInt(findInHref("page", currentUrl));
+        if(currentPageCount === allPageCount){
+            task.end = true;
+        }else{
+            task.end = false;
+        }
+        task.type = "bigVAllInit";
+        task.pageCount = allPageCount;
+        task.baseUrl = currentUrl.split("?")[0] + "?is_all=1";
+        process.send(task);
+
+    };
+
+    try {
+        await pages[0].goto(currentUrl);
+    } catch (e) {
+        console.log("搜索页面打开失败，正在重试！");
+        await sleep();
+        return;
+    }
+
+    log("搜索对应微博账号");
+    await sleep();
+
+    const name = await pages[0].$("p.person_name a");
+    await name.click();
+    let check = async () => {
+        let Pages = await browser.pages();
+        if (Pages.length === 2) {
+            await sleep(0.1);
+            await check();
+        } else {
+            pages[0] = Pages[2];
+            await Pages[1].close();
+            if(debug){
+                task.type = "bigVAllInit";
+                task.pageCount = 2;
+                task.baseUrl = "https://weibo.com/u/6049590367" + "?is_all=1";
                 process.send(task);
             }else{
                 await main(pages[0]);

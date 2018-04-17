@@ -2,7 +2,7 @@ const io = require("socket.io-client");
 
 
 let mSocket = io('http://ws.api.talkmoment.com:51179');
-let mBeeName = null;
+let mBeeName = "weibo旗下某个bee";
 let Socket = {};
 
 Socket.startHeartBeat = (beeName) => {

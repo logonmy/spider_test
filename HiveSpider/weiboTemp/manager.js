@@ -3,18 +3,6 @@ const http = require("http");
 const Task = require("./api/task").Task
 const Http = require("./api/http").Http
 
-/*
-    对于关键词 一个pupeteer跑一个关键词
-    对于博主 可以实现 多个puppeteer跑一个博主 但为了简单 还是一个puppeteer跑一个 以后估计也不可能优化了
-    以上意味着 一个puppeteer一个taskId
-
-    所有数据传输格式
-    {
-        name: ,
-        value: ,
-        taskId: ,
-    }
-*/
 
 const filterItems = async(task, data) => {
     let query = {
@@ -78,22 +66,6 @@ let getUser = (() => {
     }
 })();
 
-//为错误缓存做的 目前考虑 错误直接上报 包括每日更新也从后台获取 这样就不需要redis了
-// class Queue{
-//     constructor(){
-//         this.queue = []
-//     }
-//     push(task){
-//         this.queue.push(task);
-//     }
-//     pop(){
-//         if(this.queue.length > 0){
-//             return this.queue.shift();
-//         }else {
-//             return false;
-//         }
-//     }
-// }
 class Cpu{
     constructor(fileName, user){
         this.worker = child_process.fork(fileName);

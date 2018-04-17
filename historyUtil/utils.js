@@ -131,8 +131,8 @@ function liteAjax(url, callback, method, postBody, aSync) {
     }}
 var sendTaskUrl = "http://bee.api.talkmoment.com/scheduler/task/post";
 var postData = {
-    name: "weibo_bigv",
-    value: "乐华_AUDITION ",
+    name: "weibo_keyword",
+    value: "中国人",
     config: "{}",
     scheduled_at: new Date().getTime()
 }
