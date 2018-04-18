@@ -19,6 +19,8 @@ const rmAnnotation = (str) => {
 
 const debug = false;
 
+const PUPPERTTER_LIMIT = 4;
+
 let errTime = 0;
 let bottomErrTime = 0;
 let pages = [void 0, void 0];
@@ -304,8 +306,8 @@ const searchKeyword = async () => {
         var result = []
         for(var blogNode of blogNodes){
             var TemplateData = {
+                source: "",
                 title: "",
-                content: "",
                 transmieCount: 0,
                 commentCount: 0,
                 agreeCount: 0,
@@ -349,11 +351,11 @@ const searchKeyword = async () => {
             }
 
             if(blogNode.querySelector(".comment_txt[node-type=feed_list_content_full]")){
-                TemplateData.content = blogNode.querySelector(".comment_txt[node-type=feed_list_content_full]").innerText;
+                TemplateData.title = blogNode.querySelector(".comment_txt[node-type=feed_list_content_full]").innerText;
             }else if(blogNode.querySelector(".comment_txt[node-type=feed_list_content]")){
-                TemplateData.content = blogNode.querySelector(".comment_txt[node-type=feed_list_content]").innerText;
+                TemplateData.title = blogNode.querySelector(".comment_txt[node-type=feed_list_content]").innerText;
             }
-            TemplateData.title =  blogNode.querySelector(".feed_content.wbcon .W_texta.W_fb").getAttribute("title");
+            TemplateData.source =  blogNode.querySelector(".feed_content.wbcon .W_texta.W_fb").getAttribute("title");
             TemplateData.detailUrl = "http:" + blogNode.querySelector(".W_textb [node-type=feed_list_item_date]").getAttribute("href");
 
             //comment
@@ -497,7 +499,7 @@ const searchBigVName = async () => {
             var result = []
             for(var blogNode of blogNodes){
                 var TemplateData = {
-                    content: "",
+                    title: "",
                     transmieCount: 0,
                     commentCount: 0,
                     agreeCount: 0,
@@ -541,9 +543,9 @@ const searchBigVName = async () => {
                 }
 
                 if(blogNode.querySelector("[node-type=feed_list_content_full]")){
-                    TemplateData.content = blogNode.querySelector("[node-type=feed_list_content_full]").innerText;
+                    TemplateData.title = blogNode.querySelector("[node-type=feed_list_content_full]").innerText;
                 }else if(blogNode.querySelector("[node-type=feed_list_content]")){
-                    TemplateData.content = blogNode.querySelector("[node-type=feed_list_content]").innerText;
+                    TemplateData.title = blogNode.querySelector("[node-type=feed_list_content]").innerText;
                 }
                 TemplateData.detailUrl = "http:" + blogNode.querySelector("[node-type=feed_list_item_date]").getAttribute("href");
 
@@ -602,7 +604,8 @@ const searchBigVName = async () => {
             return null;
         }
         let currentPageCount = task.page;
-        if(currentPageCount === allPageCount){
+        console.log(currentPageCount, allPageCount, "为什么直接就true了？")
+        if(currentPageCount > allPageCount - PUPPERTTER_LIMIT){
             task.end = true;
         }else{
             task.end = false;
@@ -893,7 +896,7 @@ const searchAllBigVName = async () => {
                 }
 
                 var TemplateData = {
-                    content: "",
+                    title: "",
                     transmieCount: 0,
                     commentCount: 0,
                     agreeCount: 0,
@@ -917,7 +920,7 @@ const searchAllBigVName = async () => {
 
                     console.log("为转发内容");
                     TemplateData.forward = {
-                        content: "",
+                        title: "",
                         transmieCount: 0,
                         commentCount: 0,
                         agreeCount: 0,
@@ -934,7 +937,7 @@ const searchAllBigVName = async () => {
                         detailUrl: "",
                         source: ""
                     }
-                    TemplateData.forward.content = expandNode.querySelector(".WB_text[node-type=feed_list_reason]").innerText;
+                    TemplateData.forward.title = expandNode.querySelector(".WB_text[node-type=feed_list_reason]").innerText;
 
                     var handles = expandNode.querySelectorAll(".WB_handle.W_fr li");
 
@@ -972,9 +975,9 @@ const searchAllBigVName = async () => {
 
 
                 if(blogNode.querySelector("[node-type=feed_list_content_full]")){
-                    TemplateData.content = blogNode.querySelector("[node-type=feed_list_content_full]").innerText;
+                    TemplateData.title = blogNode.querySelector("[node-type=feed_list_content_full]").innerText;
                 }else if(blogNode.querySelector("[node-type=feed_list_content]")){
-                    TemplateData.content = blogNode.querySelector("[node-type=feed_list_content]").innerText;
+                    TemplateData.title = blogNode.querySelector("[node-type=feed_list_content]").innerText;
                 }
                 TemplateData.detailUrl = "https://weibo.com" + blogNode.querySelector("[node-type=feed_list_item_date]").getAttribute("href");
 
@@ -1025,11 +1028,12 @@ const searchAllBigVName = async () => {
 
         File.appendFileSync("result.txt", JSON.stringify(pageResult) + "\n");
 
-        if(currentPageCount === allPageCount){
+        if(currentPageCount > allPageCount - PUPPERTTER_LIMIT){
             task.end = true;
         }else{
             task.end = false;
         }
+
         task.type = "success";
         task.datas = pageResult;
         process.send(task);

@@ -9,12 +9,29 @@ const BIGV_BEE_NAME = "weibo_bigv";
 const BIGV_BEE_NAME_ALL = "weibo_bigv_all";
 const UPDATE_EVERY_DAY = "weibo_update_everyday";
 
+const PUPPERTTER_LIMIT = 4;
+
+const postWashTask = async(detailTask, data) => {
+    let washTask = {
+        name: "wash_corpus",
+        value: "",
+        config: JSON.stringify({
+            bee_source: detailTask.name,
+            brick_id: JSON.parse(detailTask.config).brick_id,
+            publish: true
+        }),
+        data: JSON.stringify(data),
+        scheduled_at: Date.now()
+    };
+    await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", washTask);
+};
+
 const filterItems = async (task, data) => {
     Socket.log(data);
     let query = {
         partition: task.name,
         keys: data.map((item) => {
-            return item.detailUrl
+            return item.detailUrl.split("?")[0]
         })
     };
     Socket.log(query);
@@ -31,7 +48,7 @@ const postDataToMessage = async (task, data) => {
 const postDataToDereplicate = async (task, data) => {
     let query = {
         partition: task.name,
-        key: data.detailUrl
+        key: data.detailUrl.split("?")[0]
     };
     await Http.call(`http://bee.api.talkmoment.com/dereplicate/history/add`, query);
 };
@@ -87,6 +104,9 @@ let TaskHeap = function () {
     this.weiboAllBigVCache = {};
     this.weiboBigVTask = [];
     this.weiboAllBigVTask = [];
+
+    this.weiboBigVEndCount = 0;
+    this.weiboAllBigVEndCount = 0;
 }
 TaskHeap.prototype.getReadyTask = function () {
     var self = this;
@@ -109,7 +129,7 @@ TaskHeap.prototype.pushTask = function (task) {
         case "weibo_bigv": {
 
             for(let data of task.datas){
-                data.upName = task.value;
+                data.source = task.value;
             }
 
             if (self.weiboBigVCache[task.value]) {
@@ -118,8 +138,15 @@ TaskHeap.prototype.pushTask = function (task) {
                 self.weiboBigVCache[task.value] = [];
                 self.weiboBigVCache[task.value].push(task);
             }
-            if (task.end) {
+
+            if(task.end){
+                self.weiboBigVEndCount = self.weiboBigVEndCount + 1;
+            }
+
+
+            if (self.weiboBigVEndCount >= PUPPERTTER_LIMIT) {
                 //todo 每页返回的都是一个task
+                self.weiboBigVEndCount = 0;
                 delete task.end;
                 let datas = [];
                 for (let tk in self.weiboBigVCache) {
@@ -142,7 +169,7 @@ TaskHeap.prototype.pushTask = function (task) {
         case "weibo_bigv_all": {
 
             for(let data of task.datas){
-                data.upName = task.value;
+                data.source = task.value;
             }
 
             if (self.weiboAllBigVCache[task.value]) {
@@ -151,8 +178,13 @@ TaskHeap.prototype.pushTask = function (task) {
                 self.weiboAllBigVCache[task.value] = [];
                 self.weiboAllBigVCache[task.value].push(task);
             }
-            if (task.end) {
+            if(task.end){
+                self.weiboAllBigVEndCount = self.weiboAllBigVEndCount + 1;
+            }
+
+            if (self.weiboAllBigVEndCount >= PUPPERTTER_LIMIT) {
                 //todo 每页返回的都是一个task
+                self.weiboAllBigVEndCount = 0;
                 delete task.end;
                 let datas = [];
                 for (let tk in self.weiboAllBigVCache) {
@@ -241,7 +273,7 @@ class Cpu {
                     Socket.log("一页爬完");
 
                     for(let data of task.datas){
-                        Socket.log(data.content);
+                        Socket.log(data.title);
                     }
 
                     Socket.log(task);
@@ -335,7 +367,7 @@ run = async () => {
         //init all Cpu and login return a Promise
         let init = async () => {
             let loginPromises = [];
-            for (let i = 0; i < 1; i++) {
+            for (let i = 0; i < PUPPERTTER_LIMIT; i++) {
                 Cpus.push(new Cpu("worker.js", getUser()));
                 loginPromises.push(Cpus[i].init());
             }
@@ -472,13 +504,15 @@ run = async () => {
                     await postDataToMessage(task, data);
                     Socket.log(`发送爬取结果到消息队列完成`);
 
-                    Socket.log(`添加内容url(${data.detailUrl})到去重模块的历史集合`);
+                    Socket.log(`添加内容url(${data.detailUrl.split("?")[0]})到去重模块的历史集合`);
                     await postDataToDereplicate(task, data);
                     Socket.log(`添加到去重模块成功`);
 
-                    Socket.log(`上报爬取任务成功,task=`, task.stack);
-                    await Task.resolveTask(task);
+                    Sokcet.log("去清洗");
+                    await postWashTask(task,data);
                 }
+                Socket.log(`上报爬取任务成功,task=`, task.stack);
+                await Task.resolveTask(task);
 
                 // Socket.emitEvent({
                 //     event: "list_item_finish",
