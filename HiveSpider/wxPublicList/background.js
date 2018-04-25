@@ -12,31 +12,34 @@ require([
     "../service/tab",
 ], (Config, Http, Async, Task, Socket, Tab) => {
 
+    const LIST_BEE_NAME = "wx_public_list";
+    const DETAIL_BEE_NAME = "wx_public_detail";
+
     const filterItems = async(task, data) => {
         let query = {
-            partition: "wx_public_detail",
+            partition: DETAIL_BEE_NAME,
             keys: data.items.map(item => item.url)
         };
         let res = await Http.call(`http://bee.api.talkmoment.com/dereplicate/filter/by/history`, query);
-        console.log(res);
         data.items = data.items.filter((item, i) => (res.filter_result[i]));
     };
 
     const postDetailTasks = async(listTask, data) => {
         for (let item of data.items) {
             let query = {
-                name: "wx_public_detail",
+                name: DETAIL_BEE_NAME,
                 value: item.url,
                 config: JSON.stringify({
-                    birck_id: JSON.parse(listTask.config).brick_id
+                    brick_id: JSON.parse(listTask.config).brick_id,
+                    up_name: listTask.value
                 }),
                 scheduled_at: 9999999999999
             };
             let task = await Http.call(`http://bee.api.talkmoment.com/scheduler/task/post`, query);
-
+            Socket.log(`向Scheduler添加task=`, task);
             Socket.emitEvent({
                 event: "list_item_added",
-                bee_name: listTask.name,
+                bee_name: LIST_BEE_NAME,
                 item: item,
                 task: task
             });
@@ -79,15 +82,16 @@ require([
     };
 
     (async() => {
-        const BEE_NAME = "wx_public_list";
         const SLEEP_TIME = 10000;
-        Socket.startHeartBeat(BEE_NAME);
+        Socket.startHeartBeat(LIST_BEE_NAME);
         while (true) {
-            let task = await Task.fetchTask(BEE_NAME);
+            let task = await Task.fetchTask(LIST_BEE_NAME);
             if (task === null) {
+                Socket.log("展示没有任务");
                 await Async.sleep(SLEEP_TIME);
                 continue;
             }
+
             await runTask(task)
         }
     })();

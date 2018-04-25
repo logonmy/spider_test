@@ -28,7 +28,7 @@ require([
                 value: item.url,
                 config: JSON.stringify({
                     up_name: listTask.value,
-                    birck_id: listTask.config.brick_id
+                    brick_id: listTask.config.brick_id
                 }),
                 scheduled_at: 9999999999999
             };

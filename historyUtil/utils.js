@@ -131,8 +131,9 @@ function liteAjax(url, callback, method, postBody, aSync) {
     }}
 var sendTaskUrl = "http://bee.api.talkmoment.com/scheduler/task/post";
 var postData = {
-    name: "weibo_keyword",
-    value: "中国人",
+    //name: "weibo_bigv_all",
+    name: "command_reopen",
+    value: "李开复",
     config: "{}",
     scheduled_at: new Date().getTime()
 }
@@ -145,3 +146,14 @@ let button = document.querySelectorAll("[action-type=feed_list_item] .W_ficon.fi
 for(let bu of button){
     bu.click();
 }
+
+
+
+//文件上传到消息队列
+
+const readLine = require("lei-stream").readLine
+
+readLine("selected.txt").go(async (data, next) => {
+    console.log(data);
+    next()
+})

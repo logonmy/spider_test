@@ -1,5 +1,6 @@
 const puppeteer = require('puppeteer');
 const File = require("fs");
+const Socket = require("./api/Socket").Socket;
 //add
 //navigation Timeout 事件捕获
 const log = (str) => {
@@ -95,7 +96,7 @@ process.on("message", async function (e) {
 //启动puppeteer
 const launchBrowser = async () => {
     browser = await puppeteer.launch({
-        headless: false,
+        headless: true,
         executablePath: '/Applications/Chromium.app/Contents/MacOS/Chromium',
         timeout: 0,
         devtools: false
@@ -604,7 +605,6 @@ const searchBigVName = async () => {
             return null;
         }
         let currentPageCount = task.page;
-        console.log(currentPageCount, allPageCount, "为什么直接就true了？")
         if(currentPageCount > allPageCount - PUPPERTTER_LIMIT){
             task.end = true;
         }else{
@@ -621,6 +621,7 @@ const searchBigVName = async () => {
     } catch (e) {
         console.log("搜索页面打开失败，正在重试！");
         await sleep();
+        await searchBigVName();
         return;
     }
 
@@ -671,10 +672,10 @@ const initBigVName = async () => {
             console.log("博主页面加载失败，正在重试");
             await curPage.reload();
             await sleep();
-            main(curPage);
+            await main(curPage);
             return;
         }
-        log("进入博主 " + await curPage.title());
+        Socket.log("进入博主 " + await curPage.title());
 
         await sleep(1);
 
@@ -692,7 +693,7 @@ const initBigVName = async () => {
 
             }
             await sleep();
-            main(curPage);
+            await main(curPage);
             return;
         }
 
@@ -710,10 +711,10 @@ const initBigVName = async () => {
             console.log("加载底部翻页按钮失败，正在重试");
             await curPage.reload();
             await sleep(60);
-            main(curPage);
+            await main(curPage);
             return;
         }
-        log("已滚动到页面底部");
+        Socket.log("已滚动到页面底部");
 
         let allPageCount = await curPage.evaluate(function(){
             let str = document.querySelector("[action-type=feed_list_page_more]").getAttribute("action-data");
@@ -791,6 +792,7 @@ const searchAllBigVName = async () => {
     let currentUrl = task.currentUrl;
 
     const main = async (curPage) => {
+        let pageResult;
         curPage.goto(currentUrl);
         try {
             await curPage.waitForSelector("div.WB_frame_c", {timeout: 60000});
@@ -876,55 +878,33 @@ const searchAllBigVName = async () => {
             await sleep(1);
         }
 
-        let pageResult = await curPage.evaluate(function(){
+        try{
+            pageResult = await curPage.evaluate(function(){
 
-            var blogNodes = document.querySelectorAll("div[action-type=feed_list_item]");
-            var result = []
-            for(var blogNode of blogNodes){
+                var blogNodes = document.querySelectorAll("div[action-type=feed_list_item]");
+                var result = []
+                for(var blogNode of blogNodes){
 
-                blockNode = blogNode;
-                let existAndReturn = (str) => {
-                    if(blogNode.querySelectorAll(str)[1]){
-                        let result = parseInt(blogNode.querySelectorAll(str)[1].innerText.trim());
-                        if(result === null){
-                            return 0
+                    blockNode = blogNode;
+                    let existAndReturn = (str) => {
+                        if(blogNode.querySelectorAll(str)[1]){
+                            let result = parseInt(blogNode.querySelectorAll(str)[1].innerText.trim());
+                            if(result === null){
+                                return 0
+                            }
+                            return result;
+                        }else{
+                            return 0;
                         }
-                        return result;
-                    }else{
-                        return 0;
                     }
-                }
 
-                var TemplateData = {
-                    title: "",
-                    transmieCount: 0,
-                    commentCount: 0,
-                    agreeCount: 0,
-                    created_at: 0,
-                    comments: [],
-                    imgs: [],
-                    video: {
-                        src: "",
-                        cover_img: {
-                            src: "",
-                            width: 0,
-                            height: 0
-                        }
-                    },
-                    detailUrl: ""
-                }
-
-                if(blogNode.getAttribute("isforward")){
-
-                    var expandNode = blogNode.querySelector(".WB_expand");
-
-                    console.log("为转发内容");
-                    TemplateData.forward = {
+                    var TemplateData = {
                         title: "",
                         transmieCount: 0,
                         commentCount: 0,
                         agreeCount: 0,
-                        created_at: "",
+                        created_at: 0,
+                        comments: [],
                         imgs: [],
                         video: {
                             src: "",
@@ -934,109 +914,139 @@ const searchAllBigVName = async () => {
                                 height: 0
                             }
                         },
-                        detailUrl: "",
-                        source: ""
-                    }
-                    TemplateData.forward.title = expandNode.querySelector(".WB_text[node-type=feed_list_reason]").innerText;
-
-                    var handles = expandNode.querySelectorAll(".WB_handle.W_fr li");
-
-                    TemplateData.forward.transmieCount = handles[0].innerText;
-                    TemplateData.forward.commentCount = handles[1].innerText;
-                    TemplateData.forward.agreeCount = handles[2].innerText;
-                    TemplateData.forward.created_at = expandNode.querySelector(".WB_from.S_txt2 a").getAttribute("date")
-
-                    var imgs = expandNode.querySelectorAll(".media_box img");
-                    for(let img of imgs){
-                        TemplateData.forward.imgs.push({
-                            src: img.getAttribute("src"),
-                            width: img.naturalWidth,
-                            height: img.naturalHeight
-                        })
+                        detailUrl: ""
                     }
 
-                    var video = expandNode.querySelector(".WB_h5video");
+                    if(blogNode.getAttribute("isforward")){
+
+                        var expandNode = blogNode.querySelector(".WB_expand");
+
+                        console.log("为转发内容");
+                        TemplateData.forward = {
+                            title: "",
+                            transmieCount: 0,
+                            commentCount: 0,
+                            agreeCount: 0,
+                            created_at: "",
+                            imgs: [],
+                            video: {
+                                src: "",
+                                cover_img: {
+                                    src: "",
+                                    width: 0,
+                                    height: 0
+                                }
+                            },
+                            detailUrl: "",
+                            source: ""
+                        }
+                        TemplateData.forward.title = expandNode.querySelector(".WB_text[node-type=feed_list_reason]").innerText;
+
+                        var handles = expandNode.querySelectorAll(".WB_handle.W_fr li");
+
+                        TemplateData.forward.transmieCount = handles[0].innerText;
+                        TemplateData.forward.commentCount = handles[1].innerText;
+                        TemplateData.forward.agreeCount = handles[2].innerText;
+                        TemplateData.forward.created_at = expandNode.querySelector(".WB_from.S_txt2 a").getAttribute("date")
+
+                        var imgs = expandNode.querySelectorAll(".media_box img");
+                        for(let img of imgs){
+                            TemplateData.forward.imgs.push({
+                                src: img.getAttribute("src"),
+                                width: img.naturalWidth,
+                                height: img.naturalHeight
+                            })
+                        }
+
+                        var video = expandNode.querySelector(".WB_h5video");
+                        if(video){
+                            TemplateData.forward.video.src = expandNode.querySelector(".WB_h5video video").getAttribute("src");
+                            TemplateData.forward.video.cover_img.src = expandNode.querySelector(".con-1 img").getAttribute("src");
+                            TemplateData.forward.video.cover_img.width = expandNode.querySelector(".con-1 img").naturalWidth;
+                            TemplateData.forward.video.cover_img.height = expandNode.querySelector(".con-1 img").naturalHeight;
+                        }
+
+                        TemplateData.forward.detailUrl = "https://weibo.com" +  expandNode.querySelector(".WB_from.S_txt2 a").getAttribute("href");
+                        TemplateData.forward.source = expandNode.querySelector(".W_fb.S_txt1").getAttribute("title")
+                    }
+
+                    TemplateData.transmieCount = existAndReturn("[action-type=fl_forward] .line.S_line1 em");
+                    TemplateData.commentCount = existAndReturn("[action-type=fl_comment] .line.S_line1 em");
+                    TemplateData.agreeCount = existAndReturn("[action-type=fl_like] .line.S_line1 em");
+
+                    TemplateData.created_at = blogNode.querySelector(".WB_from.S_txt2 a").getAttribute("date");
+
+
+                    if(blogNode.querySelector("[node-type=feed_list_content_full]")){
+                        TemplateData.title = blogNode.querySelector("[node-type=feed_list_content_full]").innerText;
+                    }else if(blogNode.querySelector("[node-type=feed_list_content]")){
+                        TemplateData.title = blogNode.querySelector("[node-type=feed_list_content]").innerText;
+                    }
+                    TemplateData.detailUrl = "https://weibo.com" + blogNode.querySelector("[node-type=feed_list_item_date]").getAttribute("href");
+
+                    //comment
+                    var root_comments = blogNode.querySelectorAll("[node-type=root_comment]");
+                    for(var root_comment of root_comments){
+                        let commentsArr = [];
+                        let comments = root_comment.querySelectorAll(".WB_text");
+                        for(let comment of comments){
+                            commentsArr.push(comment.innerText);
+                        }
+                        TemplateData.comments.push(commentsArr);
+                    }
+
+                    //img
+                    var imgs= blogNode.querySelectorAll(".media_box img");
+                    for(var img of imgs){
+                        var tempImg = {
+                            src: "",
+                            width: 0,
+                            height: 0
+                        };
+                        tempImg.src = "http:" + img.getAttribute("src");
+                        tempImg.width = img.naturalWidth;
+                        tempImg.height = img.naturalHeight;
+                        TemplateData.imgs.push(tempImg)
+                    }
+
+                    //video
+                    var video = blogNode.querySelector(".WB_h5video");
                     if(video){
-                        TemplateData.forward.video.src = expandNode.querySelector(".WB_h5video video").getAttribute("src");
-                        TemplateData.forward.video.cover_img.src = expandNode.querySelector(".con-1 img").getAttribute("src");
-                        TemplateData.forward.video.cover_img.width = expandNode.querySelector(".con-1 img").naturalWidth;
-                        TemplateData.forward.video.cover_img.height = expandNode.querySelector(".con-1 img").naturalHeight;
+                        TemplateData.video.src = blogNode.querySelector(".con-2 video").getAttribute("src");
+                        TemplateData.video.cover_img.src = blogNode.querySelector(".con-1 img").getAttribute("src");
+                        TemplateData.video.cover_img.width = blogNode.querySelector(".con-1 img").naturalWidth;
+                        TemplateData.video.cover_img.height = blogNode.querySelector(".con-1 img").naturalHeight;
+
+                        TemplateData.imgs = [];
                     }
 
-                    TemplateData.forward.detailUrl = "https://weibo.com" +  expandNode.querySelector(".WB_from.S_txt2 a").getAttribute("href");
-                    TemplateData.forward.source = expandNode.querySelector(".W_fb.S_txt1").getAttribute("title")
+                    result.push(TemplateData);
                 }
 
-                TemplateData.transmieCount = existAndReturn("[action-type=fl_forward] .line.S_line1 em");
-                TemplateData.commentCount = existAndReturn("[action-type=fl_comment] .line.S_line1 em");
-                TemplateData.agreeCount = existAndReturn("[action-type=fl_like] .line.S_line1 em");
+                return result;
+            })
+            let allPageCount = task.pageCount;
+            let currentPageCount = task.page;
 
-                TemplateData.created_at = blogNode.querySelector(".WB_from.S_txt2 a").getAttribute("date");
+            File.appendFileSync("result2.txt", JSON.stringify(pageResult) + "\n");
 
-
-                if(blogNode.querySelector("[node-type=feed_list_content_full]")){
-                    TemplateData.title = blogNode.querySelector("[node-type=feed_list_content_full]").innerText;
-                }else if(blogNode.querySelector("[node-type=feed_list_content]")){
-                    TemplateData.title = blogNode.querySelector("[node-type=feed_list_content]").innerText;
-                }
-                TemplateData.detailUrl = "https://weibo.com" + blogNode.querySelector("[node-type=feed_list_item_date]").getAttribute("href");
-
-                //comment
-                var root_comments = blogNode.querySelectorAll("[node-type=root_comment]");
-                for(var root_comment of root_comments){
-                    let commentsArr = [];
-                    let comments = root_comment.querySelectorAll(".WB_text");
-                    for(let comment of comments){
-                        commentsArr.push(comment.innerText);
-                    }
-                    TemplateData.comments.push(commentsArr);
-                }
-
-                //img
-                var imgs= blogNode.querySelectorAll(".media_box img");
-                for(var img of imgs){
-                    var tempImg = {
-                        src: "",
-                        width: 0,
-                        height: 0
-                    };
-                    tempImg.src = "http:" + img.getAttribute("src");
-                    tempImg.width = img.naturalWidth;
-                    tempImg.height = img.naturalHeight;
-                    TemplateData.imgs.push(tempImg)
-                }
-
-                //video
-                var video = blogNode.querySelector(".WB_h5video");
-                if(video){
-                    TemplateData.video.src = blogNode.querySelector(".con-2 video").getAttribute("src");
-                    TemplateData.video.cover_img.src = blogNode.querySelector(".con-1 img").getAttribute("src");
-                    TemplateData.video.cover_img.width = blogNode.querySelector(".con-1 img").naturalWidth;
-                    TemplateData.video.cover_img.height = blogNode.querySelector(".con-1 img").naturalHeight;
-
-                    TemplateData.imgs = [];
-                }
-
-                result.push(TemplateData);
+            if(currentPageCount > allPageCount - PUPPERTTER_LIMIT){
+                task.end = true;
+            }else{
+                task.end = false;
             }
 
-            return result;
-        })
-
-        let allPageCount = task.pageCount;
-        let currentPageCount = task.page;
-
-        File.appendFileSync("result.txt", JSON.stringify(pageResult) + "\n");
-
-        if(currentPageCount > allPageCount - PUPPERTTER_LIMIT){
-            task.end = true;
-        }else{
-            task.end = false;
+            task.type = "success";
+            task.datas = pageResult;
+            process.send(task);
+        }catch(e) {
+            console.log("出现了莫名其妙的错误");
+            console.log(e);
+            task.type = "error";
+            process.send(task);
         }
 
-        task.type = "success";
-        task.datas = pageResult;
-        process.send(task);
+
 
     };
 
@@ -1045,6 +1055,7 @@ const searchAllBigVName = async () => {
     } catch (e) {
         console.log("搜索页面打开失败，正在重试！");
         await sleep();
+        await searchAllBigVName();
         return;
     }
 
@@ -1084,7 +1095,7 @@ const searchAllBigVName = async () => {
 //大v全部历史搜索初始化
 const initAllBigVName = async () => {
 
-    console.log("开始大v全部历史搜索初始化");
+    Socket.log("开始大v全部历史搜索初始化");
 
     let currentUrl = `http://s.weibo.com/user/${encodeURIComponent(task.value)}&Refer=focus_lx_STopic_box`;
 
@@ -1095,10 +1106,10 @@ const initAllBigVName = async () => {
             console.log("博主页面加载失败，正在重试");
             await curPage.reload();
             await sleep();
-            main(curPage);
+            await main(curPage);
             return;
         }
-        log("进入博主 " + await curPage.title());
+        Socket.log("进入博主 " + await curPage.title());
 
         await sleep(1);
 
@@ -1116,7 +1127,7 @@ const initAllBigVName = async () => {
 
             }
             await sleep();
-            main(curPage);
+            await main(curPage);
             return;
         }
 
@@ -1131,13 +1142,13 @@ const initAllBigVName = async () => {
         try {
             await curPage.waitForSelector("div.W_pages a[bpfilter=page]", {timeout: 30000});
         } catch (e) {
-            console.log("加载底部翻页按钮失败，正在重试");
+            Socket.log("加载底部翻页按钮失败，正在重试");
             await curPage.reload();
             await sleep(60);
-            main(curPage);
+            await main(curPage);
             return;
         }
-        log("已滚动到页面底部");
+        Socket.log("已滚动到页面底部");
 
         let allPageCount = await curPage.evaluate(function(){
             let str = document.querySelector("[action-type=feed_list_page_more]").getAttribute("action-data");
@@ -1170,9 +1181,9 @@ const initAllBigVName = async () => {
         }
         task.type = "bigVAllInit";
         task.pageCount = allPageCount;
+        Socket.log("已知该博主拥有共计"+ allPageCount + "页");
         task.baseUrl = currentUrl.split("?")[0] + "?is_all=1";
         process.send(task);
-
     };
 
     try {
@@ -1180,14 +1191,13 @@ const initAllBigVName = async () => {
     } catch (e) {
         console.log("搜索页面打开失败，正在重试！");
         await sleep();
+        await initAllBigVName();
         return;
     }
 
-    log("搜索对应微博账号");
-    await sleep();
-
     const name = await pages[0].$("p.person_name a");
     await name.click();
+
     let check = async () => {
         let Pages = await browser.pages();
         if (Pages.length === 2) {

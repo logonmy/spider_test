@@ -172,7 +172,7 @@ function _BeeUtils() {
                         image.width = node.clientWidth;
                         image.height = node.clientHeight;
                     }
-                    if (image.src.indexOf("http") != 0) {
+                    if(img && img.src && image.src.indexOf("http") != 0) {
                         continue;
                     }
                     var img = {};
@@ -263,8 +263,8 @@ var TemplateData = {
 
 
 
-try{
-    setTimeout(function(){
+setTimeout(function(){
+    try{
         TemplateData.title = document.querySelector(".rich_media_title").innerText;
         TemplateData.created_at = new Date(document.querySelector("[id=post-date]").innerText).getTime();
         TemplateData.url = window.location.href;
@@ -273,17 +273,15 @@ try{
 
         chrome.runtime.sendMessage(TemplateData, function (response) {});
         window.close();
-    }, 5000)
-}
-catch (e){
-    chrome.runtime.sendMessage({
-        error:e,
-        data: TemplateData,
-        url: window.location.href,
-        false: true
-    }, function (response) {});
-    window.close();
-}
+    }
+    catch(e){
+        chrome.runtime.sendMessage({
+            error:e,
+            data: TemplateData,
+            url: window.location.href,
+            false: true
+        }, function (response) {});
+        window.close();
+    }
 
-
-
+}, 5000)

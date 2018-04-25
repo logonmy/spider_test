@@ -9,6 +9,8 @@ const BIGV_BEE_NAME = "weibo_bigv";
 const BIGV_BEE_NAME_ALL = "weibo_bigv_all";
 const UPDATE_EVERY_DAY = "weibo_update_everyday";
 
+const reopen = "weibo_reopen";
+
 const PUPPERTTER_LIMIT = 4;
 
 const postWashTask = async(detailTask, data) => {
@@ -144,7 +146,7 @@ TaskHeap.prototype.pushTask = function (task) {
             }
 
 
-            if (self.weiboBigVEndCount >= PUPPERTTER_LIMIT) {
+            if (self.weiboBigVEndCount >= PUPPERTTER_LIMIT - 1) {
                 //todo 每页返回的都是一个task
                 self.weiboBigVEndCount = 0;
                 delete task.end;
@@ -276,7 +278,10 @@ class Cpu {
                         Socket.log(data.title);
                     }
 
-                    Socket.log(task);
+                    if(task.page){
+                        Socket.log(task.page);
+                    }
+
                     taskHeap.pushTask(task);
                     break;
                 }
@@ -508,7 +513,7 @@ run = async () => {
                     await postDataToDereplicate(task, data);
                     Socket.log(`添加到去重模块成功`);
 
-                    Sokcet.log("去清洗");
+                    Socket.log("去清洗");
                     await postWashTask(task,data);
                 }
                 Socket.log(`上报爬取任务成功,task=`, task.stack);

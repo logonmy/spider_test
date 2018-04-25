@@ -10,7 +10,6 @@ require([
     "../api/task",
     "../api/socket",
     "../service/tab",
-    "../service/saveFile",
     "../api/fileControll",
 ], (Config, Http, Async, Task, Socket, Tab, SaveFile, FileControll) => {
 
