@@ -1,5 +1,8 @@
 const http = require("http");
 let Http = {};
+
+const timeout = 10000;
+
 Http.call = async (path, args) => {
     let data = args || {};
     let postData = JSON.stringify(data);
@@ -25,6 +28,10 @@ Http.call = async (path, args) => {
             res.on("end", () => {
                 resolve(data);
             })
+        })
+
+        req.setTimeout(timeout, () => {
+            reject("timeout")
         })
 
         req.on("error", (e) => {
@@ -58,6 +65,10 @@ Http.get = async (path) => {
             res.on("end", () => {
                 resolve(data);
             })
+        })
+
+        req.setTimeout(timeout, () => {
+            reject("timeout")
         })
 
         req.on("error", (e) => {

@@ -3,8 +3,10 @@ const Http = require("./api/http").Http;
 const File = require("fs");
 
 let pages = [void 0, void 0];
+
 const bigBrickId = "";
 const smallBrickId = "";
+
 const BEE_NAME = "weibo_operate"
 
 let user = {
@@ -15,7 +17,7 @@ let user = {
 const getRequire  = () => {
     return "something";
 }
-const postWashTask = async (detailTask, brick_id, data) => {
+const postWashTask = async (brick_id, data) => {
     let washTask = {
         name: "wash_corpus",
         value: "",
@@ -188,8 +190,16 @@ const searchBigVName = async () => {
             pages[1] = Pages[2];
             let ainResult = await ain(pages[1]);
             console.log(ainResult.length, '返回了ainResult', i);
-            File.appendFileSync("showcuicheng.txt", JSON.stringify(ainResult) + "\n");
-            //todo postwashdata
+            //File.appendFileSync("showcuicheng.txt", JSON.stringify(ainResult) + "\n");
+            //todo postwashdata and soso
+            for(let re of ainResult){
+                re.brick_id = "";
+                re.lego_id = "";
+                await postDataToMessage()
+                await postWashTask("brick_id", re);
+
+            }
+
         }
 
         //进入下一页

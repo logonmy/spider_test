@@ -33,6 +33,7 @@ const sleep = (s = 5) => {
 };
 
 const httpGet = async (path, header) => {
+    let timeout = 10000;
     if(!header){
         header = {
             "Content-Type":"application/json",
@@ -58,6 +59,10 @@ const httpGet = async (path, header) => {
             res.on("end", () => {
                 resolve(data);
             })
+        })
+
+        req.setTimeout(timeout, () => {
+            reject("timeout")
         })
 
         req.on("error", (e) => {
