@@ -8,7 +8,7 @@ let pages = [void 0, void 0];
 const bigBrickId = 14099;
 const smallBrickId = "";
 
-const BEE_NAME = "weibo_operate"
+const BEE_NAME = "weibo_operate";
 
 let user = {
     username: "15351702865",
@@ -23,19 +23,19 @@ const getRequire = async () => {
             "Content-Type":"application/json",
         },
         body: JSON.stringify({
-            "start_time":1524654944207,
-            "end_time":1554654944207
+            "start_time": new Date().getTime() - 24*60*60*1000,
+            "end_time": new Date().getTime()
         })
     }
 
     let result = await getApi("http://chatbot.api.talkmoment.com/topic/lego/hot/get/by/time", moreArgs);
-    result = result.result
+    result = result.result;
     return result;
 
 }
 const postWashTask = async (brick_id, data) => {
     let washTask = {
-        name: "wash_corpus",
+        name: BEE_NAME,
         value: "",
         config: JSON.stringify({
             bee_source: BEE_NAME,
@@ -49,6 +49,30 @@ const postWashTask = async (brick_id, data) => {
 };
 const postDataToMessage = async (data) => {
     await Http.call(`http://bee.api.talkmoment.com/message/publish?topic=` + BEE_NAME, data);
+};
+
+//上传filiter
+const postDataToDereplicate = async(data) => {
+    let query = {
+        partition: BEE_NAME,
+        key: data
+    };
+    await Http.call(`http://bee.api.talkmoment.com/dereplicate/history/add`, query)
+};
+
+//过滤现在data
+const filterItemsC = async(data) => {
+    let query = {
+        partition: BEE_NAME,
+        keys: data.map(item => item.lego_id + item.commenterInfo.text)
+    };
+    let res = await Http.call(`http://bee.api.talkmoment.com/dereplicate/filter/by/history`, query);
+    res = JSON.parse(res);
+    res = res.result;
+    data = data.filter((i, j) => {
+        return res.filter_result[j]
+    });
+    return data;
 };
 
 const sleep = (s = 5) => {
@@ -149,8 +173,10 @@ const openIndex = async (user) => {
 
 const searchBigVName = async () => {
 
-    let currentUrl = "https://weibo.com/songjia?profile_ftype=1&is_all=1";
+    let currentUrl = "https://weibo.com/6535736919/profile?is_all=1";
     let page = 1;
+    let loadBottomCount = 0;
+    let alreadyCount = 0;
 
     const main = async (curPage) => {
 
@@ -186,13 +212,19 @@ const searchBigVName = async () => {
             await pages[0].waitForSelector("[node-type=feed_list_page]", {timeout: 60000});
             console.log("加载底部翻页按钮成功");
         } catch (e) {
-            console.log("加载底部翻页按钮失败，正在重试");
-            await pages[0].reload();
-            await sleep(60);
-            await main(curPage);
-            return;
-        }
+            if(loadBottomCount === 2){
+                console.log("不管底部加载成功与否了，也许就没有底部")
+                loadBottomCount = 0;
+            }else{
+                loadBottomCount++;
+                console.log("加载底部翻页按钮失败，正在重试");
+                await pages[0].reload();
+                await sleep(20);
+                await main(curPage);
+                return;
+            }
 
+        }
         await sleep(5);
 
         console.log("博主页面加载完毕");
@@ -222,13 +254,8 @@ const searchBigVName = async () => {
 
         //遍历本页所有转发
         for(let i =0;i< datesButton.length;i++){
-            let url = datesButtonDom[i].href;
-            let time = datesButtonDom[i].date;
-            let qwee = qwe(url);
-            let lego_id = qwee.lego_id;
-            if(lego_id) continue;
-            if(!(qwee.start_time <= time) || !(time <= qwee.end_time)) continue;
 
+            let url = datesButtonDom[i].href;
 
             await datesButton[i].click();
             let Pages = await browser.pages();
@@ -237,30 +264,53 @@ const searchBigVName = async () => {
                 Pages = await browser.pages();
             }
             pages[1] = Pages[2];
-            let ainResult = await ain(pages[1]);
+
+
+            let ainResult;
+
+            let qwee = qwe(url);
+
+            //todo
+            let brick_id = 10883;
+            let lego_id = qwee.lego_id;
+            if(qwee){
+                ainResult = await ain(pages[1], 500);
+            }else if(alreadyCount <= 200){
+                ainResult = await ain(pages[1], 100);
+            }
+
             console.log(ainResult.length, '返回了ainResult', i);
 
+            console.log("before", ainResult.length)
             for(let re of ainResult){
-                re.brick_id = smallBrickId;
+                re.brick_id = 10883;
                 re.lego_id = lego_id;
+            }
+            ainResult = await filterItemsC(ainResult);
+            console.log("after", ainResult.length)
+            for(let re of ainResult){
                 await postDataToMessage(re);
-                await postWashTask(smallBrickId, re);
+                await postWashTask(brick_id, re);
+                await postDataToDereplicate(lego_id + re.commenterInfo.text);
+                console.log(re)
             }
         }
 
         //进入下一页
         try{
-            await curPage.waitForSelector(".page.next.S_txt1.S_line1", {timeout: 60000});
+            await curPage.waitForSelector(".page.next.S_txt1.S_line1", {timeout: 45000});
             page += 1;
             currentUrl = currentUrl + "&page=" + page;
             await main(curPage);
         }catch(e){
             console.log("一次遍历完成")
+            sleep();
+            await searchBigVName();
         }
 
     };
 
-    let ain = async (curPage) => {
+    let ain = async (curPage, commentCC) => {
         await curPage.evaluate(() => {
             let interval = setInterval(function () {
                 window.scrollTo(0, document.documentElement.scrollTop + 200);
@@ -273,7 +323,7 @@ const searchBigVName = async () => {
 
         let commentCount = 0;
 
-        while(commentCount < 100){
+        while(commentCount < commentCC){
             commentCount = await curPage.$$("[node-type=root_comment]");
             commentCount = commentCount.length;
             try{
@@ -332,15 +382,23 @@ const searchBigVName = async () => {
                 if(comments[i].querySelector(".media_box")){
                     comment.commenterInfo.withImg = comments[i].querySelector(".media_box img").getAttribute("src");
                 }
-                comment.commenterInfo.created_at = new Date(comments[i].querySelector(".WB_func .WB_from").innerText).getTime();
+                if(comments[i].querySelector(".WB_func .WB_from").innerText.indexOf("今天") > -1){
+                    comment.commenterInfo.created_at = new Date().getTime();
+                }else{
+                    comment.commenterInfo.created_at = new Date(comments[i].querySelector(".WB_func .WB_from").innerText).getTime();
 
+                    if(!comment.commenterInfo.created_at){
+                        comment.commenterInfo.created_at = comments[i].querySelector(".WB_func .WB_from").innerText;
+                        comment.commenterInfo.created_at = "2018-" + comment.commenterInfo.created_at;
+                        comment.commenterInfo.created_at = comment.commenterInfo.created_at.replace("月", "-")
+                        comment.commenterInfo.created_at = comment.commenterInfo.created_at.replace("日", "-")
+
+                        comment.commenterInfo.created_at = new Date(comment.commenterInfo.created_at).getTime();
+                    }
+
+                }
                 if(!comment.commenterInfo.created_at){
-                    comment.commenterInfo.created_at = comments[i].querySelector(".WB_func .WB_from").innerText;
-                    comment.commenterInfo.created_at = "2018-" + comment.commenterInfo.created_at;
-                    comment.commenterInfo.created_at = comment.commenterInfo.created_at.replace("月", "-")
-                    comment.commenterInfo.created_at = comment.commenterInfo.created_at.replace("日", "-")
-
-                    comment.commenterInfo.created_at = new Date(comment.commenterInfo.created_at).getTime();
+                    comment.commenterInfo.created_at = new Date().getTime();
                 }
 
                 let reply = comments[i].querySelectorAll("[node-type=child_comment] .list_li.S_line1");
@@ -353,16 +411,24 @@ const searchBigVName = async () => {
                         }
                         if(re.querySelector(".WB_func .WB_from")){
                             let str = re.querySelector(".WB_func .WB_from").innerText;
-                            str = new Date(str).getTime()
-                            if(!str){
-                                str = re.querySelector(".WB_func .WB_from").innerText;
-                                str = "2018-" + str;
-                                str = str.replace("月", "-")
-                                str = str.replace("日", "-")
-
+                            if(str.indexOf("今天") > -1){
+                                reJ.created_at = new Date().getTime();
+                            }else{
                                 str = new Date(str).getTime()
+                                if(!str){
+                                    str = re.querySelector(".WB_func .WB_from").innerText;
+                                    str = "2018-" + str;
+                                    str = str.replace("月", "-")
+                                    str = str.replace("日", "-")
+
+                                    str = new Date(str).getTime()
+                                }
+                                reJ.created_at = str;
                             }
-                            reJ.created_at = str;
+
+                        }
+                        if(!reJ.created_at){
+                            reJ.created_at = new Date().getTime()
                         }
                         if(re.querySelectorAll(".WB_func .like_status em") && re.querySelectorAll(".WB_func [node-type=like_status] em")[1]){
                             reJ.agree = parseInt(re.querySelectorAll(".WB_func [node-type=like_status] em")[1].innerText);
