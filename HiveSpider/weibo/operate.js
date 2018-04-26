@@ -1,10 +1,11 @@
 const puppeteer = require('puppeteer');
 const Http = require("./api/http").Http;
+const getApi = require("./api/fetch").getApi;
 const File = require("fs");
 
 let pages = [void 0, void 0];
 
-const bigBrickId = "";
+const bigBrickId = 14099;
 const smallBrickId = "";
 
 const BEE_NAME = "weibo_operate"
@@ -14,8 +15,23 @@ let user = {
     password: "cqcp815"
 }
 
-const getRequire  = () => {
-    return "something";
+const getRequire = async () => {
+
+    let moreArgs = {
+        method: "POST",
+        headers: {
+            "Content-Type":"application/json",
+        },
+        body: JSON.stringify({
+            "start_time":1524654944207,
+            "end_time":1554654944207
+        })
+    }
+
+    let result = await getApi("http://chatbot.api.talkmoment.com/topic/lego/hot/get/by/time", moreArgs);
+    result = result.result
+    return result;
+
 }
 const postWashTask = async (brick_id, data) => {
     let washTask = {
@@ -137,6 +153,9 @@ const searchBigVName = async () => {
     let page = 1;
 
     const main = async (curPage) => {
+
+        let requireWeibo = await getRequire()
+        console.log("获取requireWeibo", requireWeibo)
         curPage.goto(currentUrl);
         try {
             await curPage.waitForSelector("div.WB_frame_c", {timeout: 60000});
@@ -174,13 +193,43 @@ const searchBigVName = async () => {
             return;
         }
 
-        await sleep(5)
+        await sleep(5);
 
         console.log("博主页面加载完毕");
         let datesButton = await curPage.$$(".WB_func [node-type=feed_list_item_date][date]");
+        let datesButtonDom = await curPage.evaluate(() => {
+            let result = [];
+            let datesButton = document.querySelectorAll(".WB_func [node-type=feed_list_item_date][date]");
+            for(let datesB of datesButton){
+                let dd = {
+                    date: new Date(datesB.getAttribute("title")).getTime(),
+                    href: datesB.getAttribute("href")
+                }
+                result.push(dd);
+            }
+            return result;
+        })
+
+        let qwe = (url) => {
+            console.log(url)
+            for(let i=0;i< requireWeibo.length;i++){
+                if(requireWeibo[i].href.indexOf(url) > -1){
+                    return requireWeibo[i];
+                }
+            }
+            return false;
+        }
 
         //遍历本页所有转发
-        for(let i =8;i< datesButton.length;i++){
+        for(let i =0;i< datesButton.length;i++){
+            let url = datesButtonDom[i].href;
+            let time = datesButtonDom[i].date;
+            let qwee = qwe(url);
+            let lego_id = qwee.lego_id;
+            if(lego_id) continue;
+            if(!(qwee.start_time <= time) || !(time <= qwee.end_time)) continue;
+
+
             await datesButton[i].click();
             let Pages = await browser.pages();
             while(Pages.length === 2){
@@ -190,16 +239,13 @@ const searchBigVName = async () => {
             pages[1] = Pages[2];
             let ainResult = await ain(pages[1]);
             console.log(ainResult.length, '返回了ainResult', i);
-            //File.appendFileSync("showcuicheng.txt", JSON.stringify(ainResult) + "\n");
-            //todo postwashdata and soso
+
             for(let re of ainResult){
-                re.brick_id = "";
-                re.lego_id = "";
-                await postDataToMessage()
-                await postWashTask("brick_id", re);
-
+                re.brick_id = smallBrickId;
+                re.lego_id = lego_id;
+                await postDataToMessage(re);
+                await postWashTask(smallBrickId, re);
             }
-
         }
 
         //进入下一页
@@ -227,7 +273,7 @@ const searchBigVName = async () => {
 
         let commentCount = 0;
 
-        while(commentCount < 30){
+        while(commentCount < 100){
             commentCount = await curPage.$$("[node-type=root_comment]");
             commentCount = commentCount.length;
             try{
