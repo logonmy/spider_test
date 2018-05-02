@@ -209,10 +209,10 @@ const searchBigVName = async () => {
             }, 50)
         });
         try {
-            await pages[0].waitForSelector("[node-type=feed_list_page]", {timeout: 60000});
+            await pages[0].waitForSelector("[node-type=feed_list_page]", {timeout: 1000});
             console.log("加载底部翻页按钮成功");
         } catch (e) {
-            if(loadBottomCount === 2){
+            if(loadBottomCount){
                 console.log("不管底部加载成功与否了，也许就没有底部")
                 loadBottomCount = 0;
             }else{
@@ -244,6 +244,9 @@ const searchBigVName = async () => {
 
         let qwe = (url) => {
             console.log(url)
+            if(!requireWeibo.length){
+                return false;
+            }
             for(let i=0;i< requireWeibo.length;i++){
                 if(requireWeibo[i].href.indexOf(url) > -1){
                     return requireWeibo[i];
@@ -323,7 +326,13 @@ const searchBigVName = async () => {
 
         let commentCount = 0;
 
-        while(commentCount < commentCC){
+        let trueCommentCount = await curPage.evaluate(function() {
+            return parseInt(document.querySelector(".WB_repeat.S_line1[node-type=comment]").getAttribute("count"));
+        });
+        console.log("真实评论数", trueCommentCount);
+        if(trueCommentCount < commentCC) commentCC = trueCommentCount;
+
+        while(commentCount < commentCC - 10){
             commentCount = await curPage.$$("[node-type=root_comment]");
             commentCount = commentCount.length;
             try{
@@ -337,112 +346,214 @@ const searchBigVName = async () => {
 
         await sleep(2);
 
-        let result = await curPage.evaluate(() => {
+        let result = await curPage.evaluate(async () => {
 
-            //解析所有表情
-            var imgs = document.querySelectorAll("img");
-            for(let i =0 ; i< imgs.length ;i++){
-                let title = imgs[i].getAttribute("title");
-                let alt = imgs[i].getAttribute("alt");
-                if(title && alt && title === alt){
-                    imgs[i].outerHTML = title;
+            function liteAjax(url, callback, method, postBody, aSync) {
+                if (method == undefined) {
+                    method = "GET";
+                } else {
+                    method = method.toUpperCase();
+                }
+                var aSync = true;
+                var headers = {};
+                var timeout = false;
+                var timer = -1;
+
+                var rqst = getRequestObj();
+                if (rqst) {
+                    rqst.onreadystatechange = function() {
+                        if (rqst.readyState == 4) {
+                            if (timeout) {
+                                return;
+                            }
+                            clearTimeout(timer);
+                            callback(rqst.responseText);
+                        }
+
+                    };
+
+                    rqst.ontimeout = function() {
+                        if (moreArgs && moreArgs.ontimeout) {
+                            moreArgs.ontimeout();
+                        }
+                        console.log('timeout');
+                    };
+                    rqst.onerror = function() {
+                        if (moreArgs && moreArgs.onerror) {
+                            moreArgs.onerror();
+                        }
+                        console.log('error');
+                    };
+                    rqst.onabort = function() {
+                        if (moreArgs && moreArgs.onabort) {
+                            moreArgs.onabort();
+                        }
+                        console.log('abort')
+                    };
+
+                    rqst.open(method, url, aSync);
+                    for (key in headers) {
+                        rqst.setRequestHeader(key, headers[key]);
+                    }
+
+                    if (method == "POST") {
+                        //rqst.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                        rqst.setRequestHeader('Content-type', 'application/json');
+                    }
+                    rqst.send(postBody);
                 }
 
+                function getRequestObj() {
+                    if (window.ActiveXObject) {
+                        return new ActiveXObject('Microsoft.XMLHTTP');
+                    } else if (window.XMLHttpRequest) {
+                        return new XMLHttpRequest();
+                    }
+                }}
+
+            let getGender = async (id) => {
+                let href = "https://weibo.com/aj/v6/user/newcard?ajwvr=6&id=" + id + "&type=1&callback=STK_152522992280446";
+                return new Promise(function(resolve, reject){
+                    setTimeout(function(){
+                        resolve("unknow");
+                    }, 5000);
+                    liteAjax(href, function(d){
+                        if(d.indexOf("5973") > -1){
+                            resolve("女")
+                        }else if(d.indexOf("7537") > -1){
+                            resolve("男")
+                        }else{
+                            resolve("男")
+                        }
+                    }, "GET");
+                })
             }
 
             let commentsTemplate = [];
-            let comments = document.querySelectorAll("[node-type=root_comment]");
-            for(let i=0;i< comments.length;i++){
 
-                let comment = {
-                    commenterInfo: {
-                        agree: 0,
-                        text: "",
-                        faceImg: "",
-                        name: "",
-                        homePage: "",
-                        withImg: "",
-                        created_at: ""
-                    },
-                    reply: []
-                }
-
-                let info = comments[i].querySelector(".WB_face");
-                if(info.querySelector("a")){
-                    comment.commenterInfo.homePage = info.querySelector("a").getAttribute("href");
-                    comment.commenterInfo.faceImg = info.querySelector("a img").getAttribute("src");
-                    comment.commenterInfo.name = info.querySelector("a img").getAttribute("alt");
-                }
-                comment.commenterInfo.text = comments[i].querySelector(".WB_text").innerText;
-                comment.commenterInfo.agree = parseInt(comments[i].querySelectorAll(".WB_func [node-type=like_status] em")[1].innerText);
-                if(!comment.commenterInfo.agree){
-                    comment.commenterInfo.agree = 0;
-                }
-
-                if(comments[i].querySelector(".media_box")){
-                    comment.commenterInfo.withImg = comments[i].querySelector(".media_box img").getAttribute("src");
-                }
-                if(comments[i].querySelector(".WB_func .WB_from").innerText.indexOf("今天") > -1){
-                    comment.commenterInfo.created_at = new Date().getTime();
-                }else{
-                    comment.commenterInfo.created_at = new Date(comments[i].querySelector(".WB_func .WB_from").innerText).getTime();
-
-                    if(!comment.commenterInfo.created_at){
-                        comment.commenterInfo.created_at = comments[i].querySelector(".WB_func .WB_from").innerText;
-                        comment.commenterInfo.created_at = "2018-" + comment.commenterInfo.created_at;
-                        comment.commenterInfo.created_at = comment.commenterInfo.created_at.replace("月", "-")
-                        comment.commenterInfo.created_at = comment.commenterInfo.created_at.replace("日", "-")
-
-                        comment.commenterInfo.created_at = new Date(comment.commenterInfo.created_at).getTime();
+            let run = async () => {
+                //解析所有表情
+                var imgs = document.querySelectorAll("img");
+                for(let i =0 ; i< imgs.length ;i++){
+                    let title = imgs[i].getAttribute("title");
+                    let alt = imgs[i].getAttribute("alt");
+                    if(title && alt && title === alt){
+                        imgs[i].outerHTML = title;
                     }
 
                 }
-                if(!comment.commenterInfo.created_at){
-                    comment.commenterInfo.created_at = new Date().getTime();
-                }
 
-                let reply = comments[i].querySelectorAll("[node-type=child_comment] .list_li.S_line1");
-                for(let re of reply){
-                    if(re.querySelector(".WB_text").innerText.indexOf("条回复") == -1){
-                        let reJ = {
-                            text: re.querySelector(".WB_text").innerText,
-                            created_at: 0,
-                            agree: 0
+                let comments = document.querySelectorAll("[node-type=root_comment]");
+                for(let i=0;i< comments.length;i++){
+                    let usercard;
+                    let comment = {
+                        commenterInfo: {
+                            id: 0,
+                            agree: 0,
+                            text: "",
+                            faceImg: "",
+                            name: "",
+                            homePage: "",
+                            withImg: "",
+                            created_at: ""
+                        },
+                        reply: []
+                        //brick_id
+                        //lego_id
+                    }
+
+                    let info = comments[i].querySelector(".WB_face");
+                    if(info.querySelector("a")){
+                        comment.commenterInfo.homePage = info.querySelector("a").getAttribute("href");
+                        comment.commenterInfo.faceImg = info.querySelector("a img").getAttribute("src");
+                        usercard = info.querySelector("a img").getAttribute("usercard");
+                        comment.commenterInfo.name = info.querySelector("a img").getAttribute("alt");
+                    }
+
+                    let usercards = usercard.split("&");
+                    for(let card of usercards){
+                        if(card.indexOf("id") > -1){
+                            comment.commenterInfo.id = parseInt(card.split("=")[1]);
+                            break;
                         }
-                        if(re.querySelector(".WB_func .WB_from")){
-                            let str = re.querySelector(".WB_func .WB_from").innerText;
-                            if(str.indexOf("今天") > -1){
-                                reJ.created_at = new Date().getTime();
-                            }else{
-                                str = new Date(str).getTime()
-                                if(!str){
-                                    str = re.querySelector(".WB_func .WB_from").innerText;
-                                    str = "2018-" + str;
-                                    str = str.replace("月", "-")
-                                    str = str.replace("日", "-")
+                    }
 
+                    //comment.commenterInfo.gender = await getGender();
+
+                    comment.commenterInfo.text = comments[i].querySelector(".WB_text").innerText;
+                    comment.commenterInfo.agree = parseInt(comments[i].querySelectorAll(".WB_func [node-type=like_status] em")[1].innerText);
+                    if(!comment.commenterInfo.agree){
+                        comment.commenterInfo.agree = 0;
+                    }
+
+                    if(comments[i].querySelector(".media_box")){
+                        comment.commenterInfo.withImg = comments[i].querySelector(".media_box img").getAttribute("src");
+                    }
+                    if(comments[i].querySelector(".WB_func .WB_from").innerText.indexOf("今天") > -1){
+                        comment.commenterInfo.created_at = new Date().getTime();
+                    }else{
+                        comment.commenterInfo.created_at = new Date(comments[i].querySelector(".WB_func .WB_from").innerText).getTime();
+
+                        if(!comment.commenterInfo.created_at){
+                            comment.commenterInfo.created_at = comments[i].querySelector(".WB_func .WB_from").innerText;
+                            comment.commenterInfo.created_at = "2018-" + comment.commenterInfo.created_at;
+                            comment.commenterInfo.created_at = comment.commenterInfo.created_at.replace("月", "-")
+                            comment.commenterInfo.created_at = comment.commenterInfo.created_at.replace("日", "-")
+
+                            comment.commenterInfo.created_at = new Date(comment.commenterInfo.created_at).getTime();
+                        }
+
+                    }
+                    if(!comment.commenterInfo.created_at){
+                        comment.commenterInfo.created_at = new Date().getTime();
+                    }
+
+                    let reply = comments[i].querySelectorAll("[node-type=child_comment] .list_li.S_line1");
+                    for(let re of reply){
+                        if(re.querySelector(".WB_text").innerText.indexOf("条回复") == -1){
+                            let reJ = {
+                                text: re.querySelector(".WB_text").innerText,
+                                created_at: 0,
+                                agree: 0
+                            }
+                            if(re.querySelector(".WB_func .WB_from")){
+                                let str = re.querySelector(".WB_func .WB_from").innerText;
+                                if(str.indexOf("今天") > -1){
+                                    reJ.created_at = new Date().getTime();
+                                }else{
                                     str = new Date(str).getTime()
+                                    if(!str){
+                                        str = re.querySelector(".WB_func .WB_from").innerText;
+                                        str = "2018-" + str;
+                                        str = str.replace("月", "-")
+                                        str = str.replace("日", "-")
+
+                                        str = new Date(str).getTime()
+                                    }
+                                    reJ.created_at = str;
                                 }
-                                reJ.created_at = str;
+
+                            }
+                            if(!reJ.created_at){
+                                reJ.created_at = new Date().getTime()
+                            }
+                            if(re.querySelectorAll(".WB_func .like_status em") && re.querySelectorAll(".WB_func [node-type=like_status] em")[1]){
+                                reJ.agree = parseInt(re.querySelectorAll(".WB_func [node-type=like_status] em")[1].innerText);
+                            }
+                            if(!reJ.agree){
+                                reJ.agree = 0;
                             }
 
+                            comment.reply.push(reJ);
                         }
-                        if(!reJ.created_at){
-                            reJ.created_at = new Date().getTime()
-                        }
-                        if(re.querySelectorAll(".WB_func .like_status em") && re.querySelectorAll(".WB_func [node-type=like_status] em")[1]){
-                            reJ.agree = parseInt(re.querySelectorAll(".WB_func [node-type=like_status] em")[1].innerText);
-                        }
-                        if(!reJ.agree){
-                            reJ.agree = 0;
-                        }
-
-                        comment.reply.push(reJ);
                     }
+                    console.log(comment);
+                    commentsTemplate.push(comment);
                 }
-                console.log(comment);
-                commentsTemplate.push(comment);
             }
+
+            await run()
+
             return commentsTemplate;
 
         })

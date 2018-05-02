@@ -63,6 +63,7 @@ const httpGet = async (path, header) => {
 
         req.setTimeout(timeout, () => {
             reject("timeout")
+            process.exit()
         })
 
         req.on("error", (e) => {
