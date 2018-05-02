@@ -15,6 +15,10 @@ let user = {
     password: "cqcp815"
 }
 
+setTimeout(function(){
+    process.exit(0)
+}, 20 * 60 * 1000);
+
 const getRequire = async () => {
 
     let moreArgs = {
@@ -209,10 +213,10 @@ const searchBigVName = async () => {
             }, 50)
         });
         try {
-            await pages[0].waitForSelector("[node-type=feed_list_page]", {timeout: 1000});
+            await pages[0].waitForSelector("[node-type=feed_list_page]", {timeout: 30000});
             console.log("加载底部翻页按钮成功");
         } catch (e) {
-            if(loadBottomCount){
+            if(loadBottomCount == 1){
                 console.log("不管底部加载成功与否了，也许就没有底部")
                 loadBottomCount = 0;
             }else{
@@ -261,12 +265,17 @@ const searchBigVName = async () => {
             let url = datesButtonDom[i].href;
 
             await datesButton[i].click();
-            let Pages = await browser.pages();
+            let interval = setInterval(function(){
+                datesButton[i].click();
+            }, 50000)
+            let Pages = await browser.pages()
             while(Pages.length === 2){
+                console.log("waiting");
                 await sleep(2);
                 Pages = await browser.pages();
             }
             pages[1] = Pages[2];
+            clearInterval(interval);
 
 
             let ainResult;
@@ -295,7 +304,6 @@ const searchBigVName = async () => {
                 await postDataToMessage(re);
                 await postWashTask(brick_id, re);
                 await postDataToDereplicate(lego_id + re.commenterInfo.text);
-                console.log(re)
             }
         }
 
@@ -314,6 +322,13 @@ const searchBigVName = async () => {
     };
 
     let ain = async (curPage, commentCC) => {
+        if(curPage.url().indexOf("mod=like") > -1){
+            return [];
+        }
+        if(curPage.url().indexOf("home") > -1){
+            return [];
+        }
+
         await curPage.evaluate(() => {
             let interval = setInterval(function () {
                 window.scrollTo(0, document.documentElement.scrollTop + 200);
@@ -332,13 +347,18 @@ const searchBigVName = async () => {
         console.log("真实评论数", trueCommentCount);
         if(trueCommentCount < commentCC) commentCC = trueCommentCount;
 
-        while(commentCount < commentCC - 10){
+        let noMoreButton = 0;
+        while(commentCount < commentCC - 20){
             commentCount = await curPage.$$("[node-type=root_comment]");
             commentCount = commentCount.length;
             try{
-                const loadMoreButton = await curPage.$("[action-type=click_more_comment] .more_txt");
+                let loadMoreButton = await curPage.$("[action-type=click_more_comment] .more_txt", {timeout: 20000});
                 await loadMoreButton.click();
             }catch(e){
+                if(noMoreButton === 2000){
+                    break;
+                }
+                noMoreButton++;
             }
         }
         console.log("页面显示完全");
@@ -568,7 +588,7 @@ const searchBigVName = async () => {
 
 let run = async () => {
     await launchBrowser();
-    //await openIndex(user);
+    await openIndex(user);
     while(true){
         await searchBigVName();
         await sleep(60);

@@ -8,7 +8,7 @@ Queue.postDataToMessage = async (queueName, data) => {
 };
 
 Queue.getDataFromMessage = async (queueName) => {
-	return await getApi(`http://106.14.81.208:5000/message/subscribe/try?topic=${queueName}`)
+	return await getApi(`http://bee.api.talkmoment.com/message/subscribe/try?topic=${queueName}`)
 }
 
 Queue.clear = async (queueName) => {
@@ -19,12 +19,12 @@ Queue.clear = async (queueName) => {
 }
 
 Queue.detail = async (queueName, limit) => {
-	let result = await getApi("http://106.14.81.208:5000/message/detail?topic=" + queueName + "&limit=" + limit +"&offset=0");
+	let result = await getApi("http://bee.api.talkmoment.com/message/detail?topic=" + queueName + "&limit=" + limit +"&offset=0");
 	return  result;
 } 
 
 Queue.size = async (queueName) => {
-	let result = await getApi("http://106.14.81.208:5000/message/status");
+	let result = await getApi("http://bee.api.talkmoment.com/message/status");
 	result =  result.result[0];
 	let size = 0;
 	for(let i = 0; i < result.length; i++){
