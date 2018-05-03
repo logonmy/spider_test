@@ -2097,17 +2097,32 @@ const readLegoName = async (brick_id) => {
         name: result.name
     };
 }
+const readLegoFirst = async (brick_id) => {
+    let result = await Http.get("http://chatbot.api.talkmoment.com/lego/library/lego/list?brick_id="+ brick_id +"&id_start=99999999&limit=1&version=002");
+    return result;
+}
 
-let name = "jike_update_list";
+let name = "jike_new_date";
 let run = async () => {
     for(let i = 14126; i<16196; i++){
         let config = await readLegoName(i)
         console.log(config);
+
+        let strr = await readLegoFirst(i);
+        strr= JSON.parse(strr);
+
+        config.created_at = 0;
+        if(strr.result && strr.result.length) {
+            console.log(strr.result[0].created_at);
+            config.created_at = strr.result[0].created_at;
+        }
+
         if(TopicJSON[config.name]){
             let a = {
                 topic_id: TopicJSON[config.name],
                 brick_id: config.brick_id,
-                name: config.name
+                name: config.name,
+                created_at: config.created_at
             }
             await Queue.postDataToMessage(name, a);
             console.log(a)

@@ -243,8 +243,8 @@ let getAllTopicContent = async (topicId, loadMoreKey, created_at) => {
 
 
 let run = async (name, topicId, brick_id, created_at) => {
-    if(created_at === 0 && !created_at || created_at < splitDate){
-        created_at = splitDate;
+    if(created_at > splitDate){
+        return ;
     }
     let result = await getAllTopicContent(topicId, null, created_at);
 
@@ -270,6 +270,7 @@ let run = async (name, topicId, brick_id, created_at) => {
         console.log("请在2秒内推出程序");
         await sleep(2);
         console.log("################################################")
+
     }
 
 }
@@ -290,7 +291,7 @@ let run = async (name, topicId, brick_id, created_at) => {
     token = await getToken();
 
     while(true){
-        let config =await Queue.getDataFromMessage("jike_new_date");
+        let config =await Queue.getDataFromMessage("jike_old_date");
         config = JSON.parse(config.result);
         console.log(config)
         await run(config.name, config.topic_id, config.brick_id, config.created_at);
