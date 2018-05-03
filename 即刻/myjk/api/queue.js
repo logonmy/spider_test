@@ -35,6 +35,4 @@ Queue.size = async (queueName) => {
 	}
 	return size;
 }
-
-
 exports.Queue = Queue;

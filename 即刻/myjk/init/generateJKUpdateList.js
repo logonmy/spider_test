@@ -1,12 +1,5 @@
-const http = require("https");
-const Http = require("./api/http").Http;
-
-const getApi = require("./api/fetch").getApi;
-
-const BEE_NAME = "jike_topic_history"
-let token;
-let out = false;
-
+const Http = require("../api/http").Http
+const Queue = require("../api/queue").Queue
 const TopicJSON = {
     "即刻_二次元大事件": "56cc4a5b7cb333110045f1b7",
     "即刻_打击谣言和不靠谱信息": "56d687dc35f48a1200871bae",
@@ -2096,25 +2089,6 @@ const TopicJSON = {
     "即刻_韩庚照片更新提醒": "589c1dc0b178615978b14fbe"
 }
 
-const getCookie = (() => {
-    let users = [
-        "jike:sess=eyJfdWlkIjoiNWFkZWM4ZjM4MGU2MDAwMDE3ZTJlOGJiIiwiX3Nlc3Npb25Ub2tlbiI6Ing4c2I1U0pZeWcwQnczem5sZmVZOEE3cGcifQ==; path=/; expires=Fri, 19 Apr 2019 06:58:18 GMT; domain=.jike.ruguoapp.com; secure; httponly;jike:sess.sig=qAdw4DJw6MmBS2qRupCRNAHL0bM; path=/; expires=Fri, 19 Apr 2019 06:58:18 GMT; domain=.jike.ruguoapp.com; secure; httponly",
-        "jike:sess=eyJfdWlkIjoiNWFkZWQ1ZWRkZjBjNjUwMDE3MzQxYTQzIiwiX3Nlc3Npb25Ub2tlbiI6Ik5QWnJ4N2tGWnE2TkNFdjl4RUJtc0JCTUQifQ==; path=/; expires=Fri, 19 Apr 2019 07:09:01 GMT; domain=.jike.ruguoapp.com; secure; httponly;jike:sess.sig=xO4EuDEaXjq6S7bJP7_6w8t1L8Y; path=/; expires=Fri, 19 Apr 2019 07:09:01 GMT; domain=.jike.ruguoapp.com; secure; httponly",
-        "jike:sess=eyJfdWlkIjoiNWFkZWQ5NzkwNjUxOTgwMDE3NTJlMzBiIiwiX3Nlc3Npb25Ub2tlbiI6InlxZEdyVWRTa01kTTRsRlZLTGhuZ0JQR1oifQ==; path=/; expires=Fri, 19 Apr 2019 07:16:48 GMT; domain=.jike.ruguoapp.com; secure; httponly;jike:sess.sig=CBNFqijfvdKHWh3VXrVdcXnOrUM; path=/; expires=Fri, 19 Apr 2019 07:16:48 GMT; domain=.jike.ruguoapp.com; secure; httponly",
-        "jike:sess=eyJfdWlkIjoiNWFkZWRhMjQ3NjQwZDUwMDE3ZGIwN2Y2IiwiX3Nlc3Npb25Ub2tlbiI6InJaNVUzVjZJQTJOa21rVmtJbUUzOEIxTXUifQ==; path=/; expires=Fri, 19 Apr 2019 07:20:32 GMT; domain=.jike.ruguoapp.com; secure; httponly;jike:sess.sig=4ABn6K2Uoxs_GzNCEpVcwjwPiuw; path=/; expires=Fri, 19 Apr 2019 07:20:32 GMT; domain=.jike.ruguoapp.com; secure; httponly",
-        "jike:sess=eyJfdWlkIjoiNWFkZWRiMjhiYTg3YjAwMDE3NzdhMmU0IiwiX3Nlc3Npb25Ub2tlbiI6IlRZYkhMVFUyMEJPNVZXaVE1ZjE2SzIzbjMifQ==; path=/; expires=Fri, 19 Apr 2019 07:24:35 GMT; domain=.jike.ruguoapp.com; secure; httponly;jike:sess.sig=xjpaeEL_XqneHGRERK8n4xkyEQk; path=/; expires=Fri, 19 Apr 2019 07:24:35 GMT; domain=.jike.ruguoapp.com; secure; httponly",
-    ];
-    return () => {
-        let result = users.shift();
-        users.push(result);
-        return result;
-    }
-})();
-
-const readLegoFirst = async (brick_id) => {
-    let result = await Http.get("http://chatbot.api.talkmoment.com/lego/library/lego/list?brick_id="+ brick_id +"&id_start=99999999&limit=1&version=002");
-    return result;
-}
 const readLegoName = async (brick_id) => {
     let result = await Http.get("http://chatbot.api.talkmoment.com/lego/library/legobrick/get?brick_id="+ brick_id+"&version=002");
     result = JSON.parse(result).result;
@@ -2124,263 +2098,20 @@ const readLegoName = async (brick_id) => {
     };
 }
 
-const sleep = (s = 5) => {
-    return new Promise(resolve => setTimeout(resolve, s * 1000))
-};
-
-const httpGet = async (path, header) => {
-    let timeout = 10000;
-    if(!header){
-        header = {
-            "Content-Type":"application/json",
-            "User-Agent":"Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Mobile /sa-sdk-ios Jike/4.3.1",
-        }
-    }
-    let options = {
-        protocol: path.split(":")[0] + ":",
-        hostname: path.split("//")[1].split("/")[0],
-        method: "GET",
-        path: "/" + path.split("com/")[1],
-        headers: header
-    };
-
-    return new Promise((resolve, reject) => {
-
-        let req = http.request(options, (res) => {
-            let data = "";
-            res.setEncoding('utf-8');
-            res.on("data", (chunk) => {
-                data += chunk;
-            })
-            res.on("end", () => {
-                resolve(data);
-            })
-        })
-
-        req.setTimeout(timeout, () => {
-            reject("timeout")
-            process.exit()
-        })
-
-        req.on("error", (e) => {
-            console.log(e);
-            reject(e);
-        })
-        req.end();
-    })
-}
-const postWashTask = async(brick_id, data) => {
-    let washTask = {
-        name: "wash_corpus",
-        value: "",
-        config: JSON.stringify({
-            bee_source: BEE_NAME,
-            brick_id: brick_id,
-            publish: true
-        }),
-        data: JSON.stringify(data),
-        scheduled_at: Date.now()
-    };
-    console.log("任务队列ing")
-    console.log(brick_id);
-    await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", washTask);
-};
-
-const postDataToMessage = async (data) => {
-    await Http.call(`http://bee.api.talkmoment.com/message/publish?topic=${BEE_NAME}`, data);
-};
-
-const getUuid = async() => {
-    let result = await httpGet("https://app.jike.ruguoapp.com/sessions.create");
-    return JSON.parse(result).uuid;}
-const login = async(uuid, cookie) => {
-    let headers = {
-        "Host":"app.jike.ruguoapp.com",
-        "Content-Type":"application/json",
-        "Origin":"https://ruguoapp.com",
-        "Connection":"keep-alive",
-        "Accept":"*/*",
-        "User-Agent":"Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Mobile /sa-sdk-ios Jike/4.3.1",
-        "Referer":"https://ruguoapp.com/account/scan?uuid=" + uuid,
-        "Accept-Language":"zh-cn",
-        "Cookie": cookie
-    }
-    let result = await httpGet("https://app.jike.ruguoapp.com/sessions.login?uuid=" + uuid, headers);
-    return result;}
-const confirm = async(uuid, cookie) => {
-    let headers = {
-        "Host":"app.jike.ruguoapp.com",
-        "Content-Type":"application/json",
-        "Origin":"https://ruguoapp.com",
-        "Connection":"keep-alive",
-        "Accept":"*/*",
-        "User-Agent":"Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Mobile /sa-sdk-ios Jike/4.3.1",
-        "Referer":"https://ruguoapp.com/account/scan?uuid=" + uuid,
-        "Accept-Language":"zh-cn",
-        "Cookie": cookie
-    }
-    let result = await httpGet("https://app.jike.ruguoapp.com/sessions.confirm?uuid=" + uuid, headers);
-    return result;}
-const confirmation = async(uuid, cookie) => {
-    let headers = {
-        "Host":"app.jike.ruguoapp.com",
-        "Content-Type":"application/json",
-        "Origin":"https://ruguoapp.com",
-        "Connection":"keep-alive",
-        "Accept":"*/*",
-        "User-Agent":"Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Mobile /sa-sdk-ios Jike/4.3.1",
-        "Referer":"https://ruguoapp.com/account/scan?uuid=" + uuid,
-        "Accept-Language":"zh-cn",
-        "Cookie": cookie
-    }
-    let result = await httpGet("https://app.jike.ruguoapp.com/sessions.wait_for_confirmation?uuid=" + uuid, headers);
-    return result;}
-let getToken = async () => {
-    let cookie = getCookie()
-    let uuid = await getUuid();
-    await sleep(1);
-    if(JSON.parse(await login(uuid, cookie)).success){
-        await sleep(1)
-        if(JSON.parse(await confirm(uuid, cookie)).success){
-            await sleep(1)
-            if(JSON.parse(await confirmation(uuid, cookie)).token){
-                console.log("token获取成功");
-                return JSON.parse(await confirmation(uuid, cookie)).token
-            }else{
-                throw Error("confirmation 出错");
-            }
-        }else{
-            throw Error("confirm 出错")
-        }
-    }else{
-        throw Error("login 出错")
-    }}
-
-let getTopicContent = async (topicId, loadMoreKey) => {
-    console.log(topicId, loadMoreKey, "getTopicContentINGGGGGGG");
-    let moreArgs = {
-        method: "POST",
-        headers: {
-            "Content-Type":"application/json",
-            "x-jike-app-auth-jwt": token
-        },
-        body: JSON.stringify({
-            "loadMoreKey":loadMoreKey,
-            "topic":topicId,
-            "limit":50
-        })
-    }
-    let result = await getApi("https://app.jike.ruguoapp.com/1.0/messages/history", moreArgs);
-    return result;}
-
-let getCardComment = async (targetId)=> {
-    console.log(targetId, "getCardCommentINGGGGG");
-    let moreArgs = {
-        method: "POST",
-        headers: {
-            "Content-Type":"application/json",
-            "x-jike-app-auth-jwt": token
-        },
-        body: JSON.stringify({
-            "targetId": targetId,
-            "limit":20,
-            "targetType": "OFFICIAL_MESSAGE"
-        })
-    }
-    let result = await getApi("https://app.jike.ruguoapp.com/1.0/comments/listPrimary", moreArgs);
-    if(!result){
-        out = true;
-    }
-    return result;}
-
-let getAllTopicContent = async (topicId, loadMoreKey, created_at) => {
-    if(created_at === 0 && !created_at){
-        return ;
-    }
-    let datas = []
-    let result = await getTopicContent(topicId, loadMoreKey, created_at);
-
-
-
-    while(result.data.length > 0){
-        for(let data of result.data){
-            if(new Date(data.createdAt).getTime() > created_at){
-                datas.push(data);;
-            }
-
-        }
-        let ll = result.data.length;
-
-        if(result.loadMoreKey && new Date(result.data[ll - 1].createdAt).getTime() > created_at){
-            await sleep(1);
-            result = await getTopicContent(topicId, result.loadMoreKey);
-        }else{
-            break;
-        }
-    }
-
-    for(let da of datas){
-        if(da.createdAt){
-            try{
-                da.created_at = new Date(da.createdAt).getTime();
-                delete da.createdAt;
-            }catch(e){
-                console.log(e)
-            }
-        }
-        let comment = await getCardComment(da.id);
-        await sleep(0.5)
-        da.addComment = comment;
-    }
-
-    return datas;}
-
-
-let run = async (topicId, brick_id, created_at) => {
-
-    let result = await getAllTopicContent(topicId, null, created_at);
-
-    if(result){
-        result.reverse();
-        for(let data of result){
-            console.log("推送")
-            await postDataToMessage(data);
-            await postWashTask(brick_id, data);
-            await sleep(0.5);
-        }
-    }
-
-}
-
-//更新token
-(async ()=> {
-    while(true){
-        if(out){
-            break;
-        }
-        await sleep(300);
-        token = await getToken();
-    }
-
-})();
-
-(async () => {
-    token = await getToken();
-
-    for(let i = 16114; i > 14535; i--){
-        let strr = await readLegoFirst(i);
-        strr= JSON.parse(strr);
+let name = "jike_update_list";
+let run = async () => {
+    for(let i = 14126; i<16196; i++){
         let config = await readLegoName(i)
-        config.created_at = 0;
-        if(strr.result && strr.result.length) {
-            console.log(strr.result[0].created_at);
-            config.created_at = strr.result[0].created_at;
-        }
         console.log(config);
         if(TopicJSON[config.name]){
-            await run(TopicJSON[config.name], config.brick_id, config.created_at);
-            console.log(config.name + "话题 更新完毕");
+            let a = {
+                topic_id: TopicJSON[config.name],
+                brick_id: config.brick_id,
+                name: config.name
+            }
+            await Queue.postDataToMessage(name, a);
+            console.log(a)
         }
     }
-
-})();
+}
+run()
