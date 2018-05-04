@@ -4,6 +4,9 @@ const Queue = require("./api/queue").Queue;
 
 const getApi = require("./api/fetch").getApi;
 
+
+//between created_at === splitDate
+
 const splitDate = 1525276800000;
 
 const BEE_NAME = "jike_topic_history"
@@ -203,14 +206,16 @@ let getAllTopicContent = async (topicId, loadMoreKey, created_at) => {
         result.data = []
     }
     while(result && result.data && result.data.length > 0){
-        for(let data of result.data){
-            if(new Date(data.createdAt).getTime() > created_at){
-                datas.push(data);;
-            }
 
+        for(let data of result.data){
+            if(new Date(data.createdAt).getTime() > created_at && new Date(data.createdAt).getTime() < splitDate){
+                datas.push(data);
+            }
         }
         let ll = result.data.length;
 
+        console.log(new Date(result.data[ll - 1].createdAt).getTime());
+        console.log(created_at)
         if(result.loadMoreKey && new Date(result.data[ll - 1].createdAt).getTime() > created_at){
             console.log("下一页");
             await sleep(1);
@@ -220,6 +225,7 @@ let getAllTopicContent = async (topicId, loadMoreKey, created_at) => {
             break;
         }
     }
+
 
     if(datas && datas.length){
         console.log("共计拿到  ", datas.length, "条");
@@ -243,35 +249,23 @@ let getAllTopicContent = async (topicId, loadMoreKey, created_at) => {
 
 
 let run = async (name, topicId, brick_id, created_at) => {
+    console.log("开始run");
     if(created_at > splitDate){
+        console.log("run中 created_at > splitDate");
         return ;
     }
     let result = await getAllTopicContent(topicId, null, created_at);
 
-    let newestDate = splitDate;
     if(result){
         for(let data of result){
-            newestDate = data.created_at > newestDate ? data.created_at : newestDate;
-            console.log(newestDate);
             console.log("上传" + data.title + "  的  "  + data.content);
             await postDataToMessage(data);
+            console.log("brick_iiiiiiiiid", brick_id);
             await postWashTask(brick_id, data);
             await sleep(0.5);
         }
-        let a = {
-            topic_id: topicId,
-            brick_id: brick_id,
-            name: name,
-            created_at: newestDate,
-        }
-        console.log(a, "回复完成");
-        await Queue.postDataToMessage("jike_new_date", a);
-        console.log("################################################")
-        console.log("请在2秒内推出程序");
-        await sleep(2);
-        console.log("################################################")
-
     }
+    console.log("###########################")
 
 }
 
@@ -294,6 +288,9 @@ let run = async (name, topicId, brick_id, created_at) => {
         let config =await Queue.getDataFromMessage("jike_old_date");
         config = JSON.parse(config.result);
         console.log(config)
+        if(config.created_at > splitDate) {
+            console.log("config处 created_at 大于 splitDate");
+            continue;}
         await run(config.name, config.topic_id, config.brick_id, config.created_at);
     }
 

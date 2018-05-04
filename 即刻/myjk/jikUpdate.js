@@ -248,7 +248,7 @@ let run = async (name, topicId, brick_id, created_at) => {
     }
     let result = await getAllTopicContent(topicId, null, created_at);
 
-    let newestDate = splitDate;
+    let newestDate = created_at;
     if(result){
         for(let data of result){
             newestDate = data.created_at > newestDate ? data.created_at : newestDate;
