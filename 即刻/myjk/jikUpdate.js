@@ -9,6 +9,24 @@ const splitDate = 1525276800000;
 const BEE_NAME = "jike_topic_history"
 let token;
 let out = false;
+let nowRunTask = {};
+let update = true;
+
+
+const postDataToDereplicate = async (data) => {
+    let query = {
+        partition: "jike",
+        key: data
+    };
+    await Http.call(`http://bee.api.talkmoment.com/dereplicate/history/add`, query);
+};
+
+function FormatDate (strTime) {
+    var date = new Date(strTime);
+    return date.getFullYear()+"-"+(date.getMonth()+1)+"-"+date.getDate() + " " + date.getHours() + ":" + date.getMinutes();
+}
+
+
 
 const getCookie = (() => {
     let users = [
@@ -58,14 +76,20 @@ const httpGet = async (path, header) => {
             })
         })
 
-        req.setTimeout(timeout, () => {
-            reject("timeout")
+        req.setTimeout(timeout, async () => {
+            console.log("timeout");
+            await Queue.postDataToMessage("jike_new_date", nowRunTask);
+            console.log("回传完毕");
+            update = false;
             process.exit()
         })
 
-        req.on("error", (e) => {
+        req.on("error", async (e) => {
             console.log(e);
-            reject(e);
+            await Queue.postDataToMessage("jike_new_date", nowRunTask);
+            console.log("回传完毕");
+            update = false;
+            process.exit();
         })
         req.end();
     })
@@ -254,6 +278,7 @@ let run = async (name, topicId, brick_id, created_at) => {
             newestDate = data.created_at > newestDate ? data.created_at : newestDate;
             console.log(newestDate);
             console.log("上传" + data.title + "  的  "  + data.content);
+            await postDataToDereplicate(data.id);
             await postDataToMessage(data);
             await postWashTask(brick_id, data);
             await sleep(0.5);
@@ -267,7 +292,7 @@ let run = async (name, topicId, brick_id, created_at) => {
         console.log(a, "回复完成");
         await Queue.postDataToMessage("jike_new_date", a);
         console.log("################################################")
-        console.log("请在2秒内推出程序");
+        console.log("请在2秒内推出程序",FormatDate(new Date()));
         await sleep(2);
         console.log("################################################")
     }
@@ -276,7 +301,7 @@ let run = async (name, topicId, brick_id, created_at) => {
 
 //更新token
 (async ()=> {
-    while(true){
+    while(update){
         if(out){
             break;
         }
@@ -292,7 +317,8 @@ let run = async (name, topicId, brick_id, created_at) => {
     while(true){
         let config =await Queue.getDataFromMessage("jike_new_date");
         config = JSON.parse(config.result);
-        console.log(config)
+        console.log(config);
+        nowRunTask = config;
         await run(config.name, config.topic_id, config.brick_id, config.created_at);
     }
 

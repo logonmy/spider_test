@@ -10,6 +10,7 @@ Queue.postDataToMessage = async (queueName, data) => {
 Queue.getDataFromMessage = async (queueName) => {
 	return await getApi(`http://bee.api.talkmoment.com/message/subscribe/try?topic=${queueName}`)
 }
+
 Queue.clear = async (queueName) => {
 	while(true){
 		await Queue.getDataFromMessage(queueName);
@@ -35,21 +36,3 @@ Queue.size = async (queueName) => {
 	return size;
 }
 exports.Queue = Queue;
-
-// (async () => {
-// 	let a = {
-//     	topic_id: "5892a5ae87f7850015784318",
-// 		brick_id: 16197,
-// 		name: "即刻_Steam游戏打折情报",
-// 		create_at: 1525276800000
-// 	}
-//
-//     let b = {
-//         topic_id: "557a5ad9e4b04876b8698306",
-//         brick_id: 16198,
-//         name: "即刻_Steam游戏每日特惠的描述",
-//         create_at: 1525276800000
-//     }
-//     await Queue.postDataToMessage("jike_new_date", a);
-//     await Queue.postDataToMessage("jike_new_date", b);
-// })();

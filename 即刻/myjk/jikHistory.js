@@ -7,6 +7,8 @@ const getApi = require("./api/fetch").getApi;
 
 //between created_at === splitDate
 
+//检测是否已经跑过
+
 const splitDate = 1525276800000;
 
 const BEE_NAME = "jike_topic_history"
@@ -62,7 +64,7 @@ const httpGet = async (path, header) => {
         })
 
         req.setTimeout(timeout, () => {
-            reject("timeout")
+            //reject("timeout")
             process.exit()
         })
 
@@ -158,6 +160,10 @@ let getToken = async () => {
     }else{
         throw Error("login 出错")
     }}
+
+let getTopicId = async() =>{
+
+}
 
 let getTopicContent = async (topicId, loadMoreKey) => {
     console.log(topicId, loadMoreKey, "getTopicContentINGGGGGGG");
@@ -281,6 +287,7 @@ let run = async (name, topicId, brick_id, created_at) => {
 
 })();
 
+//开始运行
 (async () => {
     token = await getToken();
 
