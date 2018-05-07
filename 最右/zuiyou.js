@@ -1,17 +1,9 @@
 //仅支持单进程
 const io = require("socket.io-client");
 const socket = io("http://ws.api.talkmoment.com:51179");
-const Http = require("./api/http").Http;
 const EventEmitter = require('events');
-const File = require("fs")
-const readLine = require("lei-stream").readLine
-
 class MyEmitter extends EventEmitter {}
 const myEmitter = new MyEmitter();
-
-const sleep = (s = 5) => {
-    return new Promise(resolve => setTimeout(resolve, s * 1000))
-};
 
 socket.on("signRes", (data) => {
     myEmitter.emit(data.echo, data)
