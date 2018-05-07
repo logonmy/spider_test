@@ -255,6 +255,9 @@ let getKeyword = async(keyword, loadMoreKey) =>{
         cardCommentCount = 0;
         task.brick_id = JSON.parse(task.config).brick_id;
         let result = await getKeyword(task.value, null);
+        if(!result){
+            task.reject();
+        }
         console.log(result.length);
         result = await filterItems(result);
         for(let re of result){
