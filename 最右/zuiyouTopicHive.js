@@ -3,6 +3,7 @@ const Http = require("./api/http").Http;
 const Https = require("./api/https").Http;
 const Task = require("./api/task").Task;
 const Socket = require("./api/socket").Socket;
+const File = require("fs")
 
 let getcommentCount = 0;
 
@@ -32,7 +33,7 @@ const AskSign = async (url, params, echo) => {
     })
 }
 
-const BEE_NAME = "zuiyou_topic";
+const BEE_NAME = "zuiyou_history";
 const sleep = (s = 5) => {
     return new Promise(resolve => setTimeout(resolve, s * 1000))
 };
@@ -41,9 +42,12 @@ const filterItems = async (data) => {
     let query = {
         partition: "zuiyou",
         keys: data.map((item) => {
-            return item.id + ""
+            return "zuiyou" + item.id
         })
     };
+    for(let q of query.keys){
+        console.log(q, "q")
+    }
     let res = await Http.call(`http://bee.api.talkmoment.com/dereplicate/filter/by/history`, query);
     res = JSON.parse(res);
     Socket.log(res);
@@ -53,8 +57,9 @@ const filterItems = async (data) => {
 const postDataToDereplicate = async (data) => {
     let query = {
         partition: "zuiyou",
-        key: data
+        key: "zuiyou" + data
     };
+    console.log(query.key, "p");
     await Http.call(`http://bee.api.talkmoment.com/dereplicate/history/add`, query);
 };
 
@@ -113,31 +118,44 @@ let getCommentAll = async(id) => {
     return result
 }
 
-
-let getKeyWordOne = async(offset,keyword) => {
-    console.log(offset, keyword, "getKeywordINGGGGGGGGGGGGGGGGGG");
-    let sign = await AskSign("https://api.izuiyou.com/search/post", {offset: offset,q: keyword}, "getKeyword");
+let getTopicId = async(value) => {
+    let sign = await AskSign("https://api.izuiyou.com/search/topic", {q: value}, "getTopicId");
     let result = await Https.call(sign.url, sign.params);
+    console.log(result)
     result = JSON.parse(result);
-    await sleep(1)
-    return {
-        data: result.data.list,
-        offset: result.data.offset,
+    try{
+        return result.data.list[0].id;
+    }catch(e){
+        return false;
     }
+
 }
 
-let getKeywordAll = async(keyword) =>{
+let getTopicOne = async (topicId, next_cb) => {
+    Socket.log("翻到下一页了");
+    await sleep(1);
+    let sign = await AskSign("https://api.izuiyou.com/topic/posts_list", {tid: topicId, sort: "new", next_cb: next_cb}, "getTopic");
+    let result = await Https.call(sign.url, sign.params);
+    result = JSON.parse(result);
+    return result
+}
+
+let getTopicAll = async (topicId) => {
     let datas = [];
-    let sign = await AskSign("https://api.izuiyou.com/search/post", {offset: 0,q: keyword}, "getKeyword");
+    let sign = await AskSign("https://api.izuiyou.com/topic/posts_list", {tid: topicId, sort: "new"}, "getTopic");
+    console.log(sign);
     let result = await Https.call(sign.url, sign.params);
     result = JSON.parse(result);
     datas = datas.concat(result.data.list);
-    let offset = result.data.offset;
+    let next_cb = result.data.next_cb;
+    console.log(result.data.more);
 
-    while (offset && offset < 120 && datas.length < 100){
-        let result = await getKeyWordOne(offset, keyword);
-        offset = result.offset;
-        datas = datas.concat(result.data);
+    while(result.data.more){
+        result = await getTopicOne(topicId, next_cb);
+        console.log(result.data.more, "more");
+        console.log(result.data.list.length, "length");
+        datas = datas.concat(result.data.list);
+        next_cb = result.data.next_cb;
     }
 
     for(let da of datas){
@@ -145,6 +163,7 @@ let getKeywordAll = async(keyword) =>{
         da.hotreviews = comment.data.hotreviews;
         da.newreviews = comment.data.newreviews;
     }
+
     return datas;
 }
 
@@ -162,16 +181,20 @@ let getKeywordAll = async(keyword) =>{
         console.log(task);
         task.brick_id = JSON.parse(task.config).brick_id;
 
-        let result = await getKeywordAll(task.value);
+        let id = await getTopicId(task.value);
+        if(!id){
+            await task.rejectTask(task, "反正是失败了");
+        }
+
+        let result = await getTopicAll(id);
         if(!result){
-            task.reject();
+            await task.rejectTask(task, "反正是失败了");
         }
         console.log(result.length);
         result = await filterItems(result);
         for(let re of result){
-            re.keyword = task.value;
             re.brick_id = task.brick_id;
-            //await postDataToDereplicate(re.id);
+            await postDataToDereplicate(re.id);console.log(re.id);
             await postDataToMessage(re);
             await postWashTask(task.brick_id, re)
         }
