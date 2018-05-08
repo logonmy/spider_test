@@ -3,7 +3,6 @@ const Http = require("./api/http").Http;
 const Https = require("./api/https").Http;
 const Task = require("./api/task").Task;
 const Socket = require("./api/socket").Socket;
-const File = require("fs")
 
 let getcommentCount = 0;
 
@@ -33,10 +32,7 @@ const AskSign = async (url, params, echo) => {
     })
 }
 
-
-const getApi = require("./api/fetch").getApi;
-
-const BEE_NAME = "zuiyou_keyword";
+const BEE_NAME = "zuiyou_topic";
 const sleep = (s = 5) => {
     return new Promise(resolve => setTimeout(resolve, s * 1000))
 };
@@ -175,7 +171,7 @@ let getKeywordAll = async(keyword) =>{
         for(let re of result){
             re.keyword = task.value;
             re.brick_id = task.brick_id;
-            await postDataToDereplicate(re.id);
+            //await postDataToDereplicate(re.id);
             await postDataToMessage(re);
             await postWashTask(task.brick_id, re)
         }

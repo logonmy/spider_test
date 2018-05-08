@@ -13,7 +13,6 @@ let cardCommentCount = 0;
 
 const getCookie = (() => {
     let users = [
-        "jike:sess=eyJfdWlkIjoiNWFkZWM4ZjM4MGU2MDAwMDE3ZTJlOGJiIiwiX3Nlc3Npb25Ub2tlbiI6Ing4c2I1U0pZeWcwQnczem5sZmVZOEE3cGcifQ==; path=/; expires=Fri, 19 Apr 2019 06:58:18 GMT; domain=.jike.ruguoapp.com; secure; httponly;jike:sess.sig=qAdw4DJw6MmBS2qRupCRNAHL0bM; path=/; expires=Fri, 19 Apr 2019 06:58:18 GMT; domain=.jike.ruguoapp.com; secure; httponly",
         "jike:sess=eyJfdWlkIjoiNWFkZWQ1ZWRkZjBjNjUwMDE3MzQxYTQzIiwiX3Nlc3Npb25Ub2tlbiI6Ik5QWnJ4N2tGWnE2TkNFdjl4RUJtc0JCTUQifQ==; path=/; expires=Fri, 19 Apr 2019 07:09:01 GMT; domain=.jike.ruguoapp.com; secure; httponly;jike:sess.sig=xO4EuDEaXjq6S7bJP7_6w8t1L8Y; path=/; expires=Fri, 19 Apr 2019 07:09:01 GMT; domain=.jike.ruguoapp.com; secure; httponly",
         "jike:sess=eyJfdWlkIjoiNWFkZWQ5NzkwNjUxOTgwMDE3NTJlMzBiIiwiX3Nlc3Npb25Ub2tlbiI6InlxZEdyVWRTa01kTTRsRlZLTGhuZ0JQR1oifQ==; path=/; expires=Fri, 19 Apr 2019 07:16:48 GMT; domain=.jike.ruguoapp.com; secure; httponly;jike:sess.sig=CBNFqijfvdKHWh3VXrVdcXnOrUM; path=/; expires=Fri, 19 Apr 2019 07:16:48 GMT; domain=.jike.ruguoapp.com; secure; httponly",
         "jike:sess=eyJfdWlkIjoiNWFkZWRhMjQ3NjQwZDUwMDE3ZGIwN2Y2IiwiX3Nlc3Npb25Ub2tlbiI6InJaNVUzVjZJQTJOa21rVmtJbUUzOEIxTXUifQ==; path=/; expires=Fri, 19 Apr 2019 07:20:32 GMT; domain=.jike.ruguoapp.com; secure; httponly;jike:sess.sig=4ABn6K2Uoxs_GzNCEpVcwjwPiuw; path=/; expires=Fri, 19 Apr 2019 07:20:32 GMT; domain=.jike.ruguoapp.com; secure; httponly",
@@ -35,7 +34,7 @@ const filterItems = async (data) => {
     let query = {
         partition: "jike",
         keys: data.map((item) => {
-            return item.id
+            return item.id + ""
         })
     };
     Socket.log(query);
@@ -210,7 +209,7 @@ let getCardComment = async (targetId)=> {
     }
     return result;}
 let getTopicContent = async (topicId, loadMoreKey) => {
-    console.log(topicId, loadMoreKey, "getTopicContentINGGGGGGG");
+    Socket.log(topicId, loadMoreKey, "getTopicContentINGGGGGGG");
     let moreArgs = {
         method: "POST",
         headers: {
@@ -228,6 +227,7 @@ let getTopicContent = async (topicId, loadMoreKey) => {
 let getAllTopicContent = async (topicId, loadMoreKey) => {
     let datas = []
     let result = await getTopicContent(topicId, loadMoreKey);
+    datas = datas.concat(result.data);
     if(!result.data){
         result.data = []
     }
@@ -236,18 +236,19 @@ let getAllTopicContent = async (topicId, loadMoreKey) => {
 
         console.log(new Date(result.data[ll - 1].createdAt).getTime());
         if(result.loadMoreKey){
-            console.log("下一页");
+            Socket.log("下一页");
             await sleep(1);
             result = await getTopicContent(topicId, result.loadMoreKey);
+            datas = datas.concat(result.data);
         }else{
-            console.log("这页已经够了");
+            Socket.log("这页已经够了");
             break;
         }
     }
 
 
     if(datas && datas.length){
-        console.log("共计拿到  ", datas.length, "条");
+        Socket.log("共计拿到  ", datas.length, "条");
     }
 
     for(let da of datas){
@@ -282,6 +283,7 @@ const getTopicId = async(value) => {
         })
     }
     let result = await getApi("https://app.jike.ruguoapp.com/1.0/users/topics/search", moreArgs);
+    console.log(result);
     if(result && result.data && result.data[0]){
         return result.data[0].id;
     }
@@ -313,11 +315,18 @@ const getTopicId = async(value) => {
         console.log(task);
         cardCommentCount = 0;
         task.brick_id = JSON.parse(task.config).brick_id;
-        let topicId = await getTopicId(task.value);
-        if(!topicId) {
-            task.reject();
-            continue
+        let topicId;
+        if(task.value.length !== 24){
+            topicId = await getTopicId(task.value);
+            console.log("获得topicId", topicId)
+            if(!topicId) {
+                task.reject();
+                continue
+            }
+        }else{
+            topicId = task.value;
         }
+
         let result = await getAllTopicContent(topicId, null);
         console.log(result.length);
         result = await filterItems(result);
