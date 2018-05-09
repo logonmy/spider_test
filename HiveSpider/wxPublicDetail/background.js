@@ -116,7 +116,7 @@ require([
             Socket.log(`爬取任务完成`);
 
         } catch(err) {
-            Socket.error("爬取失败,err=", err.stack);
+            Socket.error("爬取失败,err=", err.error);
             Socket.log(`上报爬取任务失败,task=`, task);
             await Task.rejectTask(task, err);
         }

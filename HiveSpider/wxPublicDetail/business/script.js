@@ -266,7 +266,7 @@ var TemplateData = {
 setTimeout(function(){
     try{
         TemplateData.title = document.querySelector(".rich_media_title").innerText;
-        TemplateData.created_at = new Date(document.querySelector("[id=post-date]").innerText).getTime();
+        TemplateData.created_at = new Date(document.querySelector("[id=publish_time]").innerText).getTime();
         TemplateData.url = window.location.href;
         TemplateData.content = JSON.stringify(BeeUtils.htmlToJson(document.getElementsByClassName("rich_media_content")[0]));
         console.log(JSON.stringify(TemplateData));
@@ -275,6 +275,7 @@ setTimeout(function(){
         window.close();
     }
     catch(e){
+        console.log(e)
         chrome.runtime.sendMessage({
             error:e,
             data: TemplateData,

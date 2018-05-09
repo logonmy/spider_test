@@ -498,6 +498,8 @@ run = async () => {
                 await filterItems(task, task.datas);
 
                 for (let data of task.datas) {
+                    //todo 删除包含展开全文的 微博
+
                     let taskCopy = copyJSON(task);
                     Socket.log(data);
                     taskCopy.data = JSON.stringify(data);

@@ -143,6 +143,7 @@ let getKeywordAll = async(keyword) =>{
         offset = result.offset;
         datas = datas.concat(result.data);
     }
+    //todo 按照作者 标题去重
 
     for(let da of datas){
         let comment = await getCommentAll(da.id);
