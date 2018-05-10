@@ -41,6 +41,7 @@ const filterItems = async (task, data) => {
     res = JSON.parse(res);
     Socket.log(res);
     data = data.filter((item, i) => (res.result.filter_result[i]));
+    return data;
 };
 
 const postDataToMessage = async (task, data) => {
@@ -495,7 +496,7 @@ run = async () => {
                 let task = taskHeap.getReadyTask();
                 //todo taskSolve
 
-                await filterItems(task, task.datas);
+                task.datas = await filterItems(task, task.datas);
 
                 for (let data of task.datas) {
                     //todo 删除包含展开全文的 微博
