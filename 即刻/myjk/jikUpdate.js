@@ -11,6 +11,7 @@ let token;
 let out = false;
 let nowRunTask = {};
 let update = true;
+let cookieING;
 
 
 const postDataToDereplicate = async (data) => {
@@ -38,6 +39,7 @@ const getCookie = (() => {
     ];
     return () => {
         let result = users.shift();
+        cookieING = result;
         users.push(result);
         return result;
     }
@@ -293,6 +295,7 @@ let run = async (name, topicId, brick_id, created_at) => {
         await Queue.postDataToMessage("jike_new_date", a);
         console.log("################################################")
         console.log("请在2秒内推出程序",FormatDate(new Date()));
+        console.log(cookieING);
         await sleep(2);
         console.log("################################################")
     }

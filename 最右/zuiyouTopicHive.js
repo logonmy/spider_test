@@ -24,8 +24,8 @@ const AskSign = async (url, params, echo) => {
             init: "true"
         });
         let timeout = setTimeout(() => {
-            reject("timeout, 超出三秒了")
-        }, 3000)
+            reject("timeout, 超出十秒了")
+        }, 10000)
         myEmitter.once(echo, (data) => {
             clearTimeout(timeout);
             resolve(data);
@@ -103,9 +103,11 @@ let getCommentAll = async(id) => {
     let offset = 15;
     result = JSON.parse(result);
 
-    datas = datas.concat(result.data.newreviews);
+    if(result && result.data && result.data.newreviews){
+        datas = datas.concat(result.data.newreviews);
+    }
 
-    while(9 < datas.length && result.data.newreviews.length < limit){
+    while(9 < datas.length && result && result.data && result.data.newreviews.length < limit){
         let comm = await getCommentOne(offset, id);
         datas = comm.data;
         console.log(datas.length, 1)
@@ -160,8 +162,12 @@ let getTopicAll = async (topicId) => {
 
     for(let da of datas){
         let comment = await getCommentAll(da.id);
-        da.hotreviews = comment.data.hotreviews;
-        da.newreviews = comment.data.newreviews;
+        if(comment && comment.data && comment.data.hotreviews){
+            da.hotreviews = comment.data.hotreviews;
+        }
+        if(comment && comment.data && comment.data.newreviews){
+            da.newreviews = comment.data.newreviews;
+        }
     }
 
     return datas;
