@@ -1,5 +1,6 @@
-const http = require("http");
+const http = require("https");
 let Http = {};
+const File = require("fs")
 
 const timeout = 10000;
 
@@ -31,7 +32,7 @@ Http.call = async (path, args) => {
         })
 
         req.setTimeout(timeout, () => {
-            reject("timeout");
+            reject("timeout")
         })
 
         req.on("error", (e) => {
@@ -51,7 +52,8 @@ Http.get = async (path) => {
         method: "POST",
         path: "/" + path.split("com/")[1],
         headers: {
-            'Content-Type': 'application/json',
+            "Origin": "https://www.bilibili.com",
+            "User-Agent":" Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.139 Safari/537.36"
         }
     };
     return new Promise((resolve, reject) => {
@@ -60,9 +62,12 @@ Http.get = async (path) => {
             let data = "";
             res.setEncoding('utf-8');
             res.on("data", (chunk) => {
+                console.log(chunk);
+                File.appendFileSync("1.txt", chunk + "\n")
                 data += chunk;
             })
             res.on("end", () => {
+                //toXml(data)
                 resolve(data);
             })
         })

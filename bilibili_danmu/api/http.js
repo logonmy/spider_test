@@ -31,7 +31,7 @@ Http.call = async (path, args) => {
         })
 
         req.setTimeout(timeout, () => {
-            reject("timeout");
+            reject("timeout")
         })
 
         req.on("error", (e) => {

@@ -84,9 +84,28 @@ const postDataToMessage = async (data) => {
 };
 
 let getCommentOne = async(offset, id) => {
-    let sign = await AskSign("https://api.izuiyou.com/review/hot_reviews", {offset: offset, pid: id}, "getComment");
+    let sign;
+    try{
+        sign = await AskSign("https://api.izuiyou.com/review/hot_reviews", {offset: offset, pid: id}, "getComment");
+    }catch(e){
+        console.log("请求sign出错了");
+        console.log(e);
+        process.exit(0);
+    }
+
     let result = await Https.call(sign.url, sign.params);
-    result = JSON.parse(result);
+    try{
+        result = JSON.parse(result);
+    }catch(e){
+        console.log("获取评论失败了")
+        console.log(e)
+        console.log(result)
+        return {
+            offset: offset + 10,
+            data: []
+        }
+    }
+
     console.log("增长了一次评论");
     await sleep(0.5);
     return {
@@ -98,14 +117,21 @@ let getCommentOne = async(offset, id) => {
 let getCommentAll = async(id) => {
     let datas = [];
     const limit = 200;
-    let sign = await AskSign("https://api.izuiyou.com/post/detail", {pid: id}, "getComment");
-    let result = await Https.call(sign.url, sign.params);
-    let offset = 15;
-    result = JSON.parse(result);
-
-    if(result && result.data && result.data.newreviews){
-        datas = datas.concat(result.data.newreviews);
+    let result, offset;
+    try{
+        let sign = await AskSign("https://api.izuiyou.com/post/detail", {pid: id}, "getComment");
+        result = await Https.call(sign.url, sign.params);
+        offset = 15;
+        result = JSON.parse(result);
+        if(result && result.data && result.data.newreviews){
+            datas = datas.concat(result.data.newreviews);
+        }
+    }catch(e){
+        console.log("获取全部评论的第一步就坏事了");
+        let back = await getCommentAll(id);
+        return back;
     }
+
 
     while(9 < datas.length && result && result.data && result.data.newreviews.length < limit){
         let comm = await getCommentOne(offset, id);
@@ -120,90 +146,128 @@ let getCommentAll = async(id) => {
     return result
 }
 
-let getTopicId = async(value) => {
-    let sign = await AskSign("https://api.izuiyou.com/search/topic", {q: value}, "getTopicId");
-    let result = await Https.call(sign.url, sign.params);
-    console.log(result)
-    result = JSON.parse(result);
-    try{
-        return result.data.list[0].id;
-    }catch(e){
-        return false;
-    }
-
+const getTopicId = (value) => {
+    return new Promise(async (resolve, reject) => {
+        try{
+            let sign = await AskSign("https://api.izuiyou.com/search/topic", {q: value}, "getTopicId");
+            let result = await Https.call(sign.url, sign.params);
+            result = JSON.parse(result);
+            resolve(result.data.list[0].id);
+        }catch(e){
+            console.log(e);
+            reject(e);
+        }
+    })
 }
 
 let getTopicOne = async (topicId, next_cb) => {
-    Socket.log("翻到下一页了");
+    Socket.log("翻到下一页了",next_cb);
     await sleep(1);
-    let sign = await AskSign("https://api.izuiyou.com/topic/posts_list", {tid: topicId, sort: "new", next_cb: next_cb}, "getTopic");
-    let result = await Https.call(sign.url, sign.params);
-    result = JSON.parse(result);
-    return result
+
+    try{
+        let sign = await AskSign("https://api.izuiyou.com/topic/posts_list", {tid: topicId, sort: "new", next_cb: next_cb}, "getTopic");
+        let result = await Https.call(sign.url, sign.params);
+        result = JSON.parse(result);
+        return result
+    }catch(e){
+        return {
+            data: {
+                list: [],
+                more: true
+            },
+            next_cb: next_cb
+        }
+    }
+
 }
 
 let getTopicAll = async (topicId) => {
     let datas = [];
-    let sign = await AskSign("https://api.izuiyou.com/topic/posts_list", {tid: topicId, sort: "new"}, "getTopic");
-    console.log(sign);
-    let result = await Https.call(sign.url, sign.params);
-    result = JSON.parse(result);
-    datas = datas.concat(result.data.list);
-    let next_cb = result.data.next_cb;
-    console.log(result.data.more);
-
-    while(result.data.more){
-        result = await getTopicOne(topicId, next_cb);
-        console.log(result.data.more, "more");
-        console.log(result.data.list.length, "length");
-        datas = datas.concat(result.data.list);
-        next_cb = result.data.next_cb;
-    }
-
-    for(let da of datas){
-        let comment = await getCommentAll(da.id);
-        if(comment && comment.data && comment.data.hotreviews){
-            da.hotreviews = comment.data.hotreviews;
+    let nextPageCount = 0;
+    let sign;
+    let result;
+    let next_cb;
+    return new Promise(async (resolve, reject) => {
+        try{
+            sign = await AskSign("https://api.izuiyou.com/topic/posts_list", {tid: topicId, sort: "new"}, "getTopic");
+            result = await Https.call(sign.url, sign.params);
+            result = JSON.parse(result);
+            datas = datas.concat(result.data.list);
+            next_cb = result.data.next_cb;
+        }catch(e){
+            reject(new Date(), "getTopicAll的第一步就错了");
         }
-        if(comment && comment.data && comment.data.newreviews){
-            da.newreviews = comment.data.newreviews;
-        }
-    }
 
-    return datas;
+        while(result.data.more){
+            Socket.log("现在是第 ", nextPageCount++ , " 个下一页")
+            result = await getTopicOne(topicId, next_cb);
+            datas = datas.concat(result.data.list);
+            next_cb = result.data.next_cb;
+        }
+
+        if(datas.length){
+            for(let da of datas){
+                let comment = await getCommentAll(da.id);
+                if(comment && comment.data && comment.data.hotreviews){
+                    da.hotreviews = comment.data.hotreviews;
+                }
+                if(comment && comment.data && comment.data.newreviews){
+                    da.newreviews = comment.data.newreviews;
+                }
+            }
+        }else{
+            reject("莫名其妙datas没有数据");
+        }
+
+        resolve(datas);
+    })
+
+
+
+
+
+
 }
 
 (async () => {
     Socket.startHeartBeat(BEE_NAME);
     while(true){
-        let task = await Task.fetchTask(BEE_NAME);
-        getcommentCount = 0
-
-        if(task === null){
-            Socket.log("暂时没有任务");
+        let task;
+        try{
+            task = await Task.fetchTask(BEE_NAME);
+        }catch(e){
+            console.log(e);
             await sleep(5);
             continue
         }
-        console.log(task);
+        getcommentCount = 0;
+        console.log("获得任务", task);
         task.brick_id = JSON.parse(task.config).brick_id;
 
-        let id = await getTopicId(task.value);
-        if(!id){
-            await task.rejectTask(task, "反正是失败了");
-        }
+        let id, result;
+        try{
+            id = await getTopicId(task.value);
+            result = await getTopicAll(id);
 
-        let result = await getTopicAll(id);
-        if(!result){
+            console.log(result.length);
+            result = await filterItems(result);
+            try{
+                for(let re of result){
+                    re.brick_id = task.brick_id;
+                    await postDataToDereplicate(re.id);console.log(re.id);
+                    await postDataToMessage(re);
+                    await postWashTask(task.brick_id, re)
+                }
+            }catch(e){
+                console.log(e)
+                console.log("上传数据的时候不要吊它");
+            }
+            await sleep(5)
+        }catch(e) {
+            console.log(e)
             await task.rejectTask(task, "反正是失败了");
+            await sleep(5);
+            continue;
         }
-        console.log(result.length);
-        result = await filterItems(result);
-        for(let re of result){
-            re.brick_id = task.brick_id;
-            await postDataToDereplicate(re.id);console.log(re.id);
-            await postDataToMessage(re);
-            await postWashTask(task.brick_id, re)
-        }
-        await sleep(5)
     }
 })();
