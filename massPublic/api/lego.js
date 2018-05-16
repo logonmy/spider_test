@@ -9,7 +9,6 @@ let addLegoBrick = async(name, desc) =>{
 		"size": 0
 	}
 	let result = await Http.call("http://chatbot.api.talkmoment.com/lego/library/legobrick/post?version=002", morArgs);
-	console.log(typeof(result))
 	return result;
 }
 let deleteLegoBrick = async(brick_id) =>{

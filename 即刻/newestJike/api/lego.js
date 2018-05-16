@@ -27,8 +27,8 @@ let readLegoFirst = async (brick_id) => {
     return result;
 }
 
-exports.addLego = addLego;
-exports.deleteLego = deleteLego;
+exports.addLego = addLegoBrick;
+exports.deleteLego = deleteLegoBrick;
 exports.getBrick = getBrick;
 exports.readLegoFirst = readLegoFirst;
 

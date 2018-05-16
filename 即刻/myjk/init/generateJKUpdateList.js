@@ -1,5 +1,4 @@
 const Http = require("../api/http").Http
-const Queue = require("../api/queue").Queue
 const TopicJSON = {
     "即刻_二次元大事件": "56cc4a5b7cb333110045f1b7",
     "即刻_打击谣言和不靠谱信息": "56d687dc35f48a1200871bae",
@@ -2104,12 +2103,14 @@ const readLegoFirst = async (brick_id) => {
 
 let name = "jike_new_date";
 let run = async () => {
-    for(let i = 14126; i<16196; i++){
+    for(let i = 14128; i<16196; i++){
         let config = await readLegoName(i)
         console.log(config);
 
         let strr = await readLegoFirst(i);
+
         strr= JSON.parse(strr);
+        console.log(strr);
 
         config.created_at = 0;
         if(strr.result && strr.result.length) {
@@ -2124,9 +2125,9 @@ let run = async () => {
                 name: config.name,
                 created_at: config.created_at
             }
-            await Queue.postDataToMessage(name, a);
-            console.log(a)
+            console.log(name, a);
         }
+        break;
     }
 }
 run()

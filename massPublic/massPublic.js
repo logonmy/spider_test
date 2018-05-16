@@ -3,7 +3,7 @@ const addLego = require("./api/lego").addLego;
 const deleteLego = require("./api/lego").deleteLego;
 const Http = require("./api/http").Http;
 
-let i = 1;
+let i = 0;
 
 let sleep = async (s= 10) => {
     return new Promise(resolve => {setTimeout(resolve, s*1000)})
@@ -12,11 +12,17 @@ let sleep = async (s= 10) => {
 
 readLine("zuiyou.txt").go(async(data, next) => {
     console.log("#############################################")
-    console.log("读取文件第 " , i , " 行");
+    console.log("读取文件第 " , i++ , " 行");
 
     data = JSON.parse(data);
+    let name = "最右_" + data.topic
     let addBack = await addLego("最右_" + data.topic, "最右_" + data.topic + "的简介");
     addBack = JSON.parse(addBack);
+    while(addBack.err_no == -1){
+        name = name + "2";
+        addBack = await addLego(name, "最右_" + data.topic + "的简介");
+        addBack = JSON.parse(addBack);
+    }
     console.log(addBack);
     console.log("建立brick成功, brick_id为 ",addBack.result.id);
     let result = {
@@ -32,6 +38,6 @@ readLine("zuiyou.txt").go(async(data, next) => {
     console.log(re)
     console.log("任务推送成功")
     console.log("#############################################")
-    await sleep(300);
+    await sleep(2);
     next();
 })

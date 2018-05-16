@@ -185,7 +185,10 @@ const searchBigVName = async () => {
     const main = async (curPage) => {
 
         let requireWeibo = await getRequire()
-        console.log("获取requireWeibo", requireWeibo)
+        console.log("获取requireWeibo");
+        for(let requruu of requireWeibo){
+            console.log(requruu.lego_id, "    ",requruu.topic, "     ", requruu.title);
+        }
         curPage.goto(currentUrl);
         try {
             await curPage.waitForSelector("div.WB_frame_c", {timeout: 60000});
@@ -194,7 +197,7 @@ const searchBigVName = async () => {
             console.log("博主页面加载失败，正在重试");
             await curPage.reload();
             await sleep();
-            main(curPage);
+            await main(curPage);
             return;
         }
         log("进入博主 " + await curPage.title());
@@ -216,7 +219,7 @@ const searchBigVName = async () => {
             await pages[0].waitForSelector("[node-type=feed_list_page]", {timeout: 30000});
             console.log("加载底部翻页按钮成功");
         } catch (e) {
-            if(loadBottomCount == 1){
+            if(loadBottomCount == 0){
                 console.log("不管底部加载成功与否了，也许就没有底部")
                 loadBottomCount = 0;
             }else{
@@ -264,25 +267,38 @@ const searchBigVName = async () => {
 
             let url = datesButtonDom[i].href;
 
+
+            let qwee = qwe(url);
+            console.log("##################", new Date(), "###############")
+            console.log("qwee", qwee.lego_id, "    ", qwee.title, "    ",qwee.href);
+            if(!qwee.lego_id){
+                console.log("这个没有出现在接口返回中 直接就不要了");
+                console.log("##################", new Date(), "###############")
+                continue;
+            }
+
             await datesButton[i].click();
             let interval = setInterval(function(){
                 datesButton[i].click();
             }, 50000)
             let Pages = await browser.pages()
+            if(Pages.length > 3){
+                console.log("Pages过多了 有点奇怪");
+                process.exit(0);
+            }
             while(Pages.length === 2){
-                console.log("waiting");
                 await sleep(2);
                 Pages = await browser.pages();
+                if(Pages.length > 3){
+                    console.log("Pages过多了 有点奇怪");
+                    process.exit(0);
+                }
             }
             pages[1] = Pages[2];
             clearInterval(interval);
 
-
             let ainResult;
 
-            let qwee = qwe(url);
-
-            //todo
             let brick_id = 10883;
             let lego_id = qwee.lego_id;
             if(qwee){
@@ -298,27 +314,21 @@ const searchBigVName = async () => {
                 re.brick_id = 10883;
                 re.lego_id = lego_id;
             }
+
             ainResult = await filterItemsC(ainResult);
             console.log("after", ainResult.length)
             for(let re of ainResult){
                 await postDataToMessage(re);
+                console.log(re.lego_id, "      ", re.commenterInfo.text);
                 await postWashTask(brick_id, re);
                 await postDataToDereplicate(lego_id + re.commenterInfo.text);
             }
+            console.log("##################", new Date(), "###############")
         }
 
-        //进入下一页
-        try{
-            await curPage.waitForSelector(".page.next.S_txt1.S_line1", {timeout: 45000});
-            page += 1;
-            currentUrl = currentUrl + "&page=" + page;
-            await main(curPage);
-        }catch(e){
-            console.log("一次遍历完成")
-            sleep();
-            await searchBigVName();
-        }
-
+        console.log(new Date(), "   一次遍历完成,🐶");
+        await sleep();
+        await searchBigVName();
     };
 
     let ain = async (curPage, commentCC) => {

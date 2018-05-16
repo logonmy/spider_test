@@ -107,7 +107,7 @@ let getCommentOne = async(offset, id) => {
     }
 
     console.log("增长了一次评论");
-    await sleep(0.5);
+    //await sleep(0.5);
     return {
         offset: result.data.offset,
         data: result.data.list
@@ -162,7 +162,7 @@ const getTopicId = (value) => {
 
 let getTopicOne = async (topicId, next_cb) => {
     Socket.log("翻到下一页了",next_cb);
-    await sleep(1);
+    //await sleep(1);
 
     try{
         let sign = await AskSign("https://api.izuiyou.com/topic/posts_list", {tid: topicId, sort: "new", next_cb: next_cb}, "getTopic");
