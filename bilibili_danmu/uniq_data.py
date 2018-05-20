@@ -21,3 +21,14 @@ with codecs.open("result3.txt", encoding="utf8", mode="r") as file_content:
 			print e.message
 
 file_writer.close()
+
+datas = []
+function a(url){
+	http.get(url){
+		req.end(function(){
+			url = url + 1
+			a(url)
+			datas,push(da);
+		})
+	}
+}

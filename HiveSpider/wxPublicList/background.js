@@ -20,6 +20,7 @@ require([
             partition: DETAIL_BEE_NAME,
             keys: data.items.map(item => item.url)
         };
+        Socket.log(query);
         let res = await Http.call(`http://bee.api.talkmoment.com/dereplicate/filter/by/history`, query);
         data.items = data.items.filter((item, i) => (res.filter_result[i]));
     };
@@ -33,7 +34,7 @@ require([
                     brick_id: JSON.parse(listTask.config).brick_id,
                     up_name: listTask.value
                 }),
-                scheduled_at: 9999999999999
+                scheduled_at: new Date().getTime()
             };
             let task = await Http.call(`http://bee.api.talkmoment.com/scheduler/task/post`, query);
             Socket.log(`向Scheduler添加task=`, task);

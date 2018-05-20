@@ -1,94 +1,0 @@
-http://tbapi.ixiaochuan.cn/topic/hotposts_new?sign=12b06c9b885f355ae6aac27e7fcfae11
-
-{"offset":0,"h_av":"3.4.2","h_dt":0,"h_os":23,"h_model":"ZUK Z2131","h_did":"860988030015429_02:00:00","h_nt":1,"h_m":21985444,"h_ch":"me","h_ts":1492652648335,"token":"TeK8NPUXEJtivCXT7Nyu4cvC1n3y-hYnSHisC0kHHXomMWas=","tid":101762}
-
-offset 20,40,80 返回数据里有
-tid: 话题id
-
-其他参数由app自己添加 包括 h_av h_dt h_os h_model h_did  h_nt h_m h_ch h_ts token
-
-图片地址拼接：http://tbfile.ixiaochuan.cn/img/view/id/60578610/sz/src 数字部分为图片id
-
-
-
-
-用户帖子
-http://tbapi.ixiaochuan.cn/user/posts?sign=3fe7270a0688c8ed51dea1850633afbe
-
-{"offset":20,"token":"TfKcNPUXEJtivCXT7Nyu4cvC1n-lbZnmMINDxOmy0zoy1zT0=","mid":6929113,"t":15089163}
-
-mid 用户id
-t 上次请求的 data里的t
-
-根据话题
-
-offset
-tid : 话题id 例如：227217
-最新 http://tbapi.ixiaochuan.cn/topic/posts
-热门请求接口 http://tbapi.ixiaochuan.cn/topic/hotposts_new
-
-http://tbapi.ixiaochuan.cn/topic/posts?sign=5f8d1366442224fa1ea4f210ce2b36d5
-{"offset":0,"h_av":"3.4.2","h_dt":0,"h_os":23,"h_model":"ZUK Z2131","h_did":"860988030015429_02:00:00","h_nt":1,"h_m":21985444,"h_ch":"me","h_ts":1492657357708,"token":"TfKcNPUXEJtivCXT7Nyu4cvC1n-lbZnmMINDxOmy0zoy1zT0=","tid":227217,"t":0}
-
-根据话题 找用户
-http://tbapi.ixiaochuan.cn/topic/rank
-
-offset
-tag weekly monthly all
-tid
-
-
-
-1找分类
-
-{"h_av":"3.4.2","h_dt":0,"h_os":23,"h_model":"ZUK Z2131","h_did":"860988030015429_02:00:00","h_nt":1,"h_m":21985444,"h_ch":"me","h_ts":1492658164106,"token":"T6K3NPUXEJtivCXT7Nyu4cvC1n5oQtCPzynkgOwIhMwskvE4="}
-
-http://tbapi.ixiaochuan.cn/topic/recommend_home?sign=4ddae0144ac76f1788ee80a058d5890a
-
-
-2根据分类cid 找话题
-c
-offset
-cid:上一步得到
-
-
-http://tbapi.ixiaochuan.cn/topic/recommend_page
-
-
-
-
-http://tbapi.ixiaochuan.cn/topic/recommend_page
-
-map.put("cid", cid); map.put("offset", offset);
-
-
-
-http://tbapi.ixiaochuan.cn/topic/posts
-
-map.put("tid", id); map.put("offset", offset); map.put("t", t);
-
-
-
-http://tbapi.ixiaochuan.cn/index/recommend
-map.put("offset", 0); map.put("filter", "all"); map.put("tab", "rec");
-if (isUp) {   map.put("direction", "up"); } else {   map.put("direction", "down"); } if (isFirst) {   map.put("auto", 1); } else {   map.put("auto", 0); }
-
-
-
-
-http://tbapi.ixiaochuan.cn/review/hot_reviews
-
-map.put("offset", offset); map.put("pid", pid);
-
-
-
-http://tbapi.ixiaochuan.cn/review/new_reviews
-
-map.put("offset", offset); map.put("pid", pid); map.put("t", t);
-
-
-
-http://tbapi.ixiaochuan.cn/post/detail
-
-map.put("pid", pid); map.put("from", "index");
-

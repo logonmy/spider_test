@@ -61,6 +61,10 @@ require([
             } else {
                 let config = JSON.parse(task.config);
 
+                if(config.brick_id == 11779||config.brick_id == 11831){
+                    return;
+                }
+
                 Socket.log(`打开网页Tab(url=${task.value}), 注入爬取逻辑`);
                 let tab = new Tab(task.value, ["./business/script.js"]);
 

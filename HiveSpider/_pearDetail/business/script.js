@@ -12,7 +12,13 @@ var TemplateData = {
     created_at: 0
 }
 try{
-    TemplateData.type = document.getElementById("select").children[0].textContent;
+    try{
+        TemplateData.type = document.getElementById("select").children[0].textContent;
+    }
+    catch(e){
+        console.log("no select!!")
+    }
+
     TemplateData.title  = document.getElementsByClassName("video-tt")[0].textContent
     TemplateData.url = window.location.href;
     TemplateData.cover_img.src = document.getElementById("poster").children[0].src;
@@ -43,6 +49,7 @@ try{
     getSize();
 }
 catch (e){
+    console.log(e)
     chrome.runtime.sendMessage({
         error:e,
         data: templateData,
