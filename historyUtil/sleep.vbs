@@ -1,0 +1,1 @@
+wscript.sleep wscript.arguments(0)*1000
