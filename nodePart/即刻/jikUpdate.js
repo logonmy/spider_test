@@ -23,9 +23,9 @@ const postDataToDereplicate = async (data) => {
     await Http.call(`http://bee.api.talkmoment.com/dereplicate/history/add`, query);
 };
 
-function FormatDate (strTime) {
+function FormatDate(strTime) {
     var date = new Date(strTime);
-    return date.getFullYear()+"-"+(date.getMonth()+1)+"-"+date.getDate() + " " + date.getHours() + ":" + date.getMinutes();
+    return date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes();
 }
 
 const getCookie = (() => {
@@ -56,10 +56,10 @@ const sleep = (s = 5) => {
 
 const httpGet = async (path, header) => {
     let timeout = 10000;
-    if(!header){
+    if (!header) {
         header = {
-            "Content-Type":"application/json",
-            "User-Agent":"Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Mobile /sa-sdk-ios Jike/4.3.1",
+            "Content-Type": "application/json",
+            "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Mobile /sa-sdk-ios Jike/4.3.1",
         }
     }
     let options = {
@@ -99,7 +99,7 @@ const httpGet = async (path, header) => {
         req.end();
     })
 }
-const postWashTask = async(brick_id, data) => {
+const postWashTask = async (brick_id, data) => {
     let washTask = {
         name: "wash_corpus",
         value: "",
@@ -114,9 +114,9 @@ const postWashTask = async(brick_id, data) => {
     };
     console.log("任务队列ing")
     console.log(brick_id);
-    try{
+    try {
         await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", washTask);
-    }catch(e){
+    } catch (e) {
         await postWashTask(brick_id, data);
     }
 };
@@ -124,123 +124,130 @@ const postWashTask = async(brick_id, data) => {
 const postDataToMessage = async (data) => {
     await Http.call(`http://bee.api.talkmoment.com/message/publish?topic=${BEE_NAME}`, data);
 };
-const getUuid = async() => {
+const getUuid = async () => {
     let result = await httpGet("https://app.jike.ruguoapp.com/sessions.create");
-    return JSON.parse(result).uuid;}
-const login = async(uuid, cookie) => {
+    return JSON.parse(result).uuid;
+}
+const login = async (uuid, cookie) => {
     let headers = {
-        "Host":"app.jike.ruguoapp.com",
-        "Content-Type":"application/json",
-        "Origin":"https://ruguoapp.com",
-        "Connection":"keep-alive",
-        "Accept":"*/*",
-        "User-Agent":"Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Mobile /sa-sdk-ios Jike/4.3.1",
-        "Referer":"https://ruguoapp.com/account/scan?uuid=" + uuid,
-        "Accept-Language":"zh-cn",
+        "Host": "app.jike.ruguoapp.com",
+        "Content-Type": "application/json",
+        "Origin": "https://ruguoapp.com",
+        "Connection": "keep-alive",
+        "Accept": "*/*",
+        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Mobile /sa-sdk-ios Jike/4.3.1",
+        "Referer": "https://ruguoapp.com/account/scan?uuid=" + uuid,
+        "Accept-Language": "zh-cn",
         "Cookie": cookie
     }
     let result = await httpGet("https://app.jike.ruguoapp.com/sessions.login?uuid=" + uuid, headers);
-    return result;}
-const confirm = async(uuid, cookie) => {
+    return result;
+}
+const confirm = async (uuid, cookie) => {
     let headers = {
-        "Host":"app.jike.ruguoapp.com",
-        "Content-Type":"application/json",
-        "Origin":"https://ruguoapp.com",
-        "Connection":"keep-alive",
-        "Accept":"*/*",
-        "User-Agent":"Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Mobile /sa-sdk-ios Jike/4.3.1",
-        "Referer":"https://ruguoapp.com/account/scan?uuid=" + uuid,
-        "Accept-Language":"zh-cn",
+        "Host": "app.jike.ruguoapp.com",
+        "Content-Type": "application/json",
+        "Origin": "https://ruguoapp.com",
+        "Connection": "keep-alive",
+        "Accept": "*/*",
+        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Mobile /sa-sdk-ios Jike/4.3.1",
+        "Referer": "https://ruguoapp.com/account/scan?uuid=" + uuid,
+        "Accept-Language": "zh-cn",
         "Cookie": cookie
     }
     let result = await httpGet("https://app.jike.ruguoapp.com/sessions.confirm?uuid=" + uuid, headers);
-    return result;}
-const confirmation = async(uuid, cookie) => {
+    return result;
+}
+const confirmation = async (uuid, cookie) => {
     let headers = {
-        "Host":"app.jike.ruguoapp.com",
-        "Content-Type":"application/json",
-        "Origin":"https://ruguoapp.com",
-        "Connection":"keep-alive",
-        "Accept":"*/*",
-        "User-Agent":"Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Mobile /sa-sdk-ios Jike/4.3.1",
-        "Referer":"https://ruguoapp.com/account/scan?uuid=" + uuid,
-        "Accept-Language":"zh-cn",
+        "Host": "app.jike.ruguoapp.com",
+        "Content-Type": "application/json",
+        "Origin": "https://ruguoapp.com",
+        "Connection": "keep-alive",
+        "Accept": "*/*",
+        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Mobile /sa-sdk-ios Jike/4.3.1",
+        "Referer": "https://ruguoapp.com/account/scan?uuid=" + uuid,
+        "Accept-Language": "zh-cn",
         "Cookie": cookie
     }
     let result = await httpGet("https://app.jike.ruguoapp.com/sessions.wait_for_confirmation?uuid=" + uuid, headers);
-    return result;}
+    return result;
+}
 let getToken = async () => {
     console.log("开始获取token");
     let cookie = getCookie()
     let uuid = await getUuid();
     await sleep(1);
-    if(JSON.parse(await login(uuid, cookie)).success){
+    if (JSON.parse(await login(uuid, cookie)).success) {
         await sleep(1)
-        if(JSON.parse(await confirm(uuid, cookie)).success){
+        if (JSON.parse(await confirm(uuid, cookie)).success) {
             await sleep(1)
-            if(JSON.parse(await confirmation(uuid, cookie)).token){
+            if (JSON.parse(await confirmation(uuid, cookie)).token) {
                 console.log("token获取成功");
                 return JSON.parse(await confirmation(uuid, cookie)).token
-            }else{
+            } else {
                 throw Error("confirmation 出错");
             }
-        }else{
+        } else {
             throw Error("confirm 出错")
         }
-    }else{
+    } else {
         throw Error("login 出错")
-    }}
+    }
+}
 
 let getTopicContent = async (topicId, loadMoreKey) => {
     console.log(topicId, loadMoreKey, "getTopicContentINGGGGGGG");
     let moreArgs = {
         method: "POST",
         headers: {
-            "Content-Type":"application/json",
+            "Content-Type": "application/json",
             "x-jike-app-auth-jwt": token
         },
         body: JSON.stringify({
-            "loadMoreKey":loadMoreKey,
-            "topic":topicId,
-            "limit":50
+            "loadMoreKey": loadMoreKey,
+            "topic": topicId,
+            "limit": 50
         })
     }
     let result = await getApi("https://app.jike.ruguoapp.com/1.0/messages/history", moreArgs);
-    return result;}
+    return result;
+}
 
-let getCardComment = async (targetId)=> {
+let getCardComment = async (targetId) => {
     console.log(targetId, "getCardCommentINGGGGG");
     let moreArgs = {
         method: "POST",
         headers: {
-            "Content-Type":"application/json",
+            "Content-Type": "application/json",
             "x-jike-app-auth-jwt": token
         },
         body: JSON.stringify({
             "targetId": targetId,
-            "limit":20,
+            "limit": 20,
             "targetType": "OFFICIAL_MESSAGE"
         })
     }
     let result = await getApi("https://app.jike.ruguoapp.com/1.0/comments/listPrimary", moreArgs);
-    if(!result){
+    if (!result) {
         out = true;
     }
-    return result;}
+    return result;
+}
 
 let getAllTopicContent = async (topicId, loadMoreKey, created_at) => {
-    if(created_at === 0 && !created_at){
-        return ;
+    if (created_at === 0 && !created_at) {
+        return;
     }
     let datas = []
     let result = await getTopicContent(topicId, loadMoreKey, created_at);
-    if(!result.data){
+    if (!result.data) {
         result.data = []
     }
-    while(result && result.data && result.data.length > 0){
-        for(let data of result.data){
-            if(new Date(data.createdAt).getTime() > created_at){
-                datas.push(data);;
+    while (result && result.data && result.data.length > 0) {
+        for (let data of result.data) {
+            if (new Date(data.createdAt).getTime() > created_at) {
+                datas.push(data);
             }
 
         }
@@ -248,26 +255,26 @@ let getAllTopicContent = async (topicId, loadMoreKey, created_at) => {
         console.log(new Date(result.data[0].createdAt).getTime())
         console.log(created_at);
 
-        if(result.loadMoreKey && new Date(result.data[ll - 1].createdAt).getTime() > created_at){
+        if (result.loadMoreKey && new Date(result.data[ll - 1].createdAt).getTime() > created_at) {
             console.log("下一页");
             await sleep(1);
             result = await getTopicContent(topicId, result.loadMoreKey);
-        }else{
+        } else {
             console.log("这页已经够了");
             break;
         }
     }
 
-    if(datas && datas.length){
+    if (datas && datas.length) {
         console.log("共计拿到  ", datas.length, "条");
     }
 
-    for(let da of datas){
-        if(da.createdAt){
-            try{
+    for (let da of datas) {
+        if (da.createdAt) {
+            try {
                 da.created_at = new Date(da.createdAt).getTime();
                 delete da.createdAt;
-            }catch(e){
+            } catch (e) {
                 console.log(e)
             }
         }
@@ -276,21 +283,22 @@ let getAllTopicContent = async (topicId, loadMoreKey, created_at) => {
         da.addComment = comment;
     }
 
-    return datas;}
+    return datas;
+}
 
 
 let run = async (name, topicId, brick_id, created_at) => {
     let result = await getAllTopicContent(topicId, null, created_at);
-    if(result){
-        for(let data of result){
+    if (result) {
+        for (let data of result) {
 
             console.log("开始检测是否已经爬取");
             let test = await redis.sadd("jike_" + brick_id, data.messageId);
-            if(test == 0){
+            if (test == 0) {
                 console.log("已经存在了")
                 continue
-            }else{
-                console.log("上传" + data.title + "  的  "  + data.content);
+            } else {
+                console.log("上传" + data.title + "  的  " + data.content);
                 await postDataToDereplicate(data.id);
                 await postDataToMessage(data);
                 await postWashTask(brick_id, data);
@@ -305,9 +313,9 @@ let run = async (name, topicId, brick_id, created_at) => {
 }
 
 //更新token
-(async ()=> {
-    while(update){
-        if(out){
+(async () => {
+    while (update) {
+        if (out) {
             break;
         }
         await sleep(300);
@@ -322,7 +330,7 @@ let run = async (name, topicId, brick_id, created_at) => {
     let ZeroTime;
 
 
-    while(true){
+    while (true) {
 
         ZeroTime = new Date(new Date().setHours(0, 0, 0, 0));
         ZeroTime = ZeroTime.getTime();
