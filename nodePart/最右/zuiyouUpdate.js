@@ -223,16 +223,24 @@ const run = async (name, ZeroTime, brick_id) => {
 
     trueBrickId = await getBrickId();
     let id;
+    let result;
 
     try{
         id = await getTopicId(name);
     }catch(e){
-        File.appendFileSync("logCoundNotFindId.txt", name + "\n");
+        File.appendFileSync("logCoundNotFindId.txt", "\n" + name + "\n");
         console.log(e)
+        console.log("###############################################")
         return ;
     }
+    try{
+        result = await getTopicAll(id, ZeroTime);
+    }catch(e){
+        console.log(e)
+        console.log("###############################################")
+        return;
+    }
 
-    let result = await getTopicAll(id, ZeroTime);
 
     result = await filterItems(result);
     try {
