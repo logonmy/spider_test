@@ -23,34 +23,39 @@ let readLegoFirst = async (brick_id) => {
     return result;
 }
 
-//exports.addLego = addLego;
-//exports.deleteLego = deleteLego;
-
-
-let run = async() => {
-	// var a = JSON.parse(await addLegoBrick("ceshi8", "cesjo1"));
-	// console.log(a)
-	// console.log(typeof(a));
-	// console.log(a.result);
-	// console.log(typeof(a.result));
-	// console.log(await deleteLegoBrick(11861));
-	for(let i = 14125; i<16196; i++){
-		console.log(i)
-        let strr = await readLegoFirst(i);
-
-        let out = {
-        	brick_id: i,
-			created_at: 0
-		}
-        strr= JSON.parse(strr);
-        console.log(strr)
-        if(strr.result && strr.result.length) {
-            console.log(strr.result[0].created_at);
-            out.created_at = strr.result[0].created_at;
-            File.appendFileSync("created_at.txt", JSON.stringify(out) + "\n");
-        }
-	}
-
-
+let getLegoBrickOne = async(brick_id, id) => {
+    let result = await Http.get("http://chatbot.api.talkmoment.com/lego/library/lego/list?brick_id="+ brick_id +"&id_start=" + id + "&limit=100&version=002");
+    return result;
 }
-run()
+let getLegoBrickAll = async(brick_id) => {
+	let datas = []
+    let result = await Http.get("http://chatbot.api.talkmoment.com/lego/library/lego/list?brick_id="+ brick_id +"&id_start=99999999&limit=100&version=002");
+    result = JSON.parse(result);
+    let length = result.result.length - 1;
+    let id = result.result[length].id;
+
+    while(length === 99){
+		result = getLegoBrickOne(brick_id, id);
+		datas = datas.concat(result.result);
+		result =
+	}
+}
+
+// exports.addLego = addLegoBrick;
+// exports.deleteLego = deleteLegoBrick;
+// exports.readLegoFirst = readLegoFirst;
+// exports.getLegoBrickAll = getLegoBrickAll
+
+
+getLegoBrickAll(16209)
+
+
+
+
+
+
+
+
+
+
+
