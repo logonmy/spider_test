@@ -87,5 +87,9 @@ define([], function () {
         })
         return this.deferred.promise;
     };
+    Tab.prototype.closeTab = function() {
+        var self = this;
+        chrome.tabs.remove(self.tabId, function(){});
+    }
     return Tab;
 })

@@ -37,17 +37,19 @@ let getLegoBrickAll = async(brick_id) => {
     while(length === 99){
 		result = getLegoBrickOne(brick_id, id);
 		datas = datas.concat(result.result);
-		result =
 	}
 }
 
-// exports.addLego = addLegoBrick;
-// exports.deleteLego = deleteLegoBrick;
-// exports.readLegoFirst = readLegoFirst;
-// exports.getLegoBrickAll = getLegoBrickAll
+const getLegoBrick = async (limit) => {
+    let result = await Http.get("http://chatbot.api.talkmoment.com/lego/library/brick/list?limit=" + limit + "&version=002");
+    return result;
+}
 
-
-getLegoBrickAll(16209)
+exports.addLego = addLegoBrick;
+exports.deleteLego = deleteLegoBrick;
+exports.readLegoFirst = readLegoFirst;
+exports.getLegoBrickAll = getLegoBrickAll
+exports.getBrick = getLegoBrick
 
 
 
