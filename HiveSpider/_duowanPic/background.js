@@ -75,10 +75,45 @@ require([
         }
     };
 
+    const getBrickId = async() => {
+        let getTrueName = () => {
+            var date = new Date();
+            var yyyy = date.getFullYear();
+            var mm = date.getMonth() + 1;
+            if (mm < 10) {
+                mm = "0" + mm.toString();
+            }
+            var dd = date.getDate();
+            if (dd < 10) {
+                dd = "0" + dd.toString();
+            }
+            var name = yyyy + mm + dd + "更新";
+            return name;
+        }
+
+        let trueName = getTrueName();
+
+        let data = await Http.request("http://chatbot.api.talkmoment.com/lego/library/brick/list?limit=20&version=002");
+        data = JSON.parse(data);
+        data = data.result;
+        for(let da of data){
+            if(da.name == trueName){
+                return da.id;
+            }
+        }
+
+        return false;
+
+    }
+
     (async() => {
         Socket.startHeartBeat(LIST_BEE_NAME);
         while (true) {
-            await runTask()
+            brick_id = await getBrickId();
+            if(brick_id){
+                console.log(brick_id);
+                await runTask()
+            }
             await Async.sleep(120 * 60 * 1000);
         }
     })();

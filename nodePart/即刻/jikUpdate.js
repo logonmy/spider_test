@@ -13,6 +13,7 @@ let token;
 let out = false;
 let update = true;
 let cookieING;
+let trueBrickId;
 
 
 const postDataToDereplicate = async (data) => {
@@ -105,7 +106,7 @@ const postWashTask = async (brick_id, data) => {
         value: "",
         config: JSON.stringify({
             bee_source: BEE_NAME,
-            brick_id: 16661,
+            brick_id: trueBrickId,
             publish: true,
             update: true
         }),
@@ -286,6 +287,35 @@ let getAllTopicContent = async (topicId, loadMoreKey, created_at) => {
     return datas;
 }
 
+const getBrickId = async() => {
+    let getTrueName = () => {
+        var date = new Date();
+        var yyyy = date.getFullYear();
+        var mm = date.getMonth() + 1;
+        if (mm < 10) {
+            mm = "0" + mm.toString();
+        }
+        var dd = date.getDate();
+        if (dd < 10) {
+            dd = "0" + dd.toString();
+        }
+        var name = yyyy + mm + dd + "更新";
+        return name;
+    }
+
+    let trueName = getTrueName();
+
+    let data = await Http.get("http://chatbot.api.talkmoment.com/lego/library/brick/list?limit=20&version=002");
+    data = JSON.parse(data);
+    data = data.result;
+    for(let da of data){
+        if(da.name == trueName){
+            return da.id;
+        }
+    }
+
+    return false;
+}
 
 let run = async (name, topicId, brick_id, created_at) => {
     let result = await getAllTopicContent(topicId, null, created_at);
@@ -312,9 +342,15 @@ let run = async (name, topicId, brick_id, created_at) => {
 
 }
 
-//更新token
+//更新token 和 brick_id
 (async () => {
     while (update) {
+
+        let brick_id =await getBrickId();
+        if(brick_id){
+            trueBrickId = brick_id;
+        }
+
         if (out) {
             break;
         }
