@@ -1,16 +1,10 @@
-const https = require('https')
 const http = require('http')
-const fs = require('fs')
-const cheerio = require('cheerio')
-const iconv = require('iconv-lite');
 const url = require('url')
-const zlib = require('zlib');
-const qs = require('querystring');
 
 let config = {
 	num_item_limit: 10,
 	//keyword: "二次元催生办",
-	brick_id: 16201
+	brick_id: 16218
 }
 
 config = JSON.stringify(config)
@@ -21,21 +15,18 @@ let post_data = {
 	config,
 	scheduled_at: new Date().getTime()
 
-};//这是需要提交的数据
+};
 
 let content = JSON.stringify(post_data);
 console.log(content)
 
 let targetUrl = 'http://bee.api.talkmoment.com/scheduler/task/post'
 
-//push(targetUrl)
 setInterval(function () {
 	push(targetUrl)
 }, 14400*1000);
 
 function push(targetUrl) {
-
-	//console.log(content.length)
 	let urlObj = url.parse(targetUrl)
 	let req = http.request({
 		hostname: urlObj.hostname,
@@ -44,7 +35,6 @@ function push(targetUrl) {
 		//port:9090,
 		headers: {
 			'Content-Type': 'application/x-www-form-urlencoded',
-			//'Content-Length': content.length
 		}
 	}, res => {
 		console.log(targetUrl, res.statusCode)
@@ -67,7 +57,7 @@ function push(targetUrl) {
 	});
 
 	req.write(content);
-	req.end();//调用 request.end() 时发送
+	req.end();
 	req.on('error', (error) => {
 		console.log(error);
 	})

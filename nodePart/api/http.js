@@ -1,7 +1,7 @@
 const http = require("http");
 let Http = {};
 
-const timeout = 10000;
+const timeout = 40000;
 
 Http.call = async (path, args) => {
     let data = args || {};

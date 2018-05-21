@@ -1,8 +1,6 @@
-//14125 16195
-const lego = require("./api/lego").Lego;
 const Http = require("./api/http").Http;
 const File = require("fs")
-
+const readLine = require("lei-stream").readLine;
 
 const getOne = async (brick_id, id_start) => {
     let href = "http://chatbot.api.talkmoment.com/lego/library/lego/list?brick_id="+ brick_id +"&id_start=" + id_start + "&limit=1000&version=002";
@@ -31,19 +29,23 @@ const getAll = async (brick_id) => {
     return datas;
 }
 
-const run = async () => {
-    for(let i= 16097;i< 16196; i++){
-        console.log("#############正在拿  ",i, "################");
-        let results = await getAll(i);
-        console.log(results.length);
-        let write = {
-            brick_id: i,
-            messageIds: []
-        }
-        for(let re of results){
-            write.messageIds.push(JSON.parse(re.T).messageId)
-        }
-        File.appendFileSync("tett.txt", JSON.stringify(write) + "\n");
+readLine("./最右/zuiyou_brick.txt").go(async (data, next) => {
+    data = JSON.parse(data);
+    if(data.size == 0){
+        next();
     }
-}
-run();
+
+    let brick_id = data.id;
+    let results = await getAll(brick_id);
+    console.log(results.length);
+    let write = {
+        brick_id: brick_id,
+        messageIds: []
+    }
+    for(let re of results){
+        write.messageIds.push(JSON.parse(re.T).messageId)
+    }
+    File.appendFileSync("tett.txt", JSON.stringify(write) + "\n");
+    next();
+})
+

@@ -1,12 +1,14 @@
 const http = require("https");
-const Http = require("./api/http").Http;
-const Https = require("./api/https").Http;
-const Task = require("./api/task").Task;
-const Socket = require("./api/socket").Socket;
+const Http = require("../api/http").Http;
+const Https = require("../api/https").Http;
+const Task = require("../api/task").Task;
+const Socket = require("../api/socket").Socket;
+const File = require("fs");
 const RedisClient = require("../api/redis").RedisClient
 const redis = new RedisClient({host: "127.0.0.1", port: 6379})
 
 let getcommentCount = 0;
+let trueBrickId = 16661;
 
 const io = require("socket.io-client");
 const socket = io("http://ws.api.talkmoment.com:51179");
@@ -49,9 +51,6 @@ const filterItems = async (data) => {
             return "zuiyou" + item.id
         })
     };
-    for (let q of query.keys) {
-        console.log(q, "q")
-    }
     let res = await Http.call(`http://bee.api.talkmoment.com/dereplicate/filter/by/history`, query);
     res = JSON.parse(res);
     Socket.log(res);
@@ -63,7 +62,6 @@ const postDataToDereplicate = async (data) => {
         partition: "zuiyou",
         key: "zuiyou" + data
     };
-    console.log(query.key, "p");
     await Http.call(`http://bee.api.talkmoment.com/dereplicate/history/add`, query);
 };
 
@@ -79,8 +77,7 @@ const postWashTask = async (brick_id, data) => {
         data: JSON.stringify(data),
         scheduled_at: Date.now()
     };
-    console.log("任务队列ing")
-    console.log(brick_id);
+
     await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", washTask);
 };
 const postDataToMessage = async (data) => {
@@ -141,7 +138,6 @@ let getCommentAll = async (id) => {
     while (9 < datas.length && result && result.data && result.data.newreviews.length < limit) {
         let comm = await getCommentOne(offset, id);
         datas = comm.data;
-        console.log(datas.length, 1)
         offset = comm.offset;
         result.data.newreviews = result.data.newreviews.concat(datas);
     }
@@ -157,7 +153,8 @@ const getTopicId = (value) => {
             let sign = await AskSign("https://api.izuiyou.com/search/topic", {q: value}, "getTopicId");
             let result = await Https.call(sign.url, sign.params);
             result = JSON.parse(result);
-            resolve(result.data.list[0].id);
+            let id = result.data.list[0].id;
+            resolve(id);
         } catch (e) {
             console.log(e);
             reject(e);
@@ -222,8 +219,19 @@ let getTopicAll = async (topicId, ZeroTime) => {
     })
 }
 
-const run = async (name, ZeroTime) => {
-    let id = await getTopicId(name);
+const run = async (name, ZeroTime, brick_id) => {
+
+    trueBrickId = await getBrickId();
+    let id;
+
+    try{
+        id = await getTopicId(name);
+    }catch(e){
+        File.appendFileSync("logCoundNotFindId.txt", name);
+        console.log(e)
+        return ;
+    }
+
     let result = await getTopicAll(id, ZeroTime);
 
     result = await filterItems(result);
@@ -232,24 +240,55 @@ const run = async (name, ZeroTime) => {
 
             console.log("开始检测是否已经爬取");
 
-            let test = await redis.sadd("zuiyou" + brick_id, data.messageId);
+            let test = await redis.sadd("zuiyou" + brick_id, re.id);
             if(test == 0){
                 console.log("已经存在了");
                 continue
             }else{
-                re.brick_id = brick_id;
+
+                console.log("上传" + re.topic.topic + "  的  " + re.content);
                 await postDataToDereplicate(re.id);
-                console.log(re.id);
                 await postDataToMessage(re);
-                await postWashTask(task.brick_id, re)
+                await postWashTask(trueBrickId, re);
+                await sleep(0.5);
             }
         }
     } catch (e) {
         console.log(e)
         console.log("上传数据的时候不要吊它");
     }
-    await sleep(5)
+    await sleep(1)
+    console.log("###############################################")
+}
 
+const getBrickId = async() => {
+    let getTrueName = () => {
+        var date = new Date();
+        var yyyy = date.getFullYear();
+        var mm = date.getMonth() + 1;
+        if (mm < 10) {
+            mm = "0" + mm.toString();
+        }
+        var dd = date.getDate();
+        if (dd < 10) {
+            dd = "0" + dd.toString();
+        }
+        var name = yyyy + mm + dd + "更新";
+        return name;
+    }
+
+    let trueName = getTrueName();
+
+    let data = await Http.get("http://chatbot.api.talkmoment.com/lego/library/brick/list?limit=20&version=002");
+    data = JSON.parse(data);
+    data = data.result;
+    for(let da of data){
+        if(da.name == trueName){
+            return da.id;
+        }
+    }
+
+    return false;
 }
 
 (async () => {
@@ -262,13 +301,12 @@ const run = async (name, ZeroTime) => {
         ZeroTime = ZeroTime.getTime();
 
         await redis.connect()
-        let config = await redis.lpop("jike_list");
+        let config = await redis.lpop("zuiyou_list");
 
-        await redis.rpush("jike_list", config);
+        await redis.rpush("zuiyou_list", config);
         config = JSON.parse(config);
 
         console.log("开始爬取内容", config.name, "   ", config.brick_id);
-        await run(config.name, ZeroTime);
-
+        await run(config.name, ZeroTime, config.brick_id);
     }
 })();
