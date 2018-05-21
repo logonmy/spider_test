@@ -266,7 +266,18 @@ var TemplateData = {
 setTimeout(function(){
     try{
         TemplateData.title = document.querySelector(".rich_media_title").innerText;
-        TemplateData.created_at = new Date(document.querySelector("[id=publish_time]").innerText).getTime();
+
+        var getCreated_at = function(){
+            let a = new Date(document.querySelector("[id=publish_time]").innerText).getTime();
+            if(a) return a;
+            a = document.querySelector("[id=publish_time]").innerText
+            a = a.replace("月", "/");
+            a = a.replace("日", "/");
+            a = "2018/" + a;
+            return new Date(a).getTime();
+        }
+
+        TemplateData.created_at = getCreated_at();
         TemplateData.url = window.location.href;
         TemplateData.content = JSON.stringify(BeeUtils.htmlToJson(document.getElementsByClassName("rich_media_content")[0]));
         console.log(JSON.stringify(TemplateData));
