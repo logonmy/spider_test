@@ -227,7 +227,7 @@ const run = async (name, ZeroTime, brick_id) => {
     try{
         id = await getTopicId(name);
     }catch(e){
-        File.appendFileSync("logCoundNotFindId.txt", name);
+        File.appendFileSync("logCoundNotFindId.txt", name + "\n");
         console.log(e)
         return ;
     }
