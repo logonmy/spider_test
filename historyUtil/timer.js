@@ -98,7 +98,8 @@ const source = [{"name": "微信公众号_3DM游戏网", "brick_id": 16761},
     {"name":"娱乐扒星客"},
     {"name":"逗萌社"},
     {"name":"娱乐硬糖"},
-    {"name":"深八娱乐圈"}]
+    {"name":"深八娱乐圈"},
+    {"name":"聊点APP"}]
 
 
 const targetUrl = 'http://bee.api.talkmoment.com/scheduler/task/post'
