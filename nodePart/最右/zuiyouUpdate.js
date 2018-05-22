@@ -228,7 +228,6 @@ const run = async (name, ZeroTime, brick_id) => {
     try{
         id = await getTopicId(name);
     }catch(e){
-        File.appendFileSync("logCoundNotFindId.txt", "\n" + name + "\n");
         console.log(e)
         console.log("###############################################")
         return ;
@@ -246,11 +245,9 @@ const run = async (name, ZeroTime, brick_id) => {
     try {
         for (let re of result) {
 
-            console.log("开始检测是否已经爬取");
-
             let test = await redis.sadd("zuiyou" + brick_id, re.id);
             if(test == 0){
-                console.log("已经存在了");
+                console.log("已经存在了 痕迹吧恐怖 明明filter过的");
                 continue
             }else{
 

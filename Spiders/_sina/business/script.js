@@ -11,23 +11,34 @@ var TemplateData = {
     items: []
 }
 
-let run = async () => {
+setTimeout(function(){
 
-}
 
-try{
-    let data = document.querySelector(".PostContent").innerText
-    TemplateData.data = data;
-    console.log(TemplateData);
-    chrome.runtime.sendMessage(TemplateData)
-    window.close();
-}
-catch (e){
-    chrome.runtime.sendMessage({
-        error:e,
-        data: TemplateData,
-        url: window.location.href,
-        false: true
-    }, function (response) {});
-    window.close();
-}
+    try{
+
+        let datas = document.querySelectorAll("li a");
+
+        let data = []
+        for(let da of datas){
+            TemplateData.items.push(da.innerText);
+            data.push(da.innerText);
+        }
+        TemplateData.data = data;
+        chrome.runtime.sendMessage(TemplateData)
+        window.close();
+
+    }
+
+    catch (e){
+        chrome.runtime.sendMessage({
+            error:e,
+            data: TemplateData,
+            url: window.location.href,
+            false: true
+        }, function (response) {});
+        window.close();
+    }
+
+
+}, 5000)
+
