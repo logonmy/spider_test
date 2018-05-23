@@ -4,12 +4,12 @@ require([
     "../api/async",
     "../api/task",
     "../api/socket",
-    "../api/tab",
+    "../service/tab",
     "../api/fileControll"
 ], (Config, Http, Async, Task, Socket, Tab, File) => {
 
     const LIST_BEE_NAME = "zhihu_index_update";
-    const DETAIL_BEE_NAME = "bilibili_video_detail";
+    const DETAIL_BEE_NAME = "zhihu_index_detail";
 
     let brick_id = 16661;
 

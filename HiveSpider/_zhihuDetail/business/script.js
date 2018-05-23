@@ -1,9 +1,5 @@
 var templateData = {
-    cover_img: {
-        src: "",
-        width: 0,
-        height: 0
-    },
+    imgs: [],
     title: "",
     created_at: 0,
     url: "",
@@ -14,10 +10,19 @@ setTimeout(function () {
     try {
         try{
             document.querySelector("button.Button.QuestionRichText-more.Button--plain").click()
-            var img = document.querySelector(".QuestionHeader-detail img");
-            templateData.cover_img.src = img.getAttribute("src");
-            templateData.cover_img.width = img.width;
-            templateData.cover_img.height = img.naturalHeight;
+            var imgs = document.querySelectorAll(".QuestionHeader-detail img");
+            for(let img of imgs){
+                let ii = {
+                    src: "",
+                    width: 0,
+                    height: 0
+                }
+                ii.cover_img.src = img.getAttribute("src");
+                ii.cover_img.width = img.width;
+                ii.cover_img.height = img.height;
+                templateData.imgs.push(ii);
+            }
+
         }catch(e){
 
         }

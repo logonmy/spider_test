@@ -382,6 +382,7 @@ let run = async (name, topicId, brick_id, created_at) => {
         config.name = config.name.substr(3);
         await run(config.name, config.topic_id, config.brick_id, ZeroTime);
 
+        await redis.end();
     }
 
 })();
