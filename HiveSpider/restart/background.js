@@ -7,7 +7,7 @@ require([
     "../api/tab",
 ], (Config, Http, Async, Task, Socket, Tab) => {
 
-    const url = "playground.jndroid.com:9000/ghost";
+    const url = "http://playground.jndroid.com/ghost";
 
     let dso = async()=>{
         let run  = true;

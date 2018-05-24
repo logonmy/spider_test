@@ -202,7 +202,7 @@ function push(postData) {
                 console.log(e)
                 console.log("发布任务时报错了");
             }
-            await sleep(10)
+            await sleep(20)
         }
         await sleep(20 * 60);
     }

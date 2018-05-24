@@ -14,6 +14,7 @@ let user = {
     username: "15351702865",
     password: "cqcp815"
 }
+let browser;
 
 setTimeout(function(){
     process.exit(0)
@@ -595,6 +596,23 @@ const searchBigVName = async () => {
 
     await main(pages[0])
 }
+
+(async () => {
+    while (true){
+        try{
+            let Pages = await browser.pages();
+            if(Pages.length > 3){
+                console.log("Pages过多了 有点奇怪");
+                process.exit(0);
+            }
+        }catch(e){
+            console.log(e);
+            console.log("WHATEVER");
+        }
+        await sleep();
+    }
+}
+)()
 
 let run = async () => {
     await launchBrowser();

@@ -4,6 +4,7 @@ const getApi = require("./api/fetch").getApi;
 const File = require("fs");
 
 let pages = [void 0, void 0];
+let browser;
 
 const bigBrickId = 14099;
 const smallBrickId = "";
@@ -184,7 +185,7 @@ const searchBigVName = async () => {
 
     const main = async (curPage) => {
 
-        let requireWeibo = await getRequire()
+        let requireWeibo = await getRequire();
         console.log("获取requireWeibo");
         for(let requruu of requireWeibo){
             console.log(requruu.lego_id, "    ",requruu.topic, "     ", requruu.title);

@@ -12,8 +12,8 @@ require([
     "../service/tab",
 ], (Config, Http, Async, Task, Socket, Tab) => {
 
-    const LIST_BEE_NAME = "bilibili_keyword_list";
-    const DETAIL_BEE_NAME = "bilibili_video_detail";
+    const LIST_BEE_NAME = "bilibili_keyword_list_actual";
+    const DETAIL_BEE_NAME = "bilibili_video_detail_actual";
 
     const filterItems = async(task, data) => {
         let query = {
@@ -33,7 +33,7 @@ require([
                     brick_id: JSON.parse(listTask.config).brick_id,
                     keyword: listTask.value
                 }),
-                scheduled_at: 9999999999999
+                scheduled_at: Date.now()
             };
             let task = await Http.call(`http://bee.api.talkmoment.com/scheduler/task/post`, query);
             Socket.log(`向Scheduler添加task=`, task);

@@ -9,7 +9,7 @@ try{
         window.location.href="about:blank";
         window.close();
         console.log("执行了window.close()")
-    }, 2000)
+    }, 5000)
 }
 catch (e){
     chrome.runtime.sendMessage({

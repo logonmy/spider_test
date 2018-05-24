@@ -1,6 +1,6 @@
 {
     "manifest_version": 3,
-    "name": "bilibili首页更新",
+    "name": "ghost重启服务",
     "version": "0.0.3",
     "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
     "permissions": [ "cookies", "unlimitedStorage", "http://*/*", "https://*/*", "file:///*/*" ],
