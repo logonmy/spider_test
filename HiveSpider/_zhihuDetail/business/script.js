@@ -17,9 +17,9 @@ setTimeout(function () {
                     width: 0,
                     height: 0
                 }
-                ii.cover_img.src = img.getAttribute("src");
-                ii.cover_img.width = img.width;
-                ii.cover_img.height = img.height;
+                ii.src = img.getAttribute("src");
+                ii.width = img.width;
+                ii.height = img.height;
                 templateData.imgs.push(ii);
             }
 
