@@ -50,8 +50,8 @@ require([
             Socket.log(`爬取完成,data=`, data);
 
             Socket.log(`开始过滤`);
-            await filterItems(data);
-            Socket.log(`过滤掉已爬取的链接后,data=`, data);
+            await filterItems(data);Socket.log(`过滤掉已爬取的链接后,data=`, data);
+
 
             Socket.log(`开始添加详情页爬取任务`);
             await postDetailTasks(data);
