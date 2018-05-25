@@ -7,7 +7,7 @@ require([
     "../api/tab",
     "../api/fileControll"
 ], (Config, Http, Async, Task, Socket, Tab, File) => {
-    const BEE_NAME = "QQscroll3";
+    const BEE_NAME = "QQscroll";
     const indexUrl = "http://news.qq.com/articleList/rolls/";
 
     const sleep = (s = 5) => {return new Promise(resolve => setTimeout(resolve, s * 1000))};
