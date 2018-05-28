@@ -3,6 +3,7 @@ const safeFetch = async (url, moreArgs = {}) => {
     try {
         return await fetch(url, moreArgs);
     } catch (e) {
+        return false;
         console.error(e);
     }
 };

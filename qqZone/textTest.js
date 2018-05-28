@@ -87,9 +87,22 @@ const transmit = async () => {
     console.log("#######################")
 }
 
+const public = async(text) => {
+    await sleep();
+    let textInput = await pages[0].$(".textinput.textarea.c_tx3");
+    await textInput.click();
+    await textInput.type(text);
+
+    let send = await pages[0].$(".btn-post.gb_bt.evt_click");
+    await send.click();
+    console.log("#######################")
+}
+
+
 let run = async () => {
     await launchBrowser();
     await login("2736798358", "washu123456");
-    await transmit();
+    let text = "测试内容🐍🐍怪 🐷🐷🦐阿萨德大声的哭ejkasdjlas";
+    await public(text);
 }
 run();
