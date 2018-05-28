@@ -13,15 +13,22 @@ require([
 
     (async()=> {
 
-        await Queue.postDataToMessage("qqKandian", "带你看世界");
         let keyword = (await Queue.getDataFromMessage("qqKandian")).result;
+        keyword = JSON.parse(keyword);
+        console.log("keyword", keyword);
 
         let souUrl = "https://sou.qq.com/kd.html?keyword=" + keyword;
         let tab = new Tab(souUrl, ["./business/getUin.js"]);
         let uin = await tab.run();
 
-        console.log(uin)
-        console.log("#######")
+        console.log(uin);
+        console.log("#######");
+
+        await Queue.postDataToMessage("qqKandian2", JSON.stringify({
+            name: keyword,
+            uin: uin
+        }));
+
         await sleep(10)
     })()
 
