@@ -18,6 +18,15 @@ define(["../service/liteAjax"], function(liteAjax){
             })
         }
 
+        this.readDateFromMessage = function(queueName, offset){
+            return new Promise((resolve, reject) => {
+                liteAjax(`http://bee.api.talkmoment.com/message/detail?topic=${queueName}&limit=1&offset=${offset}`, function(d){
+                    d = JSON.parse(d);
+                    resolve(d);
+                }, "GET");
+            })
+        }
+
     }
     return new Queue();
 })

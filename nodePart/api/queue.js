@@ -11,6 +11,10 @@ Queue.getDataFromMessage = async (queueName) => {
 	return await getApi(`http://bee.api.talkmoment.com/message/subscribe/try?topic=${queueName}`)
 }
 
+Queue.readAllDateFromMessage = async (queueName) => {
+	return await getApi(`http://bee.api.talkmoment.com/message/detail?topic=${queueName}&limit=10000000&offset=0`)
+}
+
 Queue.clear = async (queueName) => {
 	while(true){
 		await Queue.getDataFromMessage(queueName);

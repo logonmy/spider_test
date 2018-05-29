@@ -77,7 +77,6 @@ define([], function () {
     Tab.prototype.run = function () {
         var self = this;
         chrome.tabs.create({url: this.url, selected: this.selected}, function (tab) {
-            console.log(tab);
             self.tabId = tab.id;
             self.participate();
 

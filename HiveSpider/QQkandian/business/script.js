@@ -64,8 +64,6 @@ function liteAjax(url, callback, method, postBody, aSync) {
 console.log(1)
 
 
-
-
 let getComments = async(uin,feeds_id) => {
     return new Promise((resolve, reject) => {
         liteAjax("http://kandian.qq.com/qz_kandian_social/kandian_ext/GetCommentListV2?uin=" + uin + "&feeds_id=" + feeds_id + "&feedsType=12&startIndex=0&reqCount=20", function(d){
