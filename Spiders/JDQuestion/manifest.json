@@ -1,9 +1,9 @@
 {
     "manifest_version": 3,
-    "name": "学语文",
+    "name": "京东是狗 狗是京东 咚咚咚哇咔我",
     "version": "0.0.3",
     "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
-    "permissions": [ "cookies", "unlimitedStorage", "http://*/*", "https://*/*", "file:///*/*" ],
+    "permissions": [ "cookies", "unlimitedStorage", "http://*/*", "https://*/*", "file:///*/*", "about:blank", "host", "<all_urls>", "*:*"],
     "description": "extension description",
     "background": {
       "page": "background.html",

@@ -336,8 +336,8 @@ let run = async (name, topicId, brick_id, created_at) => {
             }
         }
         console.log("现在使用的cookie", cookieING);
-        await sleep(2)
-        console.log("###############################################")
+        await sleep(2);
+        console.log("###############################################");
     }
 
 }

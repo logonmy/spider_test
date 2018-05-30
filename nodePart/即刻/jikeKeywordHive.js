@@ -10,6 +10,7 @@ const BEE_NAME = "jike_topic_keyword";
 let token;
 let out = false;
 let cardCommentCount = 0;
+let brick_id = 16661;
 
 const getCookie = (() => {
     let users = [
@@ -240,11 +241,42 @@ let getKeyword = async(keyword, loadMoreKey) =>{
 
 })();
 
+const getBrickId = async() => {
+    let getTrueName = () => {
+        var date = new Date();
+        var yyyy = date.getFullYear();
+        var mm = date.getMonth() + 1;
+        if (mm < 10) {
+            mm = "0" + mm.toString();
+        }
+        var dd = date.getDate();
+        if (dd < 10) {
+            dd = "0" + dd.toString();
+        }
+        var name = yyyy + mm + dd + "更新";
+        return name;
+    }
+
+    let trueName = getTrueName();
+
+    let data = await Http.get("http://chatbot.api.talkmoment.com/lego/library/brick/list?limit=20&version=002");
+    data = JSON.parse(data);
+    data = data.result;
+    for(let da of data){
+        if(da.name == trueName){
+            return da.id;
+        }
+    }
+
+    return false;
+}
+
 //开始运行
 (async () => {
     Socket.startHeartBeat("jike_topic_keyword");
     token = await getToken();
 	while(true){
+	    brick_id = await getBrickId();
         let task = await Task.fetchTask(BEE_NAME);
         if(task === null){
             console.log("暂时没有任务");
@@ -253,7 +285,14 @@ let getKeyword = async(keyword, loadMoreKey) =>{
 		}
         console.log(task);
         cardCommentCount = 0;
-        task.brick_id = JSON.parse(task.config).brick_id;
+
+        let config = JSON.parse(task.config);
+        if (config.fromtopictree) {
+            task.brick_id = brick_id;
+        } else {
+            task.brick_id = JSON.parse(task.config).brick_id;
+        }
+
         let result = await getKeyword(task.value, null);
         if(!result){
             task.reject();

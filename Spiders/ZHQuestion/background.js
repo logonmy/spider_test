@@ -26,6 +26,14 @@ require([
         let result = await tab.run();
         console.log(result);
 
+        for(let sm of result.question.similar_queries){
+            sm.keyword = keyword;
+        }
+
+        await Queue.postDataToMessage("ZHURES", JSON.stringify(result));
+        i++;
+        await run(i)
+
     }
 
     (async() => {

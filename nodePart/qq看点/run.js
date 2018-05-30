@@ -1,4 +1,5 @@
 const getApi = require("../api/fetch").getApi;
+const Queue = require("../api/queue").Queue;
 const File = require("fs")
 
 const getComments = async(uin,feeds_id) => {
@@ -17,7 +18,11 @@ let feed_ids = "16098934180474418474";
 
 
 (async ()=> {
-    let data = await getLists(uin);
-    File.appendFileSync("sd.txt", JSON.stringify(data));
-    console.log(data);
+
+    let data = await Queue.readAllDateFromMessage("qqKandian3");
+    console.log(data.result);
+    for(let r of data.result){
+        File.appendFileSync("201.txt", r + "\n");
+    }
 })()
+

@@ -11,11 +11,12 @@ require([
     "../api/socket",
     "../service/tab",
 ], (Config, Http, Async, Task, Socket, Tab) => {
+    let brick_id = 16661;
 
     const LIST_BEE_NAME = "bilibili_keyword_list";
     const DETAIL_BEE_NAME = "bilibili_video_detail";
 
-    const filterItems = async(task, data) => {
+    const filterItems = async (task, data) => {
         let query = {
             partition: DETAIL_BEE_NAME,
             keys: data.items.map(item => item.url)
@@ -24,13 +25,21 @@ require([
         data.items = data.items.filter((item, i) => (res.filter_result[i]));
     };
 
-    const postDetailTasks = async(listTask, data) => {
+    const postDetailTasks = async (listTask, data) => {
+        let config = JSON.parse(listTask.config);
+        let sendBrickId;
+        if (config.fromtopictree) {
+            sendBrickId = brick_id;
+        } else {
+            sendBrickId = JSON.parse(listTask.config).brick_id;
+        }
+
         for (let item of data.items) {
             let query = {
                 name: DETAIL_BEE_NAME,
                 value: item.url,
                 config: JSON.stringify({
-                    brick_id: JSON.parse(listTask.config).brick_id,
+                    brick_id: sendBrickId,
                     keyword: listTask.value
                 }),
                 scheduled_at: 9999999999999
@@ -46,7 +55,37 @@ require([
         }
     };
 
-    const runTask = async(task) => {
+    const getBrickId = async () => {
+        let getTrueName = () => {
+            var date = new Date();
+            var yyyy = date.getFullYear();
+            var mm = date.getMonth() + 1;
+            if (mm < 10) {
+                mm = "0" + mm.toString();
+            }
+            var dd = date.getDate();
+            if (dd < 10) {
+                dd = "0" + dd.toString();
+            }
+            var name = yyyy + mm + dd + "更新";
+            return name;
+        }
+
+        let trueName = getTrueName();
+
+        let data = await Http.request("http://chatbot.api.talkmoment.com/lego/library/brick/list?limit=20&version=002");
+        data = JSON.parse(data);
+        data = data.result;
+        for (let da of data) {
+            if (da.name == trueName) {
+                return da.id;
+            }
+        }
+        return false;
+    }
+
+    const runTask = async (task) => {
+        brick_id = await getBrickId();
         try {
             Socket.log(`开始处理爬取任务,task=`, task);
 
@@ -57,7 +96,7 @@ require([
             let baseUrl = "https://search.bilibili.com/all?keyword=" + task.value;
             let tabCount = new Tab(baseUrl, ["./business/script1.js"]);
             let pageCount = await tabCount.run();
-            Socket.log("当前关键词共有"+ pageCount + "页");
+            Socket.log("当前关键词共有" + pageCount + "页");
 
             let taskData = [];
             for (let i = 1; i <= pageCount; i++) {
@@ -109,14 +148,14 @@ require([
             await Task.resolveTask(task);
             Socket.log(`爬取任务完成`);
 
-        } catch(err) {
+        } catch (err) {
             Socket.log("爬取失败,err=", err.stack);
             Socket.log(`上报爬取任务失败,task=`, task);
             await Task.rejectTask(task, err);
         }
     };
 
-    (async() => {
+    (async () => {
         Socket.startHeartBeat(LIST_BEE_NAME);
         while (true) {
             let task = await Task.fetchTask(LIST_BEE_NAME);

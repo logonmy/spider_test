@@ -11,6 +11,29 @@ var a ="共 23 页";
 
 getPageCount(a)
 
+
+
+// chrome.webRequest.onBeforeSendHeaders.addListener(details => {
+//     let headers = details.requestHeaders;
+//     let url = details.url;
+//     let modified = {
+//         "User-Agent": "Mozilla/5.0 (SymbianOS/9.3; U; Series60/3.2 " +
+//         "NokiaE75-1 /110.48.125 Profile/MIDP-2.1 Configuration" +
+//         "/CLDC-1.1 ) AppleWebKit/413 (KHTML, like Gecko) Safari/413",
+//         "Referer": url,
+//         "X-Forwarded-for": "127.0.0.1",
+//         "haha":"haha",
+//         "Cookie":""
+//     };
+//     changeHeaders(modified, headers, url);
+//
+//     return {
+//         requestHeaders: headers
+//     };
+// }, {
+//     urls: ["*://www.baidu.com/*"]
+// }, ["requestHeaders", "blocking"]);
+
 let  hrefToJson = (str) => {
     let json = {};
     let arr = str.split("?")[1].split("&");
@@ -139,7 +162,7 @@ var postData = {
 }
 liteAjax(sendTaskUrl, function(data){
     console.log(data)
-}, "POST", JSON.stringify(postData))
+}, "POST", JSON.stringify(postData));
 
 
 let button = document.querySelectorAll("[action-type=feed_list_item] .W_ficon.ficon_repeat.S_ficon");
@@ -157,3 +180,24 @@ readLine("selected.txt").go(async (data, next) => {
     console.log(data);
     next()
 })
+
+chrome.webRequest.onBeforeSendHeaders.addListener(details => {
+    let headers = details.requestHeaders;
+    let url = details.url;
+    let modified = {
+        "User-Agent": "Mozilla/5.0 (SymbianOS/9.3; U; Series60/3.2 " +
+        "NokiaE75-1 /110.48.125 Profile/MIDP-2.1 Configuration" +
+        "/CLDC-1.1 ) AppleWebKit/413 (KHTML, like Gecko) Safari/413",
+        "Referer": url,
+        "X-Forwarded-for": "127.0.0.1",
+        "haha":"haha",
+        "Cookie":""
+    };
+    changeHeaders(modified, headers, url);
+
+    return {
+        requestHeaders: headers
+    };
+}, {
+    urls: ["*://www.baidu.com/*"]
+}, ["requestHeaders", "blocking"]);

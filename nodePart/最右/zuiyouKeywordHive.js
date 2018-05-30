@@ -6,6 +6,36 @@ const Socket = require("./api/socket").Socket;
 const File = require("fs")
 
 let getcommentCount = 0;
+let brick_id = 16661;
+const getBrickId = async() => {
+    let getTrueName = () => {
+        var date = new Date();
+        var yyyy = date.getFullYear();
+        var mm = date.getMonth() + 1;
+        if (mm < 10) {
+            mm = "0" + mm.toString();
+        }
+        var dd = date.getDate();
+        if (dd < 10) {
+            dd = "0" + dd.toString();
+        }
+        var name = yyyy + mm + dd + "更新";
+        return name;
+    }
+
+    let trueName = getTrueName();
+
+    let data = await Http.get("http://chatbot.api.talkmoment.com/lego/library/brick/list?limit=20&version=002");
+    data = JSON.parse(data);
+    data = data.result;
+    for(let da of data){
+        if(da.name == trueName){
+            return da.id;
+        }
+    }
+
+    return false;
+}
 
 const io = require("socket.io-client");
 const socket = io("http://ws.api.talkmoment.com:51179");
@@ -156,6 +186,7 @@ let getKeywordAll = async(keyword) =>{
 (async () => {
     Socket.startHeartBeat(BEE_NAME);
     while(true){
+        brick_id = await getBrickId();
         let task = await Task.fetchTask(BEE_NAME);
         getcommentCount = 0
 
@@ -165,7 +196,13 @@ let getKeywordAll = async(keyword) =>{
             continue
         }
         console.log(task);
-        task.brick_id = JSON.parse(task.config).brick_id;
+
+        let config = JSON.parse(task.config);
+        if (config.fromtopictree) {
+            task.brick_id = brick_id;
+        } else {
+            task.brick_id = JSON.parse(task.config).brick_id;
+        }
 
         let result = await getKeywordAll(task.value);
         if(!result){

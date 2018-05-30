@@ -88,9 +88,7 @@ require([
                 return da.id;
             }
         }
-
         return false;
-
     }
 
     (async() => {

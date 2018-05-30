@@ -4,3 +4,10 @@ a = a.result
 for(let s of a){
     console.log(JSON.parse(s));
 }
+
+var b = function(data){
+    data = [1];
+}
+var a = [2]
+b(a)
+console.log(a)

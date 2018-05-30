@@ -14,26 +14,27 @@ require([
 
     let brick_id = 16661;
 
-    const filterItem = async (task) => {
+    const filterItem = async (list) => {
         let query = {
             partition: DETAIL_BEE_NAME,
-            keys: [task.value]
+            keys: list.map(item => item.articleid + "")
         };
         let res = await Http.call(`http://bee.api.talkmoment.com/dereplicate/filter/by/history`, query);
-        return res.filter_result[0];
+        console.log(res);
+        return list.filter((item, i) => (res.filter_result[i]));
     };
 
     const postDataToMessage = async (task, data) => {
         await Http.call(`http://bee.api.talkmoment.com/message/publish?topic=${DETAIL_BEE_NAME}`, data);
     };
 
-    const postWashTask = async (detailTask, data) => {
+    const postWashTask = async (data) => {
         let washTask = {
             name: "wash_corpus",
             value: "",
             config: JSON.stringify({
                 bee_source: DETAIL_BEE_NAME,
-                brick_id: JSON.parse(detailTask.config).brick_id,
+                brick_id: 17629,
                 publish: true
             }),
             data: JSON.stringify(data),
@@ -42,10 +43,10 @@ require([
         await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", washTask)
     };
 
-    const postDataToDereplicate = async (task) => {
+    const postDataToDereplicate = async (value) => {
         let query = {
             partition: DETAIL_BEE_NAME,
-            key: task.value
+            key: value + ""
         };
         await Http.call(`http://bee.api.talkmoment.com/dereplicate/history/add`, query);
     };
@@ -61,25 +62,72 @@ require([
     let getLists = async(uin) => {
         return new Promise((resolve, reject) => {
             liteAjax("http://kandian.qq.com/cgi-bin/social/getHomePage?uin=" + uin + "&pageNo=1&pageSize=10", function(d){
-                resolve(d)
+                resolve(d);
             })
         })
     }
 
+    const getBrickId = async() => {
+        let getTrueName = () => {
+            var date = new Date();
+            var yyyy = date.getFullYear();
+            var mm = date.getMonth() + 1;
+            if (mm < 10) {
+                mm = "0" + mm.toString();
+            }
+            var dd = date.getDate();
+            if (dd < 10) {
+                dd = "0" + dd.toString();
+            }
+            var name = yyyy + mm + dd + "更新";
+            return name;
+        }
+
+        let trueName = getTrueName();
+
+        let data = await Http.request("http://chatbot.api.talkmoment.com/lego/library/brick/list?limit=20&version=002");
+        data = JSON.parse(data);
+        data = data.result;
+        for(let da of data){
+            if(da.name == trueName){
+                return da.id;
+            }
+        }
+
+        return false;
+
+    }
+
     const runTask = async (task) => {
+        brick_id = await getBrickId();
         try {
             let data = await getLists(task.uin);
-            let lists = JSON.parse(data).result.articleinfos
+            let lists = JSON.parse(data).result.articleinfos;
             for(let li of lists){
 
-                let comment = await getComments(task.uin, li.feeds_id)
+                let comment = await getComments(task.uin, li.feeds_id);
                 comment = JSON.parse(comment);
                 li.addComment = comment;
                 await Async.sleep(1000);
-                File.append("qqkandiantest2", JSON.stringify(li) + "\n");
+                //File.append("qqkandiantest2", JSON.stringify(li) + "\n");
             }
+            console.log("开始过滤");
             console.log(lists);
+            lists = await filterItem(lists);
+            console.log("添加到去重队列");
+            console.log("并且");
+            console.log("上传到消息队列");
+            console.log("并且");
+            console.log("送给陶翠城去洗碗");
+            for(let li of lists){
+                console.log(li.articleid);
+                await postDataToDereplicate(li.articleid);
+                await postDataToMessage(li);
+                await postWashTask(li);
+            }
+            console.log("算是完事了");
         } catch (err) {
+            console.log(err);
 
         }
     };
@@ -92,8 +140,9 @@ require([
 
             console.log(keyword)
 
-            await runTask(keyword);
-            await Async.sleep(99999999999);
+            let miaomiaomiao = await runTask(keyword);
+            console.log(miaomiaomiao, "？？？")
+            await Async.sleep();
 
             if (s == 467) {
                 s = -1;

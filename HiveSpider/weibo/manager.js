@@ -13,13 +13,53 @@ const reopen = "weibo_reopen";
 
 const PUPPERTTER_LIMIT = 4;
 
+let brick_id = 16661;
+const getBrickId = async() => {
+    let getTrueName = () => {
+        var date = new Date();
+        var yyyy = date.getFullYear();
+        var mm = date.getMonth() + 1;
+        if (mm < 10) {
+            mm = "0" + mm.toString();
+        }
+        var dd = date.getDate();
+        if (dd < 10) {
+            dd = "0" + dd.toString();
+        }
+        var name = yyyy + mm + dd + "更新";
+        return name;
+    }
+
+    let trueName = getTrueName();
+
+    let data = await Http.get("http://chatbot.api.talkmoment.com/lego/library/brick/list?limit=20&version=002");
+    data = JSON.parse(data);
+    data = data.result;
+    for(let da of data){
+        if(da.name == trueName){
+            return da.id;
+        }
+    }
+
+    return false;
+}
+
+
 const postWashTask = async(detailTask, data) => {
+    let config = JSON.parse(detailTask.config);
+    let sendBrickId;
+    if (config.fromtopictree) {
+        sendBrickId = brick_id;
+    } else {
+        sendBrickId = JSON.parse(detailTask.config).brick_id;
+    }
+
     let washTask = {
         name: "wash_corpus",
         value: "",
         config: JSON.stringify({
             bee_source: detailTask.name,
-            brick_id: JSON.parse(detailTask.config).brick_id,
+            brick_id: sendBrickId,
             publish: true
         }),
         data: JSON.stringify(data),
@@ -492,6 +532,7 @@ run = async () => {
     (async () => {
         Socket.log("轮询Task队列启动");
         while (true) {
+            brick_id = await getBrickId();
             if (taskHeap.hasReadyTask()) {
                 let task = taskHeap.getReadyTask();
                 //todo taskSolve

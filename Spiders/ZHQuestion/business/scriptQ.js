@@ -296,23 +296,33 @@ var run = async() => {
         let answers = document.querySelectorAll(".List-item");
         for(let a of answers){
             let an =  {
-                "responderName": "老母鸡",
+                "authorName": "老母鸡",
                 "agreeCount": 0,
                 "created_at": 0,
                 "commentCount": 0,
                 "answerContent": []
             }
-            an.responderName = a.querySelector("a.UserLink-link img").getAttribute("alt");
-            console.log(1)
+
+            let info = a.querySelector(".ContentItem.AnswerItem")
+            an.authorName = JSON.parse(info.getAttribute("data-zop")).authorName;
+            info = JSON.parse(info.getAttribute("data-za-extra-module"));
+            an.agreeCount = info.card.content.upvote_num;
+            an.created_at = new Date(a.querySelector("[itemprop=dateCreated]").getAttribute("content")).getTime();
+            an.commentCount = info.card.content.comment_num;
+            an.answerContent = BeeUtils.htmlToJson(a.querySelector(".RichText.ztext.CopyrightRichText-richText"));
+            templateData.answers.push(an);
         }
 
 
         console.log(templateData);
         chrome.runtime.sendMessage(templateData);
+        window.close();
+
     }
     catch(e){
         console.log(e);
         chrome.runtime.sendMessage(false);
+        window.close();
     }
 }
 
@@ -323,7 +333,7 @@ var sleep = async (s = 10) => {
 };
 
 var init = function () {
-    console.log("初始化页面")
+    console.log("初始化页面");
     try {
         document.querySelector(".Button.QuestionRichText-more.Button--plain").click()
         document.querySelector("[data-za-detail-view-element_name=ViewAll]").click()
@@ -342,7 +352,7 @@ var index = setInterval(function () {
     var end = false;
     var before = 0;
     while (true) {
-        if (end > 6) {
+        if (end > 5) {
             clearTimeout(index);
             await run();
             break;
