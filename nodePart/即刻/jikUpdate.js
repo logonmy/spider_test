@@ -31,13 +31,13 @@ function FormatDate(strTime) {
 
 const getCookie = (() => {
     let users = [
-        "jike:sess=eyJfdWlkIjoiNWFmOTQwMjQ3MjUxMGMwMDExYzU1YmE0IiwiX3Nlc3Npb25Ub2tlbiI6ImVkRlZTN3R4NWJSenFvdlJueUJ1VzJYSnAifQ==; path=/; expires=Sun, 12 May 2019 07:08:10 GMT; domain=.jike.ruguoapp.com; httponly;jike:sess.sig=gBnMYkol3x-sBae8qjtqP26KoVc; path=/; expires=Sun, 12 May 2019 07:08:10 GMT; domain=.jike.ruguoapp.com; httponly",
+        // 坏掉了 "jike:sess=eyJfdWlkIjoiNWFmOTQwMjQ3MjUxMGMwMDExYzU1YmE0IiwiX3Nlc3Npb25Ub2tlbiI6ImVkRlZTN3R4NWJSenFvdlJueUJ1VzJYSnAifQ==; path=/; expires=Sun, 12 May 2019 07:08:10 GMT; domain=.jike.ruguoapp.com; httponly;jike:sess.sig=gBnMYkol3x-sBae8qjtqP26KoVc; path=/; expires=Sun, 12 May 2019 07:08:10 GMT; domain=.jike.ruguoapp.com; httponly",
         "jike:sess=eyJfdWlkIjoiNWFmOTNmN2UxMWY4YWIwMDE3MGU0YmNjIiwiX3Nlc3Npb25Ub2tlbiI6IjM2VnRKTWFrclZaZ2JISXUyV3NITXRsUk8ifQ==; path=/; expires=Sun, 12 May 2019 06:37:51 GMT; domain=.jike.ruguoapp.com; secure; httponly;jike:sess.sig=gG8RqVgPuThXUtruOXAfr6JLbBA; path=/; expires=Sun, 12 May 2019 06:37:51 GMT; domain=.jike.ruguoapp.com; secure; httponly",
-        "jike:sess=eyJfdWlkIjoiNWFmOTQwZDFjODgxMjcwMDE3ZDUxMTMzIiwiX3Nlc3Npb25Ub2tlbiI6IlFTM2M4NmZKNnUzQWRGQTZ1OU5NeVhyMXMifQ==; path=/; expires=Sun, 12 May 2019 06:41:32 GMT; domain=.jike.ruguoapp.com; httponly; jike:sess.sig=KwiH0ax-JviEfDkvYhtnO44F8o4; path=/; expires=Sun, 12 May 2019 06:41:32 GMT; domain=.jike.ruguoapp.com; httponly",
-        "jike:sess=eyJfdWlkIjoiNWFmOTNiZDk5Y2ZlY2QwMDE3YWE0MWUyIiwiX3Nlc3Npb25Ub2tlbiI6ImFRZGhyb05TemNqbGdTeFNRbUY2NE1lcWYifQ==; path=/; expires=Sun, 12 May 2019 07:01:45 GMT; domain=.jike.ruguoapp.com; secure; httponly;jike:sess.sig=J3i3ubDMM8p_PCimXg87iUObykk; path=/; expires=Sun, 12 May 2019 07:01:45 GMT; domain=.jike.ruguoapp.com; secure; httponly",
-        "jike:sess=eyJfdWlkIjoiNWFmOTNlNzIxMWY4YWIwMDE3MGU0YmFlIiwiX3Nlc3Npb25Ub2tlbiI6IlQxNEIxdU5QS05kN1VhZ0pmcnRrYkhVSWUifQ==; path=/; expires=Sun, 12 May 2019 07:04:02 GMT; domain=.jike.ruguoapp.com; httponly;jike:sess.sig=o7qDkJD8AJJHs8ZL0OhnAa4HQaQ; path=/; expires=Sun, 12 May 2019 07:04:02 GMT; domain=.jike.ruguoapp.com; httponly",
+        // 坏掉了 "jike:sess=eyJfdWlkIjoiNWFmOTQwZDFjODgxMjcwMDE3ZDUxMTMzIiwiX3Nlc3Npb25Ub2tlbiI6IlFTM2M4NmZKNnUzQWRGQTZ1OU5NeVhyMXMifQ==; path=/; expires=Sun, 12 May 2019 06:41:32 GMT; domain=.jike.ruguoapp.com; httponly; jike:sess.sig=KwiH0ax-JviEfDkvYhtnO44F8o4; path=/; expires=Sun, 12 May 2019 06:41:32 GMT; domain=.jike.ruguoapp.com; httponly",
+        // 坏掉了 "jike:sess=eyJfdWlkIjoiNWFmOTNiZDk5Y2ZlY2QwMDE3YWE0MWUyIiwiX3Nlc3Npb25Ub2tlbiI6ImFRZGhyb05TemNqbGdTeFNRbUY2NE1lcWYifQ==; path=/; expires=Sun, 12 May 2019 07:01:45 GMT; domain=.jike.ruguoapp.com; secure; httponly;jike:sess.sig=J3i3ubDMM8p_PCimXg87iUObykk; path=/; expires=Sun, 12 May 2019 07:01:45 GMT; domain=.jike.ruguoapp.com; secure; httponly",
+        // 坏掉了 "jike:sess=eyJfdWlkIjoiNWFmOTNlNzIxMWY4YWIwMDE3MGU0YmFlIiwiX3Nlc3Npb25Ub2tlbiI6IlQxNEIxdU5QS05kN1VhZ0pmcnRrYkhVSWUifQ==; path=/; expires=Sun, 12 May 2019 07:04:02 GMT; domain=.jike.ruguoapp.com; httponly;jike:sess.sig=o7qDkJD8AJJHs8ZL0OhnAa4HQaQ; path=/; expires=Sun, 12 May 2019 07:04:02 GMT; domain=.jike.ruguoapp.com; httponly",
         "jike:sess=eyJfdWlkIjoiNWFmZDI5ZTQ3ZmEwMTAwMDE3ZTlmNDBkIiwiX3Nlc3Npb25Ub2tlbiI6IkFPbHBJRUhBV3NaMXVBQWFLUmU3WTR1WGsifQ==; path=/; expires=Sun, 12 May 2019 07:06:47 GMT; domain=.jike.ruguoapp.com; httponly;jike:sess.sig=CAXaBKKz8n0LJmgILt8c75cLeeY; path=/; expires=Sun, 12 May 2019 07:06:47 GMT; domain=.jike.ruguoapp.com; httponly",
-        "jike:sess=eyJfdWlkIjoiNWFmZDJhYmM2ODRmYzMwMDE3OWE3NGZjIiwiX3Nlc3Npb25Ub2tlbiI6IjBhZ0ZFVFpzVTg4Sm0xZWwzNndadXFjVncifQ==; path=/; expires=Sun, 12 May 2019 07:10:35 GMT; domain=.jike.ruguoapp.com; httponly;jike:sess.sig=BpnMj7wOobQ281BDi_A2CCqAlnY; path=/; expires=Sun, 12 May 2019 07:10:35 GMT; domain=.jike.ruguoapp.com; httponly",
+        // 坏掉了 "jike:sess=eyJfdWlkIjoiNWFmZDJhYmM2ODRmYzMwMDE3OWE3NGZjIiwiX3Nlc3Npb25Ub2tlbiI6IjBhZ0ZFVFpzVTg4Sm0xZWwzNndadXFjVncifQ==; path=/; expires=Sun, 12 May 2019 07:10:35 GMT; domain=.jike.ruguoapp.com; httponly;jike:sess.sig=BpnMj7wOobQ281BDi_A2CCqAlnY; path=/; expires=Sun, 12 May 2019 07:10:35 GMT; domain=.jike.ruguoapp.com; httponly",
         "jike:sess=eyJfdWlkIjoiNWFmZDJiMWE2ODRmYzMwMDE3OWE3NTEwIiwiX3Nlc3Npb25Ub2tlbiI6Iko0eVZHMGgxVXVlN2FRZVpkbEJ4anpiS1YifQ==; path=/; expires=Sun, 12 May 2019 07:11:56 GMT; domain=.jike.ruguoapp.com; httponly;jike:sess.sig=o4SgRveIjkqu1-lx6omWFx_8GwA; path=/; expires=Sun, 12 May 2019 07:11:56 GMT; domain=.jike.ruguoapp.com; httponly",
         "jike:sess=eyJfdWlkIjoiNWFmZDJiMWE2ODRmYzMwMDE3OWE3NTEwIiwiX3Nlc3Npb25Ub2tlbiI6Iko0eVZHMGgxVXVlN2FRZVpkbEJ4anpiS1YifQ==; path=/; expires=Sun, 12 May 2019 07:14:38 GMT; domain=.jike.ruguoapp.com; httponly;jike:sess.sig=o4SgRveIjkqu1-lx6omWFx_8GwA; path=/; expires=Sun, 12 May 2019 07:14:38 GMT; domain=.jike.ruguoapp.com; httponly",
         "jike:sess=eyJfdWlkIjoiNWFmZDJjMGJlMzlhNzcwMDFjOTdiMDI1IiwiX3Nlc3Npb25Ub2tlbiI6IjBtMmRQdGtFSXBhd2ZteWl1aGNHZEVHcnkifQ==; path=/; expires=Sun, 12 May 2019 07:15:57 GMT; domain=.jike.ruguoapp.com; httponly;jike:sess.sig=Q9rGRmJFzvSpOmtuyHHXXH5OzCs; path=/; expires=Sun, 12 May 2019 07:15:57 GMT; domain=.jike.ruguoapp.com; httponly"
@@ -212,6 +212,7 @@ let getTopicContent = async (topicId, loadMoreKey) => {
         })
     }
     let result = await getApi("https://app.jike.ruguoapp.com/1.0/messages/history", moreArgs);
+    console.log(result);
     return result;
 }
 
@@ -354,7 +355,7 @@ let run = async (name, topicId, brick_id, created_at) => {
         if (out) {
             break;
         }
-        await sleep(300);
+        await sleep(100);
         token = await getToken();
     }
 
