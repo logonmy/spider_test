@@ -1,21 +1,22 @@
 var BeeUtils = new _BeeUtils();
+
 function _BeeUtils() {
 
     var self = this;
 
-    this.warning = function(msg) {
+    this.warning = function (msg) {
         var d = new Date();
         var log = d.toLocaleString() + " | " + msg;
-        liteAjax("http://message.api.jndroid.com/publish?topic=bee_weixin_error", function() {
+        liteAjax("http://message.api.jndroid.com/publish?topic=bee_weixin_error", function () {
         }, "post", log);
     };
 
-    this.log = function(str) {
+    this.log = function (str) {
         var d = new Date();
-        console.log(d.toLocaleString() + " | "  + str);
+        console.log(d.toLocaleString() + " | " + str);
     };
 
-    this.putModel = function(model) {
+    this.putModel = function (model) {
         var data = {};
         if (Utils.isArray(model)) {
             data.data = model;
@@ -30,7 +31,7 @@ function _BeeUtils() {
     function putData(data) {
         var url = "http://message.api.jndroid.com/publish?topic=bee_weixin_output_content";
         var result = false;
-        liteAjax(url, function(e) {
+        liteAjax(url, function (e) {
             var eObj = JSON.parse(e);
             result = (eObj.err_no == 0);
             if (result == false) {
@@ -40,11 +41,11 @@ function _BeeUtils() {
         return result;
     }
 
-    this.scrollToBottom = function(document) {
+    this.scrollToBottom = function (document) {
         document.body.scrollTop = document.body.scrollHeight;
     };
 
-    this.hashCode = function(str){
+    this.hashCode = function (str) {
         var hash = 0;
         if (str.length == 0) return hash;
         for (i = 0; i < str.length; i++) {
@@ -55,7 +56,7 @@ function _BeeUtils() {
         return hash;
     };
 
-    this.formatTime = function(timeString) {
+    this.formatTime = function (timeString) {
         if (!timeString) {
             console.log("Error:" + timeString);
             return;
@@ -70,7 +71,7 @@ function _BeeUtils() {
             timeString = d.toLocaleDateString() + " " + timeString.substring(2);
         }
         if (timeString.indexOf("日") > 0 && timeString.indexOf("月") > 0 && timeString.indexOf("年") < 0) {
-            timeString = (new Date()).getFullYear() + "年" +timeString;
+            timeString = (new Date()).getFullYear() + "年" + timeString;
         }
         if (timeString.indexOf("日") > 0) {
             var timeFrames = timeString.split("日");
@@ -105,7 +106,7 @@ function _BeeUtils() {
         }
     };
 
-    this.htmlToJson = function(htmlNode, adTexts, adImgs, imgConverter) {
+    this.htmlToJson = function (htmlNode, adTexts, adImgs, imgConverter) {
         // 测试文章：
         // 果壳网：http://www.guokr.com/article/440982/
         // 打喷嚏：http://www.dapenti.com/blog/more.asp?name=xilei&id=106454
@@ -134,7 +135,7 @@ function _BeeUtils() {
                     try {
                         var obj = JSON.parse(frame);
                         jsonResult.push(obj);
-                    } catch(e) {
+                    } catch (e) {
                         var p = {};
                         p.p = frame;
                         jsonResult.push(p);
@@ -266,11 +267,14 @@ var templateData = {
     "answers": []
 }
 
-var run = async() => {
-    try{
-
+var run = async () => {
+    try {
+        if (document.querySelector(".Card.QuestionInvitation")) {
+            var c = document.querySelector(".Card.QuestionInvitation")
+            c.parentNode.removeChild(c);
+        }
         let sq = document.querySelectorAll(".SimilarQuestions-item a");
-        for(let s of sq){
+        for (let s of sq) {
             let href = s.getAttribute("href");
             templateData.question.similar_queries.push({
                 url: href,
@@ -283,7 +287,7 @@ var run = async() => {
         templateData.question.description = BeeUtils.htmlToJson(document.querySelector(".RichText.ztext"));
 
         let tags = document.querySelectorAll(".Tag.QuestionTopic [aria-haspopup=true]")
-        for(let t of tags){
+        for (let t of tags) {
             templateData.question.tags.push(t.innerText);
         }
 
@@ -294,15 +298,15 @@ var run = async() => {
 
 
         let answers = document.querySelectorAll(".List-item");
-        for(let a of answers){
-            let an =  {
+        for (let a of answers) {
+            let an = {
                 "authorName": "老母鸡",
                 "agreeCount": 0,
                 "created_at": 0,
                 "commentCount": 0,
                 "answerContent": []
             }
-
+            b = a;
             let info = a.querySelector(".ContentItem.AnswerItem")
             an.authorName = JSON.parse(info.getAttribute("data-zop")).authorName;
             info = JSON.parse(info.getAttribute("data-za-extra-module"));
@@ -319,7 +323,7 @@ var run = async() => {
         window.close();
 
     }
-    catch(e){
+    catch (e) {
         console.log(e);
         chrome.runtime.sendMessage(false);
         window.close();

@@ -1,10 +1,10 @@
 const http = require("https");
-const Http = require("./api/http").Http;
-const Queue = require("./api/queue").Queue;
-const Task = require("./api/task").Task;
-const Socket = require("./api/socket").Socket;
+const Http = require("../api/http").Http;
+const Queue = require("../api/queue").Queue;
+const Task = require("../api/task").Task;
+const Socket = require("../api/socket").Socket;
 
-const getApi = require("./api/fetch").getApi;
+const getApi = require("../api/fetch").getApi;
 
 const BEE_NAME = "jike_topic_keyword";
 let token;
@@ -282,7 +282,14 @@ const getBrickId = async() => {
     token = await getToken();
 	while(true){
 	    brick_id = await getBrickId();
-        let task = await Task.fetchTask(BEE_NAME);
+        let task;
+        try{
+            task = await Task.fetchTask(BEE_NAME);
+        }catch(e){
+            console.log(e)
+            await sleep();
+            continue;
+        }
         if(task === null){
             console.log("暂时没有任务");
         	await sleep(5);

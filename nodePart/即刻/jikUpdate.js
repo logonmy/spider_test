@@ -212,7 +212,6 @@ let getTopicContent = async (topicId, loadMoreKey) => {
         })
     }
     let result = await getApi("https://app.jike.ruguoapp.com/1.0/messages/history", moreArgs);
-    console.log(result);
     return result;
 }
 

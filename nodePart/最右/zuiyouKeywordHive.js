@@ -1,8 +1,8 @@
 const http = require("https");
-const Http = require("./api/http").Http;
-const Https = require("./api/https").Http;
-const Task = require("./api/task").Task;
-const Socket = require("./api/socket").Socket;
+const Http = require("../api/http").Http;
+const Https = require("../api/https").Http;
+const Task = require("../api/task").Task;
+const Socket = require("../api/socket").Socket;
 const File = require("fs")
 
 let getcommentCount = 0;
@@ -64,7 +64,7 @@ const AskSign = async (url, params, echo) => {
 }
 
 
-const getApi = require("./api/fetch").getApi;
+const getApi = require("../api/fetch").getApi;
 
 const BEE_NAME = "zuiyou_keyword";
 const sleep = (s = 5) => {
@@ -112,32 +112,60 @@ const postDataToMessage = async (data) => {
     await Http.call(`http://bee.api.talkmoment.com/message/publish?topic=${BEE_NAME}`, data);
 };
 
-let getCommentOne = async(offset, id) => {
-    let sign = await AskSign("https://api.izuiyou.com/review/hot_reviews", {offset: offset, pid: id}, "getComment");
+let getCommentOne = async (offset, id) => {
+    let sign;
+    try {
+        sign = await AskSign("https://api.izuiyou.com/review/hot_reviews", {offset: offset, pid: id}, "getComment");
+    } catch (e) {
+        console.log("请求sign出错了");
+        let tryOther = await getCommentOne(offset, id);
+        console.log(e);
+        return tryOther;
+    }
+
     let result = await Https.call(sign.url, sign.params);
-    result = JSON.parse(result);
+    try {
+        result = JSON.parse(result);
+    } catch (e) {
+        console.log("获取评论失败了")
+        console.log(e)
+        console.log(result)
+        return {
+            offset: offset + 10,
+            data: []
+        }
+    }
+
     console.log("增长了一次评论");
-    await sleep(0.5);
+    //await sleep(0.5);
     return {
         offset: result.data.offset,
         data: result.data.list
     }
 }
 
-let getCommentAll = async(id) => {
+let getCommentAll = async (id) => {
     let datas = [];
     const limit = 200;
-    let sign = await AskSign("https://api.izuiyou.com/post/detail", {pid: id}, "getComment");
-    let result = await Https.call(sign.url, sign.params);
-    let offset = 15;
-    result = JSON.parse(result);
+    let result, offset;
+    try {
+        let sign = await AskSign("https://api.izuiyou.com/post/detail", {pid: id}, "getComment");
+        result = await Https.call(sign.url, sign.params);
+        offset = 15;
+        result = JSON.parse(result);
+        if (result && result.data && result.data.newreviews) {
+            datas = datas.concat(result.data.newreviews);
+        }
+    } catch (e) {
+        console.log("获取全部评论的第一步就坏事了");
+        let back = await getCommentAll(id);
+        return back;
+    }
 
-    datas = datas.concat(result.data.newreviews);
 
-    while(9 < datas.length && result.data.newreviews.length < limit){
+    while (9 < datas.length && result && result.data && result.data.newreviews.length < limit) {
         let comm = await getCommentOne(offset, id);
         datas = comm.data;
-        console.log(datas.length, 1)
         offset = comm.offset;
         result.data.newreviews = result.data.newreviews.concat(datas);
     }
@@ -146,7 +174,6 @@ let getCommentAll = async(id) => {
 
     return result
 }
-
 
 let getKeyWordOne = async(offset,keyword) => {
     console.log(offset, keyword, "getKeywordINGGGGGGGGGGGGGGGGGG");
@@ -187,7 +214,16 @@ let getKeywordAll = async(keyword) =>{
     Socket.startHeartBeat(BEE_NAME);
     while(true){
         brick_id = await getBrickId();
-        let task = await Task.fetchTask(BEE_NAME);
+
+        let task;
+        try{
+            task = await Task.fetchTask(BEE_NAME);
+        }catch(e){
+            console.log(e);
+            await sleep(5)
+            continue;
+        }
+
         getcommentCount = 0
 
         if(task === null){

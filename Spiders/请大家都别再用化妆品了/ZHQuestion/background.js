@@ -9,9 +9,9 @@ require([
     "../api/queue"
 ], (Config, Http, Async, Task, Socket, Tab, File, Queue) => {
 
-    let i = 0;
+    let i = 9;
 
-    let run = async(i) => {
+    let run = async (i) => {
         let data = await Queue.readDateFromMessage("ZHH", i);
         data = data.result[0]
         data = JSON.parse(data);
@@ -26,17 +26,18 @@ require([
         let result = await tab.run();
         console.log(result);
 
-        for(let sm of result.question.similar_queries){
+        for (let sm of result.question.similar_queries) {
             sm.keyword = keyword;
         }
 
         await Queue.postDataToMessage("ZHURES", JSON.stringify(result));
         i++;
+        console.log("第     ", i, "   完成");
         await run(i)
 
     }
 
-    (async() => {
+    (async () => {
         await run(i);
     })()
 
