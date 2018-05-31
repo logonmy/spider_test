@@ -15,7 +15,7 @@ require([
 
     const DETAIL_BEE_NAME = "duowan_news_detail";
 
-    const filterItem = async(task) => {
+    const filterItem = async (task) => {
         let query = {
             partition: DETAIL_BEE_NAME,
             keys: [task.value]
@@ -24,11 +24,11 @@ require([
         return res.filter_result[0];
     };
 
-    const postDataToMessage = async(task, data) => {
+    const postDataToMessage = async (task, data) => {
         await Http.call(`http://bee.api.talkmoment.com/message/publish?topic=${DETAIL_BEE_NAME}`, data);
     };
 
-    const postWashTask = async(detailTask, data) => {
+    const postWashTask = async (detailTask, data) => {
         let washTask = {
             name: "wash_corpus",
             value: "",
@@ -43,7 +43,7 @@ require([
         await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", washTask);
     };
 
-    const postDataToDereplicate = async(task) => {
+    const postDataToDereplicate = async (task) => {
         let query = {
             partition: DETAIL_BEE_NAME,
             key: task.value
@@ -51,7 +51,7 @@ require([
         await Http.call(`http://bee.api.talkmoment.com/dereplicate/history/add`, query);
     };
 
-    const runTask = async(task) => {
+    const runTask = async (task) => {
         try {
             Socket.log(`开始处理爬取任务,task=`, task);
 
@@ -66,10 +66,15 @@ require([
 
                 Socket.log(`开始爬取`);
                 let data = await tab.run();
-                if(data && data.false){
-                    return ;
+                if (data && data.false) {
+                    return;
                 }
                 Socket.log(`爬取完成,data=`, data);
+
+                if (data.comments.length < 3) {
+                    await Task.putTaskData(task);
+                    return;
+                }
 
                 if (config.up_name) {
                     data.up_name = config.up_name;
@@ -103,14 +108,14 @@ require([
             Socket.log(`上报爬取任务成功,task=`, task);
             await Task.resolveTask(task);
             Socket.log(`爬取任务完成`);
-        } catch(err) {
+        } catch (err) {
             Socket.error("爬取失败,err=", err.stack);
             Socket.log(`上报爬取任务失败,task=`, task);
             await Task.rejectTask(task, err);
         }
     };
 
-    (async() => {
+    (async () => {
         Socket.startHeartBeat(DETAIL_BEE_NAME);
         while (true) {
             let task = await Task.fetchTask(DETAIL_BEE_NAME);

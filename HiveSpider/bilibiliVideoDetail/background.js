@@ -15,7 +15,7 @@ require([
 
     const DETAIL_BEE_NAME = "bilibili_video_detail";
 
-    const filterItem = async(task) => {
+    const filterItem = async (task) => {
         let query = {
             partition: DETAIL_BEE_NAME,
             keys: [task.value]
@@ -24,11 +24,11 @@ require([
         return res.filter_result[0];
     };
 
-    const postDataToMessage = async(task, data) => {
+    const postDataToMessage = async (task, data) => {
         await Http.call(`http://bee.api.talkmoment.com/message/publish?topic=${DETAIL_BEE_NAME}`, data);
     };
 
-    const postWashTask = async(detailTask, data) => {
+    const postWashTask = async (detailTask, data) => {
         let washTask = {
             name: "wash_corpus",
             value: "",
@@ -43,7 +43,7 @@ require([
         await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", washTask);
     };
 
-    constpostDataToDereplicate = async(task) => {
+    const postDataToDereplicate = async (task) => {
         let query = {
             partition: DETAIL_BEE_NAME,
             key: task.value
@@ -51,7 +51,7 @@ require([
         await Http.call(`http://bee.api.talkmoment.com/dereplicate/history/add`, query);
     };
 
-    const runTask = async(task) => {
+    const runTask = async (task) => {
         try {
             Socket.log(`开始处理爬取任务,task=`, task);
 
@@ -61,7 +61,7 @@ require([
             } else {
                 let config = JSON.parse(task.config);
 
-                if(config.brick_id == 11779||config.brick_id == 11831){
+                if (config.brick_id == 11779 || config.brick_id == 11831) {
                     return;
                 }
 
@@ -80,6 +80,12 @@ require([
                 data.brick_id = config.brick_id;
 
                 Socket.log(`发送爬取结果到消息队列topic=${task.name}`);
+
+                if (data && data.comments && data.comments.length < 3) {
+                    await Task.resolveTask()
+                    return;
+                }
+
                 await postDataToMessage(task, data);
                 Socket.log(`发送爬取结果到消息队列完成`);
 
@@ -104,14 +110,14 @@ require([
             Socket.log(`上报爬取任务成功,task=`, task);
             await Task.resolveTask(task);
             Socket.log(`爬取任务完成`);
-        } catch(err) {
+        } catch (err) {
             Socket.error("爬取失败,err=", err.stack);
             Socket.log(`上报爬取任务失败,task=`, task);
             await Task.rejectTask(task, err);
         }
     };
 
-    (async() => {
+    (async () => {
         Socket.startHeartBeat(DETAIL_BEE_NAME);
         while (true) {
             let task = await Task.fetchTask(DETAIL_BEE_NAME);

@@ -283,8 +283,10 @@ var run = async () => {
         }
 
         templateData.question.title = document.querySelector(".QuestionHeader-title").innerText;
+        if(document.querySelector(".RichText.ztext")){
+            templateData.question.description = BeeUtils.htmlToJson(document.querySelector(".RichText.ztext"));
+        }
 
-        templateData.question.description = BeeUtils.htmlToJson(document.querySelector(".RichText.ztext"));
 
         let tags = document.querySelectorAll(".Tag.QuestionTopic [aria-haspopup=true]")
         for (let t of tags) {
@@ -349,14 +351,14 @@ var init = function () {
 init();
 
 var index = setInterval(function () {
-    window.scrollTo(0, document.documentElement.scrollTop + 200);
+    window.scrollTo(0, document.documentElement.scrollTop + 1000);
 }, 50);
 
 (async () => {
     var end = false;
     var before = 0;
     while (true) {
-        if (end > 5) {
+        if (end > 3) {
             clearTimeout(index);
             await run();
             break;

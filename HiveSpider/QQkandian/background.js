@@ -25,6 +25,7 @@ require([
     };
 
     const postDataToMessage = async (task, data) => {
+        console.log("post了一次");
         await Http.call(`http://bee.api.talkmoment.com/message/publish?topic=${DETAIL_BEE_NAME}`, data);
     };
 
@@ -120,6 +121,11 @@ require([
             console.log("并且");
             console.log("送给陶翠城去洗碗");
             for(let li of lists){
+                if(li.addComment && li.addComment.result && li.addComment.result.retObj.commentList.length < 3){
+                    continue;
+                }
+                console.log("到底是谁?");
+                console.log(li)
                 console.log(li.articleid);
                 await postDataToDereplicate(li.articleid);
                 await postDataToMessage(li);

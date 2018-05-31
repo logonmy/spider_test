@@ -245,6 +245,10 @@ const run = async (name, ZeroTime, brick_id) => {
     try {
         for (let re of result) {
 
+            if(re.hotreviews.length + re.newreviews.length < 3){
+                continue;
+            }
+
             let test = await redis.sadd("zuiyou" + brick_id, re.id);
             if(test == 0){
                 console.log("已经存在了 痕迹吧恐怖 明明filter过的");

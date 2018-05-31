@@ -9,7 +9,7 @@ require([
     "../api/queue"
 ], (Config, Http, Async, Task, Socket, Tab, File, Queue) => {
 
-    let i = 9;
+    let i = 554;
 
     let run = async (i) => {
         let data = await Queue.readDateFromMessage("ZHH", i);

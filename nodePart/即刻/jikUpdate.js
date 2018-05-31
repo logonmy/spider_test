@@ -322,6 +322,11 @@ let run = async (name, topicId, brick_id, created_at) => {
     if (result) {
         for (let data of result) {
 
+            if(data.commentCount < 3){
+                console.log("评论稍微有点少了")
+                continue;
+            }
+
             console.log("开始检测是否已经爬取");
             let test = await redis.sadd("jike_" + brick_id, data.messageId);
             if (test == 0) {
