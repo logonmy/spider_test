@@ -66,6 +66,12 @@ require([
                 let data = await tab.run();
                 Socket.log(`爬取完成,data=`, data);
 
+
+                if(data.comments.length < 3){
+                    console.log("评论数不够");
+                    return;
+                }
+
                 Socket.log(`发送爬取结果到消息队列topic=${task.name}`);
                 await postDataToMessage(task, data);
                 Socket.log(`发送爬取结果到消息队列完成`);

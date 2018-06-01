@@ -81,6 +81,11 @@ require([
                 }
                 data.brick_id = config.brick_id;
 
+                if(data.comments.length < 3){
+                    console.log("评论数不够");
+                    return ;
+                }
+
                 Socket.log(`发送爬取结果到消息队列topic=${task.name}`);
                 await postDataToMessage(data);
                 Socket.log(`发送爬取结果到消息队列完成`);
