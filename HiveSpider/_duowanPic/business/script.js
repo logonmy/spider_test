@@ -17,7 +17,12 @@ try{
         }
         let title = lists[i].querySelector("em a").innerText;
 
+        let count = 0;
         if(href.indexOf("tu.duowan.com") > -1){
+            count++;
+            if(count == 5){
+                break;
+            }
             templateData.items.push({
                 url:href,
                 title: title,

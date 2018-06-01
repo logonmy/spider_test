@@ -27,9 +27,10 @@ require([
     const filterItemD = async(value) =>{
         let query = {
             partition: DETAIL_BEE_NAME,
-            keys: value
+            keys: [value]
         }
         let res = await Http.call(`http://bee.api.talkmoment.com/dereplicate/filter/by/history`, query);
+        console.log("filterItemD", res);
         return res.filter_result[0];
     }
 
@@ -98,11 +99,12 @@ require([
                 for(let i = 1;i <= pageCount; i++){
                     let pageUrl = task.value;
                     pageUrl = pageUrl + "#p" + i;
+
+                    console.log("pageUrl", pageUrl);
                     let filter = await filterItemD(pageUrl);
 
                     if(!filter){
                         console.log("爬过了 跳过下 也不想更新里面的评论的说");
-                        //todo 多玩动图首页手动跑了以后 这些代码直接不要了
                         continue;
                     }
 
@@ -111,18 +113,25 @@ require([
 
                     Socket.log(`开始爬取`);
                     let data = await tab.run();
+
                     Socket.log(`爬取完成,data=`, data);
                     data.comments = arrayDulicate(data.comments);
+
+                    if(data.comments.length < 3){
+                        console.log("评论有点少了 跳过吧");
+                        continue;
+                    }
+
                     dataArray.push(data);
 
                     task.data = JSON.stringify(data);
                     Socket.log(`发送爬取结果到消息队列topic=${task.name}`);
-                    await postDataToMessage(task, data);
+                    //await postDataToMessage(task, data);
                     Socket.log(`发送爬取结果到消息队列完成`);
 
                     Socket.log(`发起清洗任务`);
-                    await postWashTask(task, data);
-                    await postDataToDereplicate(task, {url: pageUrl});
+                    //await postWashTask(task, data);
+                    //await postDataToDereplicate(task, {url: pageUrl});
                 }
 
                 Socket.log(`添加内容url(${baseUrl})到去重模块的历史集合`);
