@@ -9,11 +9,11 @@ require([
     "../api/queue"
 ], (Config, Http, Async, Task, Socket, Tab, File, Queue) => {
 
-    let i = 554;
+    let i = 0;
 
     let run = async (i) => {
-        let data = await Queue.readDateFromMessage("ZHH", i);
-        data = data.result[0]
+        let data = await Queue.getDataFromMessage("ZHH", i);
+        data = data.result;
         data = JSON.parse(data);
         data = JSON.parse(data);
         console.log(data);

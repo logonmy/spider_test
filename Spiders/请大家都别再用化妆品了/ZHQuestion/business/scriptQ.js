@@ -309,14 +309,20 @@ var run = async () => {
                 "answerContent": []
             }
             b = a;
-            let info = a.querySelector(".ContentItem.AnswerItem")
-            an.authorName = JSON.parse(info.getAttribute("data-zop")).authorName;
-            info = JSON.parse(info.getAttribute("data-za-extra-module"));
-            an.agreeCount = info.card.content.upvote_num;
-            an.created_at = new Date(a.querySelector("[itemprop=dateCreated]").getAttribute("content")).getTime();
-            an.commentCount = info.card.content.comment_num;
-            an.answerContent = BeeUtils.htmlToJson(a.querySelector(".RichText.ztext.CopyrightRichText-richText"));
-            templateData.answers.push(an);
+            try{
+                let info = a.querySelector(".ContentItem.AnswerItem")
+                an.authorName = JSON.parse(info.getAttribute("data-zop")).authorName;
+                info = JSON.parse(info.getAttribute("data-za-extra-module"));
+                an.agreeCount = info.card.content.upvote_num;
+                an.created_at = new Date(a.querySelector("[itemprop=dateCreated]").getAttribute("content")).getTime();
+                an.commentCount = info.card.content.comment_num;
+                an.answerContent = BeeUtils.htmlToJson(a.querySelector(".RichText.ztext.CopyrightRichText-richText"));
+                templateData.answers.push(an);
+            }
+            catch(e){
+                continue;
+            }
+
         }
 
 
@@ -328,7 +334,6 @@ var run = async () => {
     catch (e) {
         console.log(e);
         chrome.runtime.sendMessage(false);
-        window.close();
     }
 }
 
@@ -351,15 +356,22 @@ var init = function () {
 init();
 
 var index = setInterval(function () {
-    window.scrollTo(0, document.documentElement.scrollTop + 1000);
+    window.scrollTo(0, document.documentElement.scrollTop + 1500);
 }, 50);
 
 (async () => {
     var end = false;
     var before = 0;
     while (true) {
+        let answers = document.querySelectorAll(".List-item");
+        if(answers.length > 20){
+            clearInterval(index);
+            await run();
+            await sleep(1);
+            break;
+        }
         if (end > 3) {
-            clearTimeout(index);
+            clearInterval(index);
             await run();
             break;
         }
