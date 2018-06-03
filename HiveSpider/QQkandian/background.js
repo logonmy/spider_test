@@ -35,7 +35,7 @@ require([
             value: "",
             config: JSON.stringify({
                 bee_source: DETAIL_BEE_NAME,
-                brick_id: 17629,
+                brick_id: brick_id,
                 publish: true
             }),
             data: JSON.stringify(data),

@@ -6,7 +6,7 @@ require([
     "../api/socket",
     "../api/tab",
     "../api/fileControll",
-    "../api/queue"
+    "../api/queue",
 ], (Config, Http, Async, Task, Socket, Tab, File, Queue) => {
 
     let i = 0;
@@ -23,7 +23,23 @@ require([
         let url = "https://www.zhihu.com" + data.url;
 
         let tab = new Tab(url, ["./business/scriptQ.js"]);
+
+        let remove = setTimeout(async function(){
+            tab.close();
+            i++;
+            console.log("第     ", i, "   完成 而且他老BK中的老BK 真是🐶");
+            await run(i)
+            return;
+        }, 45000)
+
         let result = await tab.run();
+        clearTimeout(remove);
+        if (!result) {
+            i++;
+            console.log("第     ", i, "   完成 而且他是个老BK");
+            await run(i)
+            return;
+        }
         console.log(result);
 
         for (let sm of result.question.similar_queries) {
@@ -36,9 +52,7 @@ require([
         await run(i)
 
     }
-
     (async () => {
         await run(i);
     })()
-
 });

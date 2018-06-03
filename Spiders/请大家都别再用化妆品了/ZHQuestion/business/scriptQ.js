@@ -334,6 +334,7 @@ var run = async () => {
     catch (e) {
         console.log(e);
         chrome.runtime.sendMessage(false);
+        window.close();
     }
 }
 
@@ -386,3 +387,13 @@ var index = setInterval(function () {
     }
 })();
 
+(async () => {
+    while(true){
+        await sleep(2);
+        var nr = document.querySelector("#js-history-back")
+        if(nr){
+            chrome.runtime.sendMessage(false);
+            window.close();
+        }
+    }
+})()
