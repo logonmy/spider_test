@@ -40,7 +40,7 @@ const getCookie = (() => {
         // 坏掉了 "jike:sess=eyJfdWlkIjoiNWFmZDJhYmM2ODRmYzMwMDE3OWE3NGZjIiwiX3Nlc3Npb25Ub2tlbiI6IjBhZ0ZFVFpzVTg4Sm0xZWwzNndadXFjVncifQ==; path=/; expires=Sun, 12 May 2019 07:10:35 GMT; domain=.jike.ruguoapp.com; httponly;jike:sess.sig=BpnMj7wOobQ281BDi_A2CCqAlnY; path=/; expires=Sun, 12 May 2019 07:10:35 GMT; domain=.jike.ruguoapp.com; httponly",
         "jike:sess=eyJfdWlkIjoiNWFmZDJiMWE2ODRmYzMwMDE3OWE3NTEwIiwiX3Nlc3Npb25Ub2tlbiI6Iko0eVZHMGgxVXVlN2FRZVpkbEJ4anpiS1YifQ==; path=/; expires=Sun, 12 May 2019 07:11:56 GMT; domain=.jike.ruguoapp.com; httponly;jike:sess.sig=o4SgRveIjkqu1-lx6omWFx_8GwA; path=/; expires=Sun, 12 May 2019 07:11:56 GMT; domain=.jike.ruguoapp.com; httponly",
         "jike:sess=eyJfdWlkIjoiNWFmZDJiMWE2ODRmYzMwMDE3OWE3NTEwIiwiX3Nlc3Npb25Ub2tlbiI6Iko0eVZHMGgxVXVlN2FRZVpkbEJ4anpiS1YifQ==; path=/; expires=Sun, 12 May 2019 07:14:38 GMT; domain=.jike.ruguoapp.com; httponly;jike:sess.sig=o4SgRveIjkqu1-lx6omWFx_8GwA; path=/; expires=Sun, 12 May 2019 07:14:38 GMT; domain=.jike.ruguoapp.com; httponly",
-        "jike:sess=eyJfdWlkIjoiNWFmZDJjMGJlMzlhNzcwMDFjOTdiMDI1IiwiX3Nlc3Npb25Ub2tlbiI6IjBtMmRQdGtFSXBhd2ZteWl1aGNHZEVHcnkifQ==; path=/; expires=Sun, 12 May 2019 07:15:57 GMT; domain=.jike.ruguoapp.com; httponly;jike:sess.sig=Q9rGRmJFzvSpOmtuyHHXXH5OzCs; path=/; expires=Sun, 12 May 2019 07:15:57 GMT; domain=.jike.ruguoapp.com; httponly"
+        //"jike:sess=eyJfdWlkIjoiNWFmZDJjMGJlMzlhNzcwMDFjOTdiMDI1IiwiX3Nlc3Npb25Ub2tlbiI6IjBtMmRQdGtFSXBhd2ZteWl1aGNHZEVHcnkifQ==; path=/; expires=Sun, 12 May 2019 07:15:57 GMT; domain=.jike.ruguoapp.com; httponly;jike:sess.sig=Q9rGRmJFzvSpOmtuyHHXXH5OzCs; path=/; expires=Sun, 12 May 2019 07:15:57 GMT; domain=.jike.ruguoapp.com; httponly"
     ];
     users = shuffle(users.slice(0))
     return () => {
@@ -198,6 +198,7 @@ let getToken = async () => {
 }
 
 let getTopicContent = async (topicId, loadMoreKey) => {
+    await sleep(2);
     console.log(topicId, loadMoreKey, "getTopicContentINGGGGGGG");
     let moreArgs = {
         method: "POST",
@@ -212,11 +213,14 @@ let getTopicContent = async (topicId, loadMoreKey) => {
         })
     }
     let result = await getApi("https://app.jike.ruguoapp.com/1.0/messages/history", moreArgs);
+    if(!result) console.log("我估计现在的cookie是坏掉了");
+    console.log("现在使用的cookie", cookieING);
     return result;
 }
 
 let getCardComment = async (targetId) => {
     console.log(targetId, "getCardCommentINGGGGG");
+    await sleep(2);
     let moreArgs = {
         method: "POST",
         headers: {
@@ -340,7 +344,6 @@ let run = async (name, topicId, brick_id, created_at) => {
                 await sleep(0.5);
             }
         }
-        console.log("现在使用的cookie", cookieING);
         await sleep(2);
         console.log("###############################################");
     }

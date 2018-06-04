@@ -227,47 +227,54 @@ const run = async (name, ZeroTime, brick_id) => {
 
     try{
         id = await getTopicId(name);
+        console.log(name, id);
+        File.appendFileSync("result.txt", JSON.stringify({
+            brick_id: brick_id,
+            name: name,
+            id: id
+        }) + "\n");
     }catch(e){
-        console.log(e)
+        console.log(e);
+        File.appendFileSync("error.txt", name + "\n");
         console.log("###############################################")
         return ;
     }
-    try{
-        result = await getTopicAll(id, ZeroTime);
-    }catch(e){
-        console.log(e)
-        console.log("###############################################")
-        return;
-    }
-
-
-    result = await filterItems(result);
-    try {
-        for (let re of result) {
-
-            if(re.hotreviews.length + re.newreviews.length < 3){
-                continue;
-            }
-
-            let test = await redis.sadd("zuiyou" + brick_id, re.id);
-            if(test == 0){
-                console.log("已经存在了 痕迹吧恐怖 明明filter过的");
-                continue
-            }else{
-
-                console.log("上传" + re.topic.topic + "  的  " + re.content);
-                await postDataToDereplicate(re.id);
-                await postDataToMessage(re);
-                await postWashTask(trueBrickId, re);
-                await sleep(0.5);
-            }
-        }
-    } catch (e) {
-        console.log(e)
-        console.log("上传数据的时候不要吊它");
-    }
-    await sleep(1)
-    console.log("###############################################")
+    // try{
+    //     result = await getTopicAll(id, ZeroTime);
+    // }catch(e){
+    //     console.log(e)
+    //     console.log("###############################################")
+    //     return;
+    // }
+    //
+    //
+    // result = await filterItems(result);
+    // try {
+    //     for (let re of result) {
+    //
+    //         if(re.hotreviews.length + re.newreviews.length < 3){
+    //             continue;
+    //         }
+    //
+    //         let test = await redis.sadd("zuiyou" + brick_id, re.id);
+    //         if(test == 0){
+    //             console.log("已经存在了 痕迹吧恐怖 明明filter过的");
+    //             continue
+    //         }else{
+    //
+    //             console.log("上传" + re.topic.topic + "  的  " + re.content);
+    //             await postDataToDereplicate(re.id);
+    //             await postDataToMessage(re);
+    //             await postWashTask(trueBrickId, re);
+    //             await sleep(0.5);
+    //         }
+    //     }
+    // } catch (e) {
+    //     console.log(e)
+    //     console.log("上传数据的时候不要吊它");
+    // }
+    // await sleep(1)
+    // console.log("###############################################")
 }
 
 const getBrickId = async() => {
@@ -314,6 +321,11 @@ const getBrickId = async() => {
 
         await redis.rpush("zuiyou_list", config);
         config = JSON.parse(config);
+        if(config.brick_id == 16579){
+            console.log("跳过 球球大作战这智障东西");
+            console.log(config.name);
+            continue;
+        }
 
         console.log("开始爬取内容", config.name, "   ", config.brick_id);
         await run(config.name, ZeroTime, config.brick_id);

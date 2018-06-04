@@ -65,6 +65,10 @@ require([
                     return;
                 }
 
+                if(!(task.value.indexOf("/video/") > -1)){
+                    return ;
+                }
+
                 Socket.log(`打开网页Tab(url=${task.value}), 注入爬取逻辑`);
                 let tab = new Tab(task.value, ["./business/script.js"]);
 

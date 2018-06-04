@@ -12,7 +12,7 @@ require([
 
     (async () => {
 
-        for(let k = 1;k<200;k++){
+        for(let k = 34;k<200;k++){
 
             let data = await Queue.readDateFromMessage("JDTEST", k);
             data = JSON.parse(data.result[0]);
@@ -21,7 +21,8 @@ require([
             console.log("kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk        ", k);
 
             let d = encodeURIComponent(data.keyword);
-            for(let page = 82;page < data.pageCount * 2;page= page +2){
+            for(let page = 0;page < data.pageCount * 2;page= page +2){
+                console.log("kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk        ", k);
                 console.log("pppppppppppppppppppppppppppppp        ", page);
                 try{
                     let url = "https://search.jd.com/Search?keyword=" + d +"&enc=utf-8&wq=" + d + "&stock=1&page=" + page;
@@ -30,7 +31,7 @@ require([
                     console.log(runData);
                     for(let d of runData){
                         d.keyword = data.keyword;
-                        await Queue.postDataToMessage("JDTEST2222", JSON.stringify(d))
+                        await Queue.postDataToMessage("JDTEST3333", JSON.stringify(d))
                     }
                 }catch(e){
                     console.log(e);

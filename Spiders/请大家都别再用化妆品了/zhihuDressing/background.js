@@ -71,7 +71,12 @@ require([
 
             for (let re of result) {
                 re.keyword = keyword;
-                await Queue.postDataToMessage("ZHDTopicQuestion", JSON.stringify(re));
+                if(re.url.indexOf("/zhuanlan.zhihu.com") > -1){
+                    continue;
+                }
+                re.url = re.url.split("/answer")[0];
+
+                await Queue.postDataToMessage("ZHH", JSON.stringify(re));
             }
 
         }

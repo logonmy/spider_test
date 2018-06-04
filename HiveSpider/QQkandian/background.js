@@ -121,7 +121,8 @@ require([
             console.log("并且");
             console.log("送给陶翠城去洗碗");
             for(let li of lists){
-                if(li.addComment && li.addComment.result && li.addComment.result.retObj.commentList.length < 3){
+                console.log(li);
+                if(li.addComment && li.addComment.result && li.addComment.result.retObj.commentList && li.addComment.result.retObj.commentList.length < 3){
                     continue;
                 }
                 console.log("到底是谁?");

@@ -14,7 +14,7 @@ require([
     let run = async (i) => {
         let data = await Queue.getDataFromMessage("ZHH", i);
         data = data.result;
-        data = JSON.parse(data);
+        console.log(data);
         data = JSON.parse(data);
         console.log(data);
 

@@ -48,6 +48,4 @@ var run = async() => {
         chrome.runtime.sendMessage(false);
         window.close();
     }
-
-
 }
