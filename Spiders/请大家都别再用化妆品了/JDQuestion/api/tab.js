@@ -10,28 +10,38 @@ define([], function () {
             var self = this;
 
             chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
-                if (changeInfo.status == 'complete' && tabId == G.tabId) {
+                var timeout;
 
-                    function implantation(index) {
-                        if (G.script[index].indexOf(".js") > -1) {
-                            chrome.tabs.executeScript(G.tabId, {
-                                file: G.script[index]
-                            }, function () {
-                                if (G.script[index + 1]) {
-                                    implantation(index + 1);
-                                }
-                            })
-                        } else {
-                            chrome.tabs.executeScript(G.tabId, {
-                                code: G.script[index]
-                            }, function () {
-                                if (G.script[index + 1]) {
-                                    implantation(index + 1);
-                                }
-                            })
-                        }
+                function implantation(index) {
+                    if (G.script[index].indexOf(".js") > -1) {
+                        chrome.tabs.executeScript(G.tabId, {
+                            file: G.script[index]
+                        }, function () {
+                            if (G.script[index + 1]) {
+                                implantation(index + 1);
+                            }
+                        })
+                    } else {
+                        chrome.tabs.executeScript(G.tabId, {
+                            code: G.script[index]
+                        }, function () {
+                            if (G.script[index + 1]) {
+                                implantation(index + 1);
+                            }
+                        })
                     }
+                }
 
+                if(tabId == G.tabId){
+                    timeout = setTimeout(function(){
+                        implantation(0);
+                    },30000);
+                }
+
+                if (changeInfo.status == 'complete' && tabId == G.tabId) {
+                    if(timeout){
+                        clearTimeout(timeout);
+                    }
                     implantation(0);
 
                 }

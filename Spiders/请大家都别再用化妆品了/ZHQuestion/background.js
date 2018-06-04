@@ -11,8 +11,25 @@ require([
 
     let i = 0;
 
+    var parse = function (d) {
+        while (typeof(d) == "string") d = JSON.parse(d);
+        if (d.err_no) d = d.result;
+        while (typeof (d) == "string") d = JSON.parse(d);
+        if (typeof (d) == "object") return d[0];
+        return d;
+    }
+
     let run = async (i) => {
-        let data = await Queue.getDataFromMessage("ZHH", i);
+        let data;
+        try {
+            data = await Queue.getDataFromMessage("ZHH", i);
+            data = parse(data);
+        }catch (e){
+            i++;
+            console.log("第     ", i, "   完成 而且他是个终极无敌老BK");
+            await run(i);
+            return;
+        }
         data = data.result;
         console.log(data);
         data = JSON.parse(data);
@@ -24,7 +41,7 @@ require([
 
         let tab = new Tab(url, ["./business/scriptQ.js"]);
 
-        let remove = setTimeout(async function(){
+        let remove = setTimeout(async function () {
             tab.close();
             i++;
             console.log("第     ", i, "   完成 而且他老BK中的老BK 真是🐶");
