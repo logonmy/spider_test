@@ -23,16 +23,15 @@ require([
         let data;
         try {
             data = await Queue.getDataFromMessage("ZHH", i);
-            data = parse(data);
+            console.log(data);
+            data = JSON.parse(data.result)
+            // data = parse(data);
         }catch (e){
             i++;
             console.log("第     ", i, "   完成 而且他是个终极无敌老BK");
             await run(i);
             return;
         }
-        data = data.result;
-        console.log(data);
-        data = JSON.parse(data);
         console.log(data);
 
         let keyword = data.keyword;
@@ -58,9 +57,19 @@ require([
             return;
         }
         console.log(result);
+        if(result == "timeout"){
+            i++;
+            console.log("第     ", i, "   完成 而且他是个老BK 超时了");
+            await run(i)
+            return;
+        }
 
-        for (let sm of result.question.similar_queries) {
-            sm.keyword = keyword;
+        try {
+            for (let sm of result.question.similar_queries) {
+                sm.keyword = keyword;
+            }
+        }catch(e){
+
         }
 
         await Queue.postDataToMessage("ZHURES", JSON.stringify(result));

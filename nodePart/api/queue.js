@@ -22,6 +22,11 @@ Queue.clear = async (queueName) => {
 	return null;
 }
 
+Queue.readDateFromMessage = async (queueName, offset) => {
+	return await getApi(`http://bee.api.talkmoment.com/message/detail?topic=${queueName}&limit=1&offset=${offset}`);
+}
+
+
 Queue.detail = async (queueName, limit) => {
 	let result = await getApi("http://bee.api.talkmoment.com/message/detail?topic=" + queueName + "&limit=" + limit +"&offset=0");
 	return  result;

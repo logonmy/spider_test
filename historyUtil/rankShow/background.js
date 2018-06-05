@@ -14,7 +14,7 @@ require([
     };
 
     (async() => {
-        while(true){
+        while(false){
 
             await sleep(2000);
 

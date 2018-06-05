@@ -114,7 +114,7 @@ require([
                 console.log(brick_id);
                 await runTask()
             }
-            await Async.sleep(120 * 60 * 1000);
+            await Async.sleep(480 * 60 * 1000);
         }
     })();
 

@@ -43,41 +43,45 @@ const getAllAnswer = async (id) => {
     return data;
 }
 const getId = async() =>{
-    let d = await Queue.getDataFromMessage("JDTEST");
-    console.log(JSON.parse(d.result).id);
-    return JSON.parse(d.result).id
+    let d = await Queue.getDataFromMessage("JDTEST3333");
+    return {
+        id: JSON.parse(d.result).id,
+        href: JSON.parse(d.result).href,
+        title: JSON.parse(d.result).title,
+        keyword: JSON.parse(d.result).keyword,
+    }
 }
 
 (async () => {
     while(true){
-        let productId = await getId()
-        let ql = await getQuestionList(productId);
-
-        console.log(ql.questionList)
-        let result = [];
-        for (let q of ql.questionList) {
-            let xihua = {
-                pId: productId,
-                qId: q.id,
-                C: q.content,
-                R: [],
+        try{
+            let product = await getId()
+            console.log(product)
+            let ql = await getQuestionList(product.id);
+            let result = [];
+            for (let q of ql.questionList) {
+                let xihua = {
+                    qId: q.id,
+                    C: q.content,
+                    R: [],
+                }
+                for (let a of q.answerList) {
+                    xihua.R.push(a.content);
+                }
+                result.push(xihua);
             }
-            for (let a of q.answerList) {
-                xihua.R.push(a.content);
+            for (let re of result) {
+                let d = await getAllAnswer(re.qId);
+                for (let a of d.answers) {
+                    re.R.push(a.content);
+                }
             }
-            result.push(xihua);
+            console.log("#############");
+            product.content = result;
+            File.appendFileSync("jsr.txt", JSON.stringify(product) + "\n");
         }
-        console.log(result);
-        for (let re of result) {
-            let d = await getAllAnswer(re.qId);
-            for (let a of d.answers) {
-                re.R.push(a.content);
-            }
-        }
-        console.log("#############");
-        console.log(result);
-        for(let re of result){
-            File.appendFileSync("jsr.txt", JSON.stringify(re) + "\n");
+        catch(e){
+            console.log("whatever");
         }
     }
     // let dat = await getPage("https://search.jd.com/Search?keyword=%E9%9D%A2%E8%86%9C&enc=utf-8&qrst=1&rt=1&stop=1&vt=2&wq=%E9%9D%A2%E8%86%9C&stock=1&page=2&s=1&click=0");

@@ -88,6 +88,7 @@ define([], function () {
     };
 
     Tab.prototype.close = function () {
+        var self = this;
         chrome.tabs.remove(self.tabId, function () {
 
         })
