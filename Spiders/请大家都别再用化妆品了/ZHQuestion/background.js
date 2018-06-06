@@ -30,6 +30,7 @@ require([
             i++;
             console.log("第     ", i, "   完成 而且他是个终极无敌老BK");
             await run(i);
+            await sleep(20);
             return;
         }
         console.log(data);

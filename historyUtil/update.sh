@@ -24,3 +24,4 @@ echo start
 \cp -rf newest/* ../HiveSpider/wxPublicDetail
 \cp -rf newest/* ../HiveSpider/wxPublicList
 \cp -rf newest/* ../HiveSpider/wxXingBang
+echo end

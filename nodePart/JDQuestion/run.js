@@ -32,6 +32,9 @@
 const getApi = require("../api/fetch").getApi;
 const Queue = require("../api/queue").Queue;
 const File = require("fs");
+const readLine =require("lei-stream").readLine;
+
+
 const getQuestionList = async (id) => {
     let url = "https://question.jd.com/question/getQuestionAnswerList.action?page=1&productId=" + id;
     let data = await getApi(url);
@@ -42,51 +45,55 @@ const getAllAnswer = async (id) => {
     let data = await getApi(url);
     return data;
 }
-const getId = async() =>{
-    let d = await Queue.getDataFromMessage("JDTEST3333");
-    return {
-        id: JSON.parse(d.result).id,
-        href: JSON.parse(d.result).href,
-        title: JSON.parse(d.result).title,
-        keyword: JSON.parse(d.result).keyword,
+
+let run = async(data) => {
+    let product = data;
+    try{
+        let ql = await getQuestionList(product.id);
+        let result = [];
+        for (let q of ql.questionList) {
+            let xihua = {
+                qId: q.id,
+                C: q.content,
+                R: [],
+            }
+            for (let a of q.answerList) {
+                xihua.R.push(a.content);
+            }
+            result.push(xihua);
+        }
+        for (let re of result) {
+            let d = await getAllAnswer(re.qId);
+            for (let a of d.answers) {
+                re.R.push(a.content);
+            }
+        }
+        console.log("#############");
+        product.content = result;
+        File.appendFileSync("jsr.txt", JSON.stringify(product) + "\n");
+    }
+    catch(e){
+        await sleep(10);
+        console.log("whatever");
     }
 }
+let stop = 70291;
+let jumpCount = 0;
+readLine("jdtest3333.txt").go(async (data, next) => {
+    data = JSON.parse(data);
+    data = JSON.parse(data.data);
+    console.log(data);
+    // let timeout = setTimeout(function(){
+    //     stop++;
+    //     console.log(stop);
+    //     console.log("跳过了一个商品");
+    //     console.log(jumpCount++);
+    //     next();
+    // }, 5000);
+    await run(data);
+    //clearTimeout(timeout);
+    stop++;
+    console.log(stop);
+    next();
+})
 
-(async () => {
-    while(true){
-        try{
-            let product = await getId()
-            console.log(product)
-            let ql = await getQuestionList(product.id);
-            let result = [];
-            for (let q of ql.questionList) {
-                let xihua = {
-                    qId: q.id,
-                    C: q.content,
-                    R: [],
-                }
-                for (let a of q.answerList) {
-                    xihua.R.push(a.content);
-                }
-                result.push(xihua);
-            }
-            for (let re of result) {
-                let d = await getAllAnswer(re.qId);
-                for (let a of d.answers) {
-                    re.R.push(a.content);
-                }
-            }
-            console.log("#############");
-            product.content = result;
-            File.appendFileSync("jsr.txt", JSON.stringify(product) + "\n");
-        }
-        catch(e){
-            console.log("whatever");
-        }
-    }
-    // let dat = await getPage("https://search.jd.com/Search?keyword=%E9%9D%A2%E8%86%9C&enc=utf-8&qrst=1&rt=1&stop=1&vt=2&wq=%E9%9D%A2%E8%86%9C&stock=1&page=2&s=1&click=0");
-    // let d = new jsdom.JSDOM(dat);
-    // let $ = jq(d.window);
-    // let s = $(".gl-item");
-    // console.log(s.attr("data-sku"));
-})()

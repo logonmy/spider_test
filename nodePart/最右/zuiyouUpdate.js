@@ -310,6 +310,7 @@ const getBrickId = async() => {
 (async () => {
 
     let ZeroTime;
+    let jump = [16608, 16579, 16601]
 
     while (true) {
 
@@ -321,7 +322,7 @@ const getBrickId = async() => {
 
         await redis.rpush("zuiyou_list", config);
         config = JSON.parse(config);
-        if(config.brick_id == 16579){
+        if(parseInt(config.brick_id) in jump){
             console.log("跳过 球球大作战这智障东西");
             console.log(config.name);
             continue;

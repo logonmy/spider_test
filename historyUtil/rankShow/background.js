@@ -25,12 +25,10 @@ require([
                         for(let s of d){
                             console.log(s.id);
 
-                            await sleep(2000);
-
                             chrome.tabs.update(s.id, {
                                 selected: true
                             }, function(){
-                                console.log("反正我selectedl了");
+                                console.log("反正我selected了");
                             })
                         }
                     })

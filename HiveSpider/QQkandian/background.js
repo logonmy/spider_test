@@ -18,6 +18,7 @@ require([
         let query = {
             partition: DETAIL_BEE_NAME,
             keys: list.map(item => item.articleid + "")
+
         };
         let res = await Http.call(`http://bee.api.talkmoment.com/dereplicate/filter/by/history`, query);
         console.log(res);
@@ -122,15 +123,18 @@ require([
             console.log("送给陶翠城去洗碗");
             for(let li of lists){
                 console.log(li);
-                if(li.addComment && li.addComment.result && li.addComment.result.retObj.commentList && li.addComment.result.retObj.commentList.length < 3){
-                    continue;
+                try{
+                    if(li.addComment.result.retObj.commentList.length > 3){
+                        console.log("到底是谁?");
+                        console.log(li)
+                        console.log(li.articleid);
+                        await postDataToDereplicate(li.articleid);
+                        await postDataToMessage(li);
+                        await postWashTask(li);
+                    }
+                }catch(e){
+                    console.log("先这样吧");
                 }
-                console.log("到底是谁?");
-                console.log(li)
-                console.log(li.articleid);
-                await postDataToDereplicate(li.articleid);
-                await postDataToMessage(li);
-                await postWashTask(li);
             }
             console.log("算是完事了");
         } catch (err) {

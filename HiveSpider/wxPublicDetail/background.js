@@ -29,13 +29,17 @@ require([
     };
 
     const postWashTask = async(detailTask, data) => {
+        let publish = true;
+
+        if(JSON.parse(detailTask.config).fromList) publish = false;
+
         let washTask = {
             name: "wash_corpus",
             value: "",
             config: JSON.stringify({
                 bee_source: DETAIL_BEE_NAME,
                 brick_id: JSON.parse(detailTask.config).brick_id,
-                publish: true
+                publish: publish
             }),
             data: JSON.stringify(data),
             scheduled_at: Date.now()

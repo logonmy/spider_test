@@ -32,5 +32,16 @@ define(["./http", "./socket"], function(Http, Socket){
         };
         await Http.call(`http://bee.api.talkmoment.com/scheduler/task/reject`, query);
     };
+
+    Task.countTask = async(task) => {
+        let query = {
+            task_id: task.id,
+            name: task.name,
+            state: "INTASK",
+            created_at: Date.now()
+        }
+        await Http.call('bee.api.talkmoment.com/bee/wash/state/put', query);
+    }
+
     return Task;
 });

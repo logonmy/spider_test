@@ -15,8 +15,6 @@ readLine("ZHURES.txt").go((data, next) =>{
             console.log(data.question.similar_queries[0].keyword)
             data.keyword = data.question.similar_queries[0].keyword;
         }
-        File.appendFileSync("ZHURES2.txt", JSON.stringify(data) + "\n");
-
     }catch(e){
         errorCount++;
         console.log(e)
@@ -24,7 +22,8 @@ readLine("ZHURES.txt").go((data, next) =>{
 
     }
     console.log(i);
-    //next();
+    File.appendFileSync("ZHURES2.txt", JSON.stringify(data) + "\n");
+    next();
 }, () => {
     console.log("失败了多少个嫩？" , errorCount);
 })
