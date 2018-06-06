@@ -48,7 +48,8 @@ require([
         console.log(detailTask.config, typeof(detailTask.config));
         console.log(JSON.parse(detailTask.config), typeof(JSON.parse(detailTask.config)));
         console.log(JSON.parse(detailTask.config).brick_id);
-        await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", washTask);
+        let d = await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", washTask);
+        return d.id;
     };
 
     const postDataToDereplicate = async(task, data) => {
@@ -98,6 +99,12 @@ require([
                 Socket.log(`发起清洗任务`);
                 console.log(data, "############################", task);
                 await postWashTask(task, data);
+
+                Socket.log(`发起清洗任务`);
+                let task_id = await postWashTask(task, data);
+
+                Socket.log('发送到记数的地方')
+                await Task.countTask(task_id, DETAIL_BEE_NAME);
 
                 Socket.log(`添加内容url(${task.value})到去重模块的历史集合`);
                 await postDataToDereplicate(task);

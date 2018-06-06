@@ -41,4 +41,14 @@ Task.rejectTask = async(task, err) => {
     await Http.call(`http://bee.api.talkmoment.com/scheduler/task/reject`, query);
 };
 
+Task.countTask = async(task_id, bee_name) => {
+    let query = {
+        task_id: task_id,
+        name: bee_name,
+        state: "INTASK",
+        created_at: Date.now()
+    }
+    await Http.call('http://bee.api.talkmoment.com/bee/wash/state/put', query);
+}
+
 exports.Task = Task;

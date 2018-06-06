@@ -4,7 +4,7 @@ const Queue = require("../api/queue").Queue
 
 let AID = new Set();
 let BID = new Set();
-readLine("ZHURES2.txt").go((data, next) => {
+readLine("ZHURES3.txt").go((data, next) => {
     data = JSON.parse(data);
     try{
         let Aid = data.question.url.split("/question/")[1];
@@ -30,11 +30,11 @@ readLine("ZHURES2.txt").go((data, next) => {
         if(!AID.has(b.url)){
             b.url = "/question/" + b.url;
             if(b.url.indexOf("unde") > -1 || b.url.indexOf("answer") > -1) continue;
-            if(count < 14535){
+            if(count < 25083){
                 count++;
                 continue;
             }
-            //File.appendFileSync("partOne.txt", JSON.stringify(b) + "\n");
+            File.appendFileSync("partTwo.txt", JSON.stringify(b) + "\n");
             await Queue.postDataToMessage("ZHH", b);
             console.log(count++);
         }

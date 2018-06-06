@@ -42,7 +42,8 @@ require([
             data: JSON.stringify(data),
             scheduled_at: Date.now()
         };
-        await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", washTask)
+        let d = await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", washTask);
+        return d.id;
     };
 
     const postDataToDereplicate = async (value) => {
@@ -130,7 +131,13 @@ require([
                         console.log(li.articleid);
                         await postDataToDereplicate(li.articleid);
                         await postDataToMessage(li);
-                        await postWashTask(li);
+
+                        Socket.log(`发起清洗任务`);
+                        let task_id = await postWashTask(task, data);
+
+                        Socket.log('发送到记数的地方')
+                        await Task.countTask(task_id, DETAIL_BEE_NAME);
+
                     }
                 }catch(e){
                     console.log("先这样吧");

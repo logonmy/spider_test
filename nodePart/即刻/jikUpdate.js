@@ -36,7 +36,7 @@ const getCookie = (() => {
         // 坏掉了 "jike:sess=eyJfdWlkIjoiNWFmOTQwZDFjODgxMjcwMDE3ZDUxMTMzIiwiX3Nlc3Npb25Ub2tlbiI6IlFTM2M4NmZKNnUzQWRGQTZ1OU5NeVhyMXMifQ==; path=/; expires=Sun, 12 May 2019 06:41:32 GMT; domain=.jike.ruguoapp.com; httponly; jike:sess.sig=KwiH0ax-JviEfDkvYhtnO44F8o4; path=/; expires=Sun, 12 May 2019 06:41:32 GMT; domain=.jike.ruguoapp.com; httponly",
         // 坏掉了 "jike:sess=eyJfdWlkIjoiNWFmOTNiZDk5Y2ZlY2QwMDE3YWE0MWUyIiwiX3Nlc3Npb25Ub2tlbiI6ImFRZGhyb05TemNqbGdTeFNRbUY2NE1lcWYifQ==; path=/; expires=Sun, 12 May 2019 07:01:45 GMT; domain=.jike.ruguoapp.com; secure; httponly;jike:sess.sig=J3i3ubDMM8p_PCimXg87iUObykk; path=/; expires=Sun, 12 May 2019 07:01:45 GMT; domain=.jike.ruguoapp.com; secure; httponly",
         // 坏掉了 "jike:sess=eyJfdWlkIjoiNWFmOTNlNzIxMWY4YWIwMDE3MGU0YmFlIiwiX3Nlc3Npb25Ub2tlbiI6IlQxNEIxdU5QS05kN1VhZ0pmcnRrYkhVSWUifQ==; path=/; expires=Sun, 12 May 2019 07:04:02 GMT; domain=.jike.ruguoapp.com; httponly;jike:sess.sig=o7qDkJD8AJJHs8ZL0OhnAa4HQaQ; path=/; expires=Sun, 12 May 2019 07:04:02 GMT; domain=.jike.ruguoapp.com; httponly",
-        "jike:sess=eyJfdWlkIjoiNWFmZDI5ZTQ3ZmEwMTAwMDE3ZTlmNDBkIiwiX3Nlc3Npb25Ub2tlbiI6IkFPbHBJRUhBV3NaMXVBQWFLUmU3WTR1WGsifQ==; path=/; expires=Sun, 12 May 2019 07:06:47 GMT; domain=.jike.ruguoapp.com; httponly;jike:sess.sig=CAXaBKKz8n0LJmgILt8c75cLeeY; path=/; expires=Sun, 12 May 2019 07:06:47 GMT; domain=.jike.ruguoapp.com; httponly",
+        //"jike:sess=eyJfdWlkIjoiNWFmZDI5ZTQ3ZmEwMTAwMDE3ZTlmNDBkIiwiX3Nlc3Npb25Ub2tlbiI6IkFPbHBJRUhBV3NaMXVBQWFLUmU3WTR1WGsifQ==; path=/; expires=Sun, 12 May 2019 07:06:47 GMT; domain=.jike.ruguoapp.com; httponly;jike:sess.sig=CAXaBKKz8n0LJmgILt8c75cLeeY; path=/; expires=Sun, 12 May 2019 07:06:47 GMT; domain=.jike.ruguoapp.com; httponly",
         // 坏掉了 "jike:sess=eyJfdWlkIjoiNWFmZDJhYmM2ODRmYzMwMDE3OWE3NGZjIiwiX3Nlc3Npb25Ub2tlbiI6IjBhZ0ZFVFpzVTg4Sm0xZWwzNndadXFjVncifQ==; path=/; expires=Sun, 12 May 2019 07:10:35 GMT; domain=.jike.ruguoapp.com; httponly;jike:sess.sig=BpnMj7wOobQ281BDi_A2CCqAlnY; path=/; expires=Sun, 12 May 2019 07:10:35 GMT; domain=.jike.ruguoapp.com; httponly",
     ];
     users = shuffle(users.slice(0))
@@ -98,6 +98,7 @@ const httpGet = async (path, header) => {
     })
 }
 const postWashTask = async (brick_id, data) => {
+    let d;
     let washTask = {
         name: "wash_corpus",
         value: "",
@@ -113,10 +114,11 @@ const postWashTask = async (brick_id, data) => {
     console.log("任务队列ing")
     console.log(brick_id);
     try {
-        await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", washTask);
+        d = await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", washTask);
     } catch (e) {
         await postWashTask(brick_id, data);
     }
+    return d.id;
 };
 
 const postDataToMessage = async (data) => {
@@ -338,7 +340,8 @@ let run = async (name, topicId, brick_id, created_at) => {
                 console.log("上传" + data.title + "  的  " + data.content);
                 await postDataToDereplicate(data.id);
                 await postDataToMessage(data);
-                await postWashTask(brick_id, data);
+                let task_id = await postWashTask(brick_id, data);
+                await Task.countTask(task_id, "jike_update")
                 await sleep(0.5);
             }
         }

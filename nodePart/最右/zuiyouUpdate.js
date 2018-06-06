@@ -78,7 +78,8 @@ const postWashTask = async (brick_id, data) => {
         scheduled_at: Date.now()
     };
 
-    await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", washTask);
+    let d = await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", washTask);
+    return d.id;
 };
 const postDataToMessage = async (data) => {
     await Http.call(`http://bee.api.talkmoment.com/message/publish?topic=${BEE_NAME}`, data);
@@ -265,7 +266,9 @@ const run = async (name, ZeroTime, brick_id) => {
                 console.log("上传" + re.topic.topic + "  的  " + re.content);
                 await postDataToDereplicate(re.id);
                 await postDataToMessage(re);
-                await postWashTask(trueBrickId, re);
+                let task_id = await postWashTask(trueBrickId, re);
+                await Task.countTask(task_id, "zuiyou_update");
+                await Task.countTask(task);
                 await sleep(0.5);
             }
         }

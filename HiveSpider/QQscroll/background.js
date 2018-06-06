@@ -8,6 +8,7 @@ require([
     "../api/fileControll"
 ], (Config, Http, Async, Task, Socket, Tab, File) => {
     const BEE_NAME = "QQscroll";
+    const DETAIL_BEE_NAME = "QQscroll";
     const indexUrl = "http://news.qq.com/articleList/rolls/";
 
     const sleep = (s = 5) => {return new Promise(resolve => setTimeout(resolve, s * 1000))};
@@ -40,7 +41,8 @@ require([
             data: JSON.stringify(data),
             scheduled_at: Date.now()
         };
-        await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", washTask);
+        let d = await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", washTask);
+        return d.id;
     };
 
     const postDataToDereplicate = async(task) => {
@@ -94,7 +96,13 @@ require([
             for(let da of data.items){
                 console.log(da);
                 await postDataToMessage(da)
-                await postWashTask(da);
+
+                Socket.log(`发起清洗任务`);
+                let task_id = await postWashTask(task, data);
+
+                Socket.log('发送到记数的地方')
+                await Task.countTask(task_id, DETAIL_BEE_NAME);
+
                 await postDataToDereplicate(da);
             }
 
