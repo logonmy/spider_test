@@ -133,7 +133,7 @@ require([
                         await postDataToMessage(li);
 
                         Socket.log(`发起清洗任务`);
-                        let task_id = await postWashTask(task, data);
+                        let task_id = await postWashTask(data);
 
                         Socket.log('发送到记数的地方')
                         await Task.countTask(task_id, DETAIL_BEE_NAME);

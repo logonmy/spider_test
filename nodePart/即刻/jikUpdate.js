@@ -38,6 +38,7 @@ const getCookie = (() => {
         // 坏掉了 "jike:sess=eyJfdWlkIjoiNWFmOTNlNzIxMWY4YWIwMDE3MGU0YmFlIiwiX3Nlc3Npb25Ub2tlbiI6IlQxNEIxdU5QS05kN1VhZ0pmcnRrYkhVSWUifQ==; path=/; expires=Sun, 12 May 2019 07:04:02 GMT; domain=.jike.ruguoapp.com; httponly;jike:sess.sig=o7qDkJD8AJJHs8ZL0OhnAa4HQaQ; path=/; expires=Sun, 12 May 2019 07:04:02 GMT; domain=.jike.ruguoapp.com; httponly",
         //"jike:sess=eyJfdWlkIjoiNWFmZDI5ZTQ3ZmEwMTAwMDE3ZTlmNDBkIiwiX3Nlc3Npb25Ub2tlbiI6IkFPbHBJRUhBV3NaMXVBQWFLUmU3WTR1WGsifQ==; path=/; expires=Sun, 12 May 2019 07:06:47 GMT; domain=.jike.ruguoapp.com; httponly;jike:sess.sig=CAXaBKKz8n0LJmgILt8c75cLeeY; path=/; expires=Sun, 12 May 2019 07:06:47 GMT; domain=.jike.ruguoapp.com; httponly",
         // 坏掉了 "jike:sess=eyJfdWlkIjoiNWFmZDJhYmM2ODRmYzMwMDE3OWE3NGZjIiwiX3Nlc3Npb25Ub2tlbiI6IjBhZ0ZFVFpzVTg4Sm0xZWwzNndadXFjVncifQ==; path=/; expires=Sun, 12 May 2019 07:10:35 GMT; domain=.jike.ruguoapp.com; httponly;jike:sess.sig=BpnMj7wOobQ281BDi_A2CCqAlnY; path=/; expires=Sun, 12 May 2019 07:10:35 GMT; domain=.jike.ruguoapp.com; httponly",
+        "jike:config:searchPlaceholderLastInfo=1528338941325#0; path=/; expires=Thu, 07 Jun 2018 14:38:51 GMT; domain=.jike.ruguoapp.com; httponly;jike:sess.sig=; expires=Thu, 01 Jan 1970 00:00:00 GMT; domain=.jike.ruguoapp.com; path=/"
     ];
     users = shuffle(users.slice(0))
     return () => {
@@ -177,6 +178,7 @@ let getToken = async () => {
     console.log("开始获取token");
     let cookie = getCookie()
     let uuid = await getUuid();
+    console.log(uuid);
     await sleep(1);
     if (JSON.parse(await login(uuid, cookie)).success) {
         await sleep(1)
@@ -371,7 +373,7 @@ let run = async (name, topicId, brick_id, created_at) => {
 
 (async () => {
     token = await getToken();
-
+    console.log(token);
     let ZeroTime;
 
 

@@ -98,7 +98,6 @@ require([
                 console.log(task, "@@@@@@@");
                 Socket.log(`发起清洗任务`);
                 console.log(data, "############################", task);
-                await postWashTask(task, data);
 
                 Socket.log(`发起清洗任务`);
                 let task_id = await postWashTask(task, data);

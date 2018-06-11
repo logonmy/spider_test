@@ -176,6 +176,7 @@ let run = async () => {
     }
     console.log(TemplateData);
     chrome.runtime.sendMessage(TemplateData, function (response) {});
+    window.close();
 }
 try{
     run();

@@ -4,10 +4,9 @@ const File = require("fs");
 let i =0 ;
 let errorCount = 0;
 
-readLine("z.txt").go((data, next) =>{
+readLine("za.txt").go((data, next) =>{
     i++;
     data = JSON.parse(data);
-    data = JSON.parse(data.data);
     console.log(data.keyword);
     try{
         console.log(data.question.similar_queries[0].keyword)
@@ -22,7 +21,7 @@ readLine("z.txt").go((data, next) =>{
 
     }
     console.log(i);
-    File.appendFileSync("ZHURES3.txt", JSON.stringify(data) + "\n");
+    File.appendFileSync("知乎.txt", JSON.stringify(data) + "\n");
     next();
 }, () => {
     console.log("失败了多少个嫩？" , errorCount);

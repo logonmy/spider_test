@@ -23,6 +23,7 @@ Http.call = async (path, args) => {
             let data = "";
             res.setEncoding('utf-8');
             res.on("data", (chunk) => {
+                //var html = iconv.decode(new Buffer(result), 'win1251');
                 data += chunk;
             })
             res.on("end", () => {

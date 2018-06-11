@@ -1,4 +1,5 @@
 const fetch = require("node-fetch");
+const iconv = require("iconv-lite");
 const safeFetch = async (url, moreArgs = {}) => {
     try {
         return await fetch(url, moreArgs);
@@ -23,14 +24,23 @@ const getApi = async (url, moreArgs = {
     }
 };
 
-const getPage = async (url, moreArgs = {}) => {
+const getPage = async (url, moreArgs = {
+    headers: {
+        'Content-Type': 'charset=utf-8',
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36",
+        "Connection": "keep-alive",
+    }
+}) => {
     let res = await safeFetch(url, moreArgs);
     if (res !== undefined && res.status === 200) {
         return res.text();
+        //return iconv.decode( res.text(),'gb2312');
+
     } else {
         return false;
     }
 };
+
 
 exports.getApi = getApi;
 exports.getPage = getPage;

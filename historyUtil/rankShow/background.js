@@ -21,14 +21,11 @@ require([
             try{
                 (async () => {
                     chrome.tabs.query({},async function(d) {
-                        console.log(d)
                         for(let s of d){
-                            console.log(s.id);
-
                             chrome.tabs.update(s.id, {
                                 selected: true
                             }, function(){
-                                console.log("反正我selected了");
+                                console.log(Date.now());
                             })
                         }
                     })
@@ -38,5 +35,4 @@ require([
             }
         }
     })()
-
 });
