@@ -69,7 +69,11 @@ require([
                 if(!(task.value.indexOf("/video/") > -1)){
                     return ;
                 }
+                if(task.value.indexOf("http") > -1){
 
+                }else{
+                    task.value = "https://" + task.value
+                }
                 Socket.log(`打开网页Tab(url=${task.value}), 注入爬取逻辑`);
                 let tab = new Tab(task.value, ["./business/script.js"]);
 
