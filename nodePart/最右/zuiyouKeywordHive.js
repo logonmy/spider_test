@@ -1,12 +1,13 @@
-const http = require("https");
 const Http = require("../api/http").Http;
 const Https = require("../api/https").Http;
 const Task = require("../api/task").Task;
 const Socket = require("../api/socket").Socket;
-const File = require("fs")
+const io = require("socket.io-client");
+const getApi = require("../api/fetch").getApi;
 
 let getcommentCount = 0;
 let brick_id = 16661;
+//let publish = false;
 const getBrickId = async() => {
     let getTrueName = () => {
         var date = new Date();
@@ -37,7 +38,6 @@ const getBrickId = async() => {
     return false;
 }
 
-const io = require("socket.io-client");
 const socket = io("http://ws.api.talkmoment.com:51179");
 const EventEmitter = require('events');
 class MyEmitter extends EventEmitter {}
@@ -45,6 +45,9 @@ const myEmitter = new MyEmitter();
 socket.on("signRes", (data) => {
     myEmitter.emit(data.echo, data)
 })
+
+
+
 const AskSign = async (url, params, echo) => {
     return new Promise((resolve, reject) => {
         socket.emit("signReq", {
@@ -54,17 +57,14 @@ const AskSign = async (url, params, echo) => {
             init: "true"
         });
         let timeout = setTimeout(() => {
-            reject("timeout, 超出三秒了")
-        }, 3000)
+            reject("askSign的时候超时了 超过10秒");
+        }, 10000)
         myEmitter.once(echo, (data) => {
             clearTimeout(timeout);
             resolve(data);
         })
     })
 }
-
-
-const getApi = require("../api/fetch").getApi;
 
 const BEE_NAME = "zuiyou_keyword";
 const sleep = (s = 5) => {
@@ -113,7 +113,7 @@ const postDataToMessage = async (data) => {
 };
 
 let getCommentOne = async (offset, id) => {
-    let sign;
+    let sign, result;
     try {
         sign = await AskSign("https://api.izuiyou.com/review/hot_reviews", {offset: offset, pid: id}, "getComment");
     } catch (e) {
@@ -123,8 +123,8 @@ let getCommentOne = async (offset, id) => {
         return tryOther;
     }
 
-    let result = await Https.call(sign.url, sign.params);
     try {
+        result = await Https.call(sign.url, sign.params);
         result = JSON.parse(result);
     } catch (e) {
         console.log("获取评论失败了")
@@ -163,7 +163,7 @@ let getCommentAll = async (id) => {
     }
 
 
-    while (9 < datas.length && result && result.data && result.data.newreviews.length < limit) {
+    while (datas && 9 < datas.length && result && result.data && result.data.newreviews.length < limit) {
         let comm = await getCommentOne(offset, id);
         datas = comm.data;
         offset = comm.offset;
@@ -178,7 +178,12 @@ let getCommentAll = async (id) => {
 let getKeyWordOne = async(offset,keyword) => {
     console.log(offset, keyword, "getKeywordINGGGGGGGGGGGGGGGGGG");
     let sign = await AskSign("https://api.izuiyou.com/search/post", {offset: offset,q: keyword}, "getKeyword");
-    let result = await Https.call(sign.url, sign.params);
+    let result;
+    try{
+        result = await Https.call(sign.url, sign.params);
+    }catch(e){
+        return await getKeyWordOne(offset, keyword);
+    }
     result = JSON.parse(result);
     await sleep(1)
     return {
@@ -190,8 +195,13 @@ let getKeyWordOne = async(offset,keyword) => {
 let getKeywordAll = async(keyword) =>{
     let datas = [];
     let sign = await AskSign("https://api.izuiyou.com/search/post", {offset: 0,q: keyword}, "getKeyword");
-    let result = await Https.call(sign.url, sign.params);
-    result = JSON.parse(result);
+    let result;
+    try{
+        result = await Https.call(sign.url, sign.params);
+        result = JSON.parse(result);
+    }catch(e){
+        return await getKeywordAll(keyword);
+    }
     datas = datas.concat(result.data.list);
     let offset = result.data.offset;
 

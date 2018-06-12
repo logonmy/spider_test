@@ -12,6 +12,8 @@ require([
     "../service/tab",
 ], (Config, Http, Async, Task, Socket, Tab) => {
     let brick_id = 16661;
+    let publish = false;
+    let scheduled_at = 9999999999999;
 
     const LIST_BEE_NAME = "toutiao_keyword_list";
     const DETAIL_BEE_NAME = "toutiao_keyword_detail";
@@ -26,32 +28,27 @@ require([
     };
 
     const postDetailTasks = async (listTask, data) => {
-        let config = JSON.parse(listTask.config);
-        let sendBrickId;
-        if (config.fromtopictree) {
-            sendBrickId = brick_id;
-        } else {
-            sendBrickId = JSON.parse(listTask.config).brick_id;
-        }
-
         for (let item of data.items) {
             let query = {
                 name: DETAIL_BEE_NAME,
                 value: item.url,
                 config: JSON.stringify({
-                    brick_id: sendBrickId,
-                    keyword: listTask.value
+                    brick_id: brick_id,
+                    keyword: listTask.value,
+                    publish: publish
                 }),
-                scheduled_at: 9999999999999
+                scheduled_at: scheduled_at
             };
             let task = await Http.call(`http://bee.api.talkmoment.com/scheduler/task/post`, query);
             Socket.log(`向Scheduler添加task=`, task);
-            Socket.emitEvent({
-                event: "list_item_added",
-                bee_name: LIST_BEE_NAME,
-                item: item,
-                task: task
-            });
+            if(scheduled_at == 9999999999999){
+                Socket.emitEvent({
+                    event: "list_item_added",
+                    bee_name: LIST_BEE_NAME,
+                    item: item,
+                    task: task
+                });
+            }
         }
     };
 
@@ -84,7 +81,23 @@ require([
         return false;
     }
 
+    const initTask = async (task) => {
+        let config = JSON.parse(task.config);
+        if(config.brick_id){
+            brick_id = config.brick_id;
+        }else{
+            brick_id = await getBrickId();
+        }
+        if(config.publish){
+            publish = true;
+        }
+        if(config.scheduled_at){
+            scheduled_at = Date.now();
+        }
+    };
+
     const runTask = async (task) => {
+        await initTask(task);
         try {
             Socket.log(`开始处理爬取任务,task=`, task);
 
@@ -113,6 +126,13 @@ require([
             Socket.log(`开始添加详情页爬取任务`);
             await postDetailTasks(task, data);
             Socket.log(`详情页爬取任务添加完成`);
+
+            if(scheduled_at == 9999999999999){
+                Socket.emitEvent({
+                    event: "list_item_finish",
+                    bee_name: task.name
+                });
+            }
 
             task.data = JSON.stringify(data);
             Socket.log(`提交爬取任务结果数据`);

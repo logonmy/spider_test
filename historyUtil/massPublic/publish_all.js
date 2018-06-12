@@ -14,7 +14,8 @@ let postOne = async (k) => {
             name: a,
             value: k,
             config: JSON.stringify({
-                brick_id: 18774
+                brick_id: 18774,
+                publish: true
             }),
             scheduled_at: new Date().getTime()
         }

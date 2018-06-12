@@ -11,6 +11,9 @@ require([
     "../api/socket",
     "../service/tab",
 ], (Config, Http, Async, Task, Socket, Tab) => {
+    let brick_id = 16661;
+    let publish = false;
+    let scheduled_at = 9999999999999;
 
     const LIST_BEE_NAME = "bilibili_user_list";
     const DETAIL_BEE_NAME = "bilibili_video_detail";
@@ -30,23 +33,42 @@ require([
                 name: DETAIL_BEE_NAME,
                 value: item.url,
                 config: JSON.stringify({
-                    brick_id: JSON.parse(listTask.config).brick_id,
-                    up_name: listTask.value
+                    brick_id: brick_id,
+                    up_name: listTask.value,
+                    publish: publish
                 }),
-                scheduled_at: 9999999999999
+                scheduled_at: scheduled_at
             };
             let task = await Http.call(`http://bee.api.talkmoment.com/scheduler/task/post`, query);
             Socket.log(`向Scheduler添加task=`, task);
-            Socket.emitEvent({
-                event: "list_item_added",
-                bee_name: LIST_BEE_NAME,
-                item: item,
-                task: task
-            });
+            if(scheduled_at == 9999999999999){
+                Socket.emitEvent({
+                    event: "list_item_added",
+                    bee_name: LIST_BEE_NAME,
+                    item: item,
+                    task: task
+                });
+            }
+        }
+    };
+
+    const initTask = async (task) => {
+        let config = JSON.parse(task.config);
+        if(config.brick_id){
+            brick_id = config.brick_id;
+        }else{
+            brick_id = await getBrickId();
+        }
+        if(config.publish){
+            publish = true;
+        }
+        if(config.scheduled_at){
+            scheduled_at = Date.now();
         }
     };
 
     const runTask = async(task) => {
+        await initTask(task);
         try {
             Socket.log(`开始处理爬取任务,task=`, task);
 
@@ -99,10 +121,12 @@ require([
                 }
             }
 
-            Socket.emitEvent({
-                event: "list_item_finish",
-                bee_name: task.name
-            });
+            if(scheduled_at == 9999999999999){
+                Socket.emitEvent({
+                    event: "list_item_finish",
+                    bee_name: task.name
+                });
+            }
 
             task.data = JSON.stringify(taskData);
             Socket.log(`提交爬取任务结果数据`);

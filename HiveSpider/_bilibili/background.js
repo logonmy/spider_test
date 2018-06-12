@@ -29,7 +29,7 @@ require([
                 value: item.url,
                 config: JSON.stringify({
                     brick_id: brick_id,
-                    from_index: true
+                    publish: true
                 }),
                 scheduled_at: Date.now()
             };

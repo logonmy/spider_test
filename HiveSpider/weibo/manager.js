@@ -44,7 +44,6 @@ const getBrickId = async() => {
     return false;
 }
 
-
 const postWashTask = async(detailTask, data) => {
     let config = JSON.parse(detailTask.config);
     let sendBrickId;

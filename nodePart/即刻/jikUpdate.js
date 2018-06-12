@@ -1,6 +1,7 @@
 const http = require("https");
 const Http = require("../api/http").Http;
 const Queue = require("../api/queue").Queue;
+const Task = require("../api/task").Task;
 const shuffle = require('knuth-shuffle').knuthShuffle
 const getApi = require("../api/fetch").getApi;
 const RedisClient = require("../api/redis").RedisClient
@@ -31,6 +32,7 @@ function FormatDate(strTime) {
 
 const getCookie = (() => {
     let users = [
+        "jike:sess.sig=; expires=Thu, 01 Jan 1970 00:00:00 GMT; domain=.jike.ruguoapp.com; path=/"
         // 坏掉了 "jike:sess=eyJfdWlkIjoiNWFmOTQwMjQ3MjUxMGMwMDExYzU1YmE0IiwiX3Nlc3Npb25Ub2tlbiI6ImVkRlZTN3R4NWJSenFvdlJueUJ1VzJYSnAifQ==; path=/; expires=Sun, 12 May 2019 07:08:10 GMT; domain=.jike.ruguoapp.com; httponly;jike:sess.sig=gBnMYkol3x-sBae8qjtqP26KoVc; path=/; expires=Sun, 12 May 2019 07:08:10 GMT; domain=.jike.ruguoapp.com; httponly",
         //"jike:sess=eyJfdWlkIjoiNWFmOTNmN2UxMWY4YWIwMDE3MGU0YmNjIiwiX3Nlc3Npb25Ub2tlbiI6IjM2VnRKTWFrclZaZ2JISXUyV3NITXRsUk8ifQ==; path=/; expires=Sun, 12 May 2019 06:37:51 GMT; domain=.jike.ruguoapp.com; secure; httponly;jike:sess.sig=gG8RqVgPuThXUtruOXAfr6JLbBA; path=/; expires=Sun, 12 May 2019 06:37:51 GMT; domain=.jike.ruguoapp.com; secure; httponly",
         // 坏掉了 "jike:sess=eyJfdWlkIjoiNWFmOTQwZDFjODgxMjcwMDE3ZDUxMTMzIiwiX3Nlc3Npb25Ub2tlbiI6IlFTM2M4NmZKNnUzQWRGQTZ1OU5NeVhyMXMifQ==; path=/; expires=Sun, 12 May 2019 06:41:32 GMT; domain=.jike.ruguoapp.com; httponly; jike:sess.sig=KwiH0ax-JviEfDkvYhtnO44F8o4; path=/; expires=Sun, 12 May 2019 06:41:32 GMT; domain=.jike.ruguoapp.com; httponly",
@@ -38,7 +40,9 @@ const getCookie = (() => {
         // 坏掉了 "jike:sess=eyJfdWlkIjoiNWFmOTNlNzIxMWY4YWIwMDE3MGU0YmFlIiwiX3Nlc3Npb25Ub2tlbiI6IlQxNEIxdU5QS05kN1VhZ0pmcnRrYkhVSWUifQ==; path=/; expires=Sun, 12 May 2019 07:04:02 GMT; domain=.jike.ruguoapp.com; httponly;jike:sess.sig=o7qDkJD8AJJHs8ZL0OhnAa4HQaQ; path=/; expires=Sun, 12 May 2019 07:04:02 GMT; domain=.jike.ruguoapp.com; httponly",
         //"jike:sess=eyJfdWlkIjoiNWFmZDI5ZTQ3ZmEwMTAwMDE3ZTlmNDBkIiwiX3Nlc3Npb25Ub2tlbiI6IkFPbHBJRUhBV3NaMXVBQWFLUmU3WTR1WGsifQ==; path=/; expires=Sun, 12 May 2019 07:06:47 GMT; domain=.jike.ruguoapp.com; httponly;jike:sess.sig=CAXaBKKz8n0LJmgILt8c75cLeeY; path=/; expires=Sun, 12 May 2019 07:06:47 GMT; domain=.jike.ruguoapp.com; httponly",
         // 坏掉了 "jike:sess=eyJfdWlkIjoiNWFmZDJhYmM2ODRmYzMwMDE3OWE3NGZjIiwiX3Nlc3Npb25Ub2tlbiI6IjBhZ0ZFVFpzVTg4Sm0xZWwzNndadXFjVncifQ==; path=/; expires=Sun, 12 May 2019 07:10:35 GMT; domain=.jike.ruguoapp.com; httponly;jike:sess.sig=BpnMj7wOobQ281BDi_A2CCqAlnY; path=/; expires=Sun, 12 May 2019 07:10:35 GMT; domain=.jike.ruguoapp.com; httponly",
-        "jike:config:searchPlaceholderLastInfo=1528338941325#0; path=/; expires=Thu, 07 Jun 2018 14:38:51 GMT; domain=.jike.ruguoapp.com; httponly;jike:sess.sig=; expires=Thu, 01 Jan 1970 00:00:00 GMT; domain=.jike.ruguoapp.com; path=/"
+        //"jike:config:searchPlaceholderLastInfo=1528338941325#0; path=/; expires=Thu, 07 Jun 2018 14:38:51 GMT; domain=.jike.ruguoapp.com; httponly;jike:sess.sig=; expires=Thu, 01 Jan 1970 00:00:00 GMT; domain=.jike.ruguoapp.com; path=/"
+        //"jike:config:searchPlaceholderLastInfo=1528715676938#1; path=/; expires=Mon, 11 Jun 2018 23:14:36 GMT; domain=.jike.ruguoapp.com; httponly;jike:sess=; expires=Thu, 01 Jan 1970 00:00:00 GMT; domain=.jike.ruguoapp.com; path=/"
+        //"jike:config:searchPlaceholderLastInfo=1528716288360#2"
     ];
     users = shuffle(users.slice(0))
     return () => {
@@ -142,6 +146,7 @@ const login = async (uuid, cookie) => {
         "Cookie": cookie
     }
     let result = await httpGet("https://app.jike.ruguoapp.com/sessions.login?uuid=" + uuid, headers);
+    console.log(result);
     return result;
 }
 const confirm = async (uuid, cookie) => {
@@ -181,10 +186,13 @@ let getToken = async () => {
     console.log(uuid);
     await sleep(1);
     if (JSON.parse(await login(uuid, cookie)).success) {
+        console.log("login_ok");
         await sleep(1)
         if (JSON.parse(await confirm(uuid, cookie)).success) {
+            console.log("confirm_ok");
             await sleep(1)
             if (JSON.parse(await confirmation(uuid, cookie)).token) {
+                console.log("confirmation_ok");
                 console.log("token获取成功");
                 return JSON.parse(await confirmation(uuid, cookie)).token
             } else {
@@ -205,7 +213,7 @@ let getTopicContent = async (topicId, loadMoreKey) => {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "x-jike-app-auth-jwt": token
+            "x-jike-app-auth-jwt": ""
         },
         body: JSON.stringify({
             "loadMoreKey": loadMoreKey,
@@ -215,6 +223,7 @@ let getTopicContent = async (topicId, loadMoreKey) => {
     }
     let result = await getApi("https://app.jike.ruguoapp.com/1.0/messages/history", moreArgs);
     if(!result) console.log("我估计现在的cookie是坏掉了");
+    //else{console.log(result, "我看看现在的result什么样子")}
     console.log("现在使用的cookie", cookieING);
     return result;
 }
@@ -366,13 +375,15 @@ let run = async (name, topicId, brick_id, created_at) => {
             break;
         }
         await sleep(10 * 60);
-        token = await getToken();
+        //token = await getToken();
+        token = "";
     }
 
 })();
 
 (async () => {
-    token = await getToken();
+    //token = await getToken();
+    token = "";
     console.log(token);
     let ZeroTime;
 

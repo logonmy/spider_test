@@ -12,7 +12,7 @@ require([
     "../service/tab",
 ], (Config, Http, Async, Task, Socket, Tab) => {
 
-    const postDataToMessage = async(task, data) => {
+    const postDataToMessage = async (task, data) => {
         await Http.call(`http://bee.api.talkmoment.com/message/publish?topic=${task.name}`, data);
 
         let query = {
@@ -20,14 +20,17 @@ require([
             config: JSON.stringify({
                 bee_source: "toutiao_user_detail",
                 msg_topic: "toutiao_user_detail",
-                brick_id: JSON.parse(task.config)["brick_id"]
-            })
+                publish: JSON.parse(task.config).publish,
+                brick_id: JSON.parse(task.config).brick_id
+            }),
+            data: JSON.stringify(data),
+            scheduled_at: Date.now()
         }
-        await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", query)
-
+        let d = await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", query)
+        return d.id;
     };
 
-    const postDataToDereplicate = async(task, data) => {
+    const postDataToDereplicate = async (task, data) => {
         let query = {
             partition: task.name,
             key: data.url
@@ -36,7 +39,7 @@ require([
     };
 
 
-    const runTask = async(task) => {
+    const runTask = async (task) => {
         try {
             Socket.log(`开始处理爬取任务,task=`, task);
 
@@ -62,24 +65,36 @@ require([
             Socket.log(`提交爬取任务结果数据完成`);
 
             Socket.log(`发送爬取结果到消息队列topic=${task.name}`);
-            await postDataToMessage(task, data);
+            let task_id = await postDataToMessage(task, data);
+
+            Socket.log('发送到记数的地方')
+            await Task.countTask(task_id, DETAIL_BEE_NAME);
+
             Socket.log(`发送爬取结果到消息队列完成`);
 
             Socket.log(`添加内容url(${data.url})到去重模块的历史集合`);
             await postDataToDereplicate(task, data);
             Socket.log(`添加到去重模块成功`);
 
+            if (task.scheduled_at == 9999999999999) {
+                Socket.emitEvent({
+                    event: "detail_item_finish",
+                    bee_name: task.name,
+                    task_id: task.id
+                });
+            }
+
             Socket.log(`上报爬取任务成功,task=`, task);
             await Task.resolveTask(task);
             Socket.log(`爬取任务完成`);
-        } catch(err) {
+        } catch (err) {
             Socket.error("爬取失败,err=", err.stack);
             Socket.log(`上报爬取任务失败,task=`, task);
             await Task.rejectTask(task, err);
         }
     };
 
-    (async() => {
+    (async () => {
         const BEE_NAME = "toutiao_user_detail";
         const SLEEP_TIME = 10000;
         Socket.startHeartBeat(BEE_NAME);

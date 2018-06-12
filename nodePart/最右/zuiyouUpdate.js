@@ -86,7 +86,7 @@ const postDataToMessage = async (data) => {
 };
 
 let getCommentOne = async (offset, id) => {
-    let sign;
+    let sign, result;
     try {
         sign = await AskSign("https://api.izuiyou.com/review/hot_reviews", {offset: offset, pid: id}, "getComment");
     } catch (e) {
@@ -95,9 +95,8 @@ let getCommentOne = async (offset, id) => {
         console.log(e);
         return tryOther;
     }
-
-    let result = await Https.call(sign.url, sign.params);
     try {
+        result = await Https.call(sign.url, sign.params);
         result = JSON.parse(result);
     } catch (e) {
         console.log("获取评论失败了")
@@ -136,7 +135,7 @@ let getCommentAll = async (id) => {
     }
 
 
-    while (9 < datas.length && result && result.data && result.data.newreviews.length < limit) {
+    while (datas && 9 < datas.length && result && result.data && result.data.newreviews.length < limit) {
         let comm = await getCommentOne(offset, id);
         datas = comm.data;
         offset = comm.offset;
@@ -268,7 +267,6 @@ const run = async (name, ZeroTime, brick_id) => {
                 await postDataToMessage(re);
                 let task_id = await postWashTask(trueBrickId, re);
                 await Task.countTask(task_id, "zuiyou_update");
-                await Task.countTask(task);
                 await sleep(0.5);
             }
         }

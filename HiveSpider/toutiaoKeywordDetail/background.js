@@ -35,12 +35,13 @@ require([
             config: JSON.stringify({
                 bee_source: DETAIL_BEE_NAME,
                 brick_id: JSON.parse(detailTask.config).brick_id,
-                publish: true
+                publish: JSON.parse(detailTask.config).publish
             }),
             data: JSON.stringify(data),
             scheduled_at: Date.now()
         };
-        await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", washTask)
+        let d = await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", washTask)
+        return d.id;
     };
 
     const postDataToDereplicate = async(task) => {
@@ -68,6 +69,10 @@ require([
                 let data = await tab.run();
                 Socket.log(`爬取完成,data=`, data);
 
+                if(data && data.comments && data.comments.length < 3){
+                    await Task.reject(task, "评论数小于3条 reject掉了");
+                }
+
                 if (config.up_name) {
                     data.up_name = config.up_name;
                 } else if (config.keyword) {
@@ -80,7 +85,10 @@ require([
                 Socket.log(`发送爬取结果到消息队列完成`);
 
                 Socket.log(`发起清洗任务`);
-                await postWashTask(task, data);
+                let task_id = await postWashTask(task, data);
+
+                Socket.log('发送到记数的地方');
+                await Task.countTask(task_id, DETAIL_BEE_NAME);
 
                 Socket.log(`添加内容url(${data.url})到去重模块的历史集合`);
                 await postDataToDereplicate(task, data);
@@ -91,11 +99,14 @@ require([
                 await Task.putTaskData(task);
                 Socket.log(`提交爬取任务结果数据完成`);
             }
-            Socket.emitEvent({
-                event: "detail_item_finish",
-                bee_name: task.name,
-                task_id: task.id
-            });
+            if(task.scheduled_at == 9999999999999){
+                Socket.emitEvent({
+                    event: "detail_item_finish",
+                    bee_name: task.name,
+                    task_id: task.id
+                });
+            }
+
             Socket.log(`上报爬取任务成功,task=`, task);
             await Task.resolveTask(task);
             Socket.log(`爬取任务完成`);

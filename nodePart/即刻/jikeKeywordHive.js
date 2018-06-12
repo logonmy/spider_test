@@ -15,7 +15,7 @@ let brick_id = 16661;
 const getCookie = (() => {
     let users = [
         // 坏掉了 "jike:sess=eyJfdWlkIjoiNWFmOTQwMjQ3MjUxMGMwMDExYzU1YmE0IiwiX3Nlc3Npb25Ub2tlbiI6ImVkRlZTN3R4NWJSenFvdlJueUJ1VzJYSnAifQ==; path=/; expires=Sun, 12 May 2019 07:08:10 GMT; domain=.jike.ruguoapp.com; httponly;jike:sess.sig=gBnMYkol3x-sBae8qjtqP26KoVc; path=/; expires=Sun, 12 May 2019 07:08:10 GMT; domain=.jike.ruguoapp.com; httponly",
-        "jike:sess=eyJfdWlkIjoiNWFmOTNmN2UxMWY4YWIwMDE3MGU0YmNjIiwiX3Nlc3Npb25Ub2tlbiI6IjM2VnRKTWFrclZaZ2JISXUyV3NITXRsUk8ifQ==; path=/; expires=Sun, 12 May 2019 06:37:51 GMT; domain=.jike.ruguoapp.com; secure; httponly;jike:sess.sig=gG8RqVgPuThXUtruOXAfr6JLbBA; path=/; expires=Sun, 12 May 2019 06:37:51 GMT; domain=.jike.ruguoapp.com; secure; httponly",
+        //"jike:sess=eyJfdWlkIjoiNWFmOTNmN2UxMWY4YWIwMDE3MGU0YmNjIiwiX3Nlc3Npb25Ub2tlbiI6IjM2VnRKTWFrclZaZ2JISXUyV3NITXRsUk8ifQ==; path=/; expires=Sun, 12 May 2019 06:37:51 GMT; domain=.jike.ruguoapp.com; secure; httponly;jike:sess.sig=gG8RqVgPuThXUtruOXAfr6JLbBA; path=/; expires=Sun, 12 May 2019 06:37:51 GMT; domain=.jike.ruguoapp.com; secure; httponly",
         // 坏掉了 "jike:sess=eyJfdWlkIjoiNWFmOTQwZDFjODgxMjcwMDE3ZDUxMTMzIiwiX3Nlc3Npb25Ub2tlbiI6IlFTM2M4NmZKNnUzQWRGQTZ1OU5NeVhyMXMifQ==; path=/; expires=Sun, 12 May 2019 06:41:32 GMT; domain=.jike.ruguoapp.com; httponly; jike:sess.sig=KwiH0ax-JviEfDkvYhtnO44F8o4; path=/; expires=Sun, 12 May 2019 06:41:32 GMT; domain=.jike.ruguoapp.com; httponly",
         // 坏掉了 "jike:sess=eyJfdWlkIjoiNWFmOTNiZDk5Y2ZlY2QwMDE3YWE0MWUyIiwiX3Nlc3Npb25Ub2tlbiI6ImFRZGhyb05TemNqbGdTeFNRbUY2NE1lcWYifQ==; path=/; expires=Sun, 12 May 2019 07:01:45 GMT; domain=.jike.ruguoapp.com; secure; httponly;jike:sess.sig=J3i3ubDMM8p_PCimXg87iUObykk; path=/; expires=Sun, 12 May 2019 07:01:45 GMT; domain=.jike.ruguoapp.com; secure; httponly",
         // 坏掉了 "jike:sess=eyJfdWlkIjoiNWFmOTNlNzIxMWY4YWIwMDE3MGU0YmFlIiwiX3Nlc3Npb25Ub2tlbiI6IlQxNEIxdU5QS05kN1VhZ0pmcnRrYkhVSWUifQ==; path=/; expires=Sun, 12 May 2019 07:04:02 GMT; domain=.jike.ruguoapp.com; httponly;jike:sess.sig=o7qDkJD8AJJHs8ZL0OhnAa4HQaQ; path=/; expires=Sun, 12 May 2019 07:04:02 GMT; domain=.jike.ruguoapp.com; httponly",
@@ -214,7 +214,7 @@ let getKeyword = async(keyword, loadMoreKey) =>{
         method: "POST",
         headers: {
             "Content-Type":"application/json",
-            "x-jike-app-auth-jwt": token
+            "x-jike-access-token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyZW1vdGVfYWRkciI6IjE4MC4xNjguMjUzLjUiLCJhcHBfdXNlcl9pbmZvIjp7InVzZXJJZCI6MzA1MzExOTcsImlzTG9naW5Vc2VyIjp0cnVlLCJpZCI6IjViMTg5OWZjZWYzOGJhMDAxODMwMGFkNiIsIl9pZCI6IjViMTg5OWZjZWYzOGJhMDAxODMwMGFkNiIsInVzZXJuYW1lIjoiNTM3RjhDOTAtMTNGOS00RDJDLUI1OTctOTE1NkU2NjBCRkNDIiwiYmFuU3RhdHVzIjowfSwiZXhwaXJlc19hdCI6IjE1MzAwMTIyODcuNTI4In0.nRVyAhCHWTJa7VdGOrgdjCu2_yKUsH-Pt-UyyHAnaEM&EIO=3&transport=polling&t=MFpnWSS&sid=KeO1UrB3n8xVA5XMUQLU"
         },
         body: JSON.stringify({
             loadMoreKey: loadMoreKey,
@@ -222,9 +222,11 @@ let getKeyword = async(keyword, loadMoreKey) =>{
             "limit":99
         })
     }
+    console.log(moreArgs);
     let result = await getApi("https://app.jike.ruguoapp.com/1.0/messages/search", moreArgs);
 
     let datas = result.data;
+    console.log(datas);
 
     for(let da of datas){
         let comment = await getCardComment(da.id);
@@ -241,7 +243,8 @@ let getKeyword = async(keyword, loadMoreKey) =>{
             break;
         }
         await sleep(300);
-        token = await getToken();
+        //token = await getToken();
+        token = "";
     }
 
 })();
@@ -279,7 +282,8 @@ const getBrickId = async() => {
 //开始运行
 (async () => {
     Socket.startHeartBeat("jike_topic_keyword");
-    token = await getToken();
+    //token = await getToken();
+    token = "";
 	while(true){
 	    brick_id = await getBrickId();
         let task;
