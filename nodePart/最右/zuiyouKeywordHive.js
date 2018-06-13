@@ -190,9 +190,9 @@ let getCommentAll = async (id) => {
 
 let getKeyWordOne = async(offset,keyword) => {
     console.log(offset, keyword, "getKeywordINGGGGGGGGGGGGGGGGGG");
-    let sign = await AskSign("https://api.izuiyou.com/search/post", {offset: offset,q: keyword}, "getKeyword");
     let result;
     try{
+        let sign = await AskSign("https://api.izuiyou.com/search/post", {offset: offset,q: keyword}, "getKeyword");
         result = await Https.call(sign.url, sign.params);
     }catch(e){
         return await getKeyWordOne(offset, keyword);
@@ -226,9 +226,14 @@ let getKeywordAll = async(keyword) =>{
     //todo 按照作者 标题去重
 
     for(let da of datas){
-        let comment = await getCommentAll(da.id);
-        da.hotreviews = comment.data.hotreviews;
-        da.newreviews = comment.data.newreviews;
+        if(da && da.id){
+            let comment = await getCommentAll(da.id);
+            if(comment && comment.data){
+                da.hotreviews = comment.data.hotreviews;
+                da.newreviews = comment.data.newreviews;
+            }
+        }
+
     }
     return datas;
 }
