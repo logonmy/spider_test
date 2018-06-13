@@ -3,11 +3,13 @@ const Http = require("../../nodePart/api/http").Http;
 let postOne = async (k) => {
     //即刻 最右 微博 b站点 头条
     const sendTaskUrl = "http://bee.api.talkmoment.com/scheduler/task/post";
-    var as = ["bilibili_keyword_list",
-    "weibo_keyword",
-    "toutiao_keyword_list",
-    "jike_topic_keyword",
-    "zuiyou_keyword"];
+    var as = [
+        //"bilibili_keyword_list",
+        "weibo_keyword",
+        // "toutiao_keyword_list",
+        // "jike_topic_keyword",
+        // "zuiyou_keyword"
+    ];
 
     for(let a of as){
         let postData = {

@@ -18,7 +18,6 @@ Http.call = async (path, args) => {
         }
     };
     return new Promise((resolve, reject) => {
-
         let req = http.request(options, (res) => {
             let data = "";
             res.setEncoding('utf-8');

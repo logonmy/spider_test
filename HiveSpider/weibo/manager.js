@@ -11,7 +11,7 @@ const UPDATE_EVERY_DAY = "weibo_update_everyday";
 
 const reopen = "weibo_reopen";
 
-const PUPPERTTER_LIMIT = 4;
+const PUPPERTTER_LIMIT = 1;
 
 let brick_id = 16661;
 const getBrickId = async() => {
@@ -64,7 +64,9 @@ const postWashTask = async(detailTask, data) => {
         data: JSON.stringify(data),
         scheduled_at: Date.now()
     };
-    await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", washTask);
+
+    let d = await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", washTask);
+    return d.id;
 };
 
 const filterItems = async (task, data) => {
@@ -94,6 +96,16 @@ const postDataToDereplicate = async (task, data) => {
     };
     await Http.call(`http://bee.api.talkmoment.com/dereplicate/history/add`, query);
 };
+
+const countTask = async(task_id, bee_name) => {
+    let query = {
+        task_id: task_id,
+        name: bee_name,
+        state: "INTASK",
+        created_at: Date.now()
+    }
+    await Http.call('http://bee.api.talkmoment.com/bee/wash/state/put', query);
+}
 
 const copyJSON = (obj) => {
     var answerObject = {};
@@ -531,7 +543,7 @@ run = async () => {
     (async () => {
         Socket.log("轮询Task队列启动");
         while (true) {
-            brick_id = await getBrickId();
+            //brick_id = await getBrickId();
             if (taskHeap.hasReadyTask()) {
                 let task = taskHeap.getReadyTask();
                 //todo taskSolve
@@ -557,7 +569,8 @@ run = async () => {
                     Socket.log(`添加到去重模块成功`);
 
                     Socket.log("去清洗");
-                    await postWashTask(task,data);
+                    let task_id = await postWashTask(task,data);
+                    await countTask(task_id, task.name);
                 }
                 Socket.log(`上报爬取任务成功,task=`, task.stack);
                 await Task.resolveTask(task);

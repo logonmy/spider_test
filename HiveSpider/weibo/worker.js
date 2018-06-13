@@ -226,11 +226,12 @@ const searchKeyword = async () => {
         await pages[0].waitForSelector(".page.next.S_txt1.S_line1", {timeout: 30000});
         console.log("加载底部翻页按钮成功");
     } catch (e) {
-        console.log("加载底部翻页按钮失败，正在重试");
-        await pages[0].reload();
-        await sleep(60);
-        await searchKeyword();
-        return;
+        // console.log("加载底部翻页按钮失败，正在重试");
+        // await pages[0].reload();
+        // await sleep(60);
+        // await searchKeyword();
+        // return;
+        console.log("whatever");
     }
 
     let blogNodes = await pages[0].$$("div[action-type=feed_list_item]:not([isforward='1'])")

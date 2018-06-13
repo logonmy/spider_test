@@ -89,7 +89,11 @@ const postDataToDereplicate = async (data) => {
         partition: "zuiyou",
         key: data
     };
-    await Http.call(`http://bee.api.talkmoment.com/dereplicate/history/add`, query);
+    try{
+        await Http.call(`http://bee.api.talkmoment.com/dereplicate/history/add`, query);
+    }catch(e){
+        await postDataToDereplicate(data);
+    }
 };
 
 const postWashTask = async(brick_id, data) => {
@@ -106,10 +110,19 @@ const postWashTask = async(brick_id, data) => {
     };
     console.log("任务队列ing")
     console.log(brick_id);
-    await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", washTask);
+    try{
+        await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", washTask);
+    }catch(e){
+       await postWashTask(brick_id, data);
+    }
 };
 const postDataToMessage = async (data) => {
-    await Http.call(`http://bee.api.talkmoment.com/message/publish?topic=${BEE_NAME}`, data);
+    try{
+        await Http.call(`http://bee.api.talkmoment.com/message/publish?topic=${BEE_NAME}`, data);
+    }catch(e){
+        console.log(e);
+        await postDataToDereplicate(data);
+    }
 };
 
 let getCommentOne = async (offset, id) => {

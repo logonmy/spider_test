@@ -1,35 +1,35 @@
 const http = require('http')
 const url = require('url')
-const Http = require("../nodePart/api/http").Http
+const Http = require("../nodePart/api/http").Http;
 
-const source = [{"name": "微信公众号_3DM游戏网", "brick_id": 16761},
-    {"name": "微信公众号_1862游戏", "brick_id": 16748},
-    {"name": "微信公众号_游戏研究社", "brick_id": 16674},
-    {"name": "微信公众号_动漫异次元", "brick_id": 16663},
-    {"name": "微信公众号_幸运石动漫", "brick_id": 16662},
-    {"name": "微信公众号_动漫头条", "brick_id": 16660},
-    {"name": "微信公众号_蓝猫动漫", "brick_id": 16658},
-    {"name": "微信公众号_动漫基地", "brick_id": 16657},
-    {"name": "微信公众号_动漫大全", "brick_id": 16655},
-    {"name": "微信公众号_ACG资讯", "brick_id": 16654},
-    {"name": "微信公众号_ACG宅腐萌", "brick_id": 16653},
-    {"name": "微信公众号_ACG次元饭", "brick_id": 16652},
-    {"name": "微信公众号_二次元基地", "brick_id": 16651},
-    {"name": "微信公众号_二次元理性蒸发", "brick_id": 16650},
-    {"name": "微信公众号_二次元宅腐基", "brick_id": 16649},
-    {"name": "微信公众号_二次元之梦", "brick_id": 16244},
-    {"name": "微信公众号_晚安二次元", "brick_id": 16243},
-    {"name": "微信公众号_二次元动漫", "brick_id": 16236},
-    {"name": "微信公众号_爱上二次元", "brick_id": 16235},
-    {"name": "微信公众号_二次元风暴", "brick_id": 16234},
-    {"name": "微信公众号_二次元内外", "brick_id": 16229},
-    {"name": "微信公众号_二次元头条", "brick_id": 16223},
-    {"name": "微信公众号_偶的二次元世界", "brick_id": 16222},
-    {"name": "微信公众号_二次元宅姬送", "brick_id": 16221},
-    {"name": "微信公众号_东京二次元", "brick_id": 16220},
-    {"name": "微信公众号_NaJoy二次元", "brick_id": 16219},
-    {"name": "微信公众号_二次元催生办", "brick_id": 16218},
-    {"name": "即刻_微信新动向", "brick_id": 16179},
+const source = [
+    {"name": "3DM游戏网", "brick_id": 16761},
+    {"name": "1862游戏"},
+    {"name": "游戏研究社"},
+    {"name": "动漫异次元"},
+    {"name": "幸运石动漫"},
+    {"name": "动漫头条"},
+    {"name": "蓝猫动漫"},
+    {"name": "动漫基地"},
+    {"name": "动漫大全"},
+    {"name": "ACG资讯"},
+    {"name": "ACG宅腐萌"},
+    {"name": "ACG次元饭"},
+    {"name": "二次元基地"},
+    {"name": "二次元理性蒸发"},
+    {"name": "二次元宅腐基"},
+    {"name": "二次元之梦"},
+    {"name": "晚安二次元"},
+    {"name": "二次元动漫"},
+    {"name": "爱上二次元"},
+    {"name": "二次元风暴"},
+    {"name": "二次元内外"},
+    {"name": "二次元头条"},
+    {"name": "偶的二次元世界"},
+    {"name": "二次元宅姬送"},
+    {"name": "东京二次元"},
+    {"name": "NaJoy二次元"},
+    {"name": "二次元催生办"},
     {"name":"木木宠物馆"},
     {"name":"青年文摘"},
     {"name":"全球逗比搞笑排行榜"},
@@ -99,8 +99,8 @@ const source = [{"name": "微信公众号_3DM游戏网", "brick_id": 16761},
     {"name":"逗萌社"},
     {"name":"娱乐硬糖"},
     {"name":"深八娱乐圈"},
-    {"name":"聊点APP"}]
-
+    {"name":"聊点APP"}
+    ]
 
 const targetUrl = 'http://bee.api.talkmoment.com/scheduler/task/post'
 const getBrickId = async () => {
@@ -194,16 +194,18 @@ function push(postData) {
                 scheduled_at: new Date().getTime()
             };
             let content = JSON.stringify(post_data);
-            console.log(content)
+            console.log("数据组织出来是这样的", content);
 
             try {
                 await push(content);
+                console.log(new Date, "  上面那个content完成了")
+                console.log("================");
             } catch (e) {
                 console.log(e)
                 console.log("发布任务时报错了");
             }
-            await sleep(20)
+            await sleep(60)
         }
-        await sleep(20 * 60);
+        await sleep(60 * 60);
     }
 })()
