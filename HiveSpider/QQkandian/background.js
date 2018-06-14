@@ -51,6 +51,7 @@ require([
             partition: DETAIL_BEE_NAME,
             key: value + ""
         };
+        console.log("去重ing这些事儿", query);
         await Http.call(`http://bee.api.talkmoment.com/dereplicate/history/add`, query);
     };
 
@@ -140,7 +141,8 @@ require([
 
                     }
                 }catch(e){
-                    console.log("先这样吧");
+                    console.log(e);
+                    console.log("先这样吧 大概率是他根本没有评论 所以没有commentList");
                 }
             }
             console.log("算是完事了");
@@ -158,8 +160,7 @@ require([
 
             console.log(keyword)
 
-            let miaomiaomiao = await runTask(keyword);
-            console.log(miaomiaomiao, "？？？")
+            await runTask(keyword);
             await Async.sleep();
 
             if (s == 467) {

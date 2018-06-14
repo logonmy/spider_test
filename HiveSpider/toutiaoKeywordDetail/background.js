@@ -49,6 +49,7 @@ require([
             partition: DETAIL_BEE_NAME,
             key: task.value
         };
+        console.log(query, "去重讯息");
         await Http.call(`http://bee.api.talkmoment.com/dereplicate/history/add`, query);
     };
 
@@ -70,7 +71,7 @@ require([
                 Socket.log(`爬取完成,data=`, data);
 
                 if(data && data.comments && data.comments.length < 3){
-                    await Task.reject(task, "评论数小于3条 reject掉了");
+                    await Task.rejectTask(task, "评论数小于3条 reject掉了");
                 }
 
                 if (config.up_name) {
@@ -90,7 +91,7 @@ require([
                 Socket.log('发送到记数的地方');
                 await Task.countTask(task_id, DETAIL_BEE_NAME);
 
-                Socket.log(`添加内容url(${data.url})到去重模块的历史集合`);
+                Socket.log(`添加内容url(${task.value})到去重模块的历史集合`);
                 await postDataToDereplicate(task, data);
                 Socket.log(`添加到去重模块成功`);
 

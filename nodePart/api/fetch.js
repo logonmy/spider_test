@@ -34,8 +34,6 @@ const getPage = async (url, moreArgs = {
     let res = await safeFetch(url, moreArgs);
     if (res !== undefined && res.status === 200) {
         return res.text();
-        //return iconv.decode( res.text(),'gb2312');
-
     } else {
         return false;
     }
