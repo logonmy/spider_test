@@ -63,7 +63,7 @@ define([], function () {
         this.MessageBox = MessageBox;
         this.deferred = Q.defer();
         this.tabId = void 0;
-        this.selected = true;
+        this.selected = false;
     }
 
     Tab.prototype.participate = function () {
