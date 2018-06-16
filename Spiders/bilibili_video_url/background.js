@@ -28,7 +28,7 @@ require([
         return request;
     };
 
-    const extractSource = (legoR) => {
+    const extractWebUrl = (legoR) => {
         let parts = legoR.split("||");
         for (let part of parts) {
             try {
@@ -36,26 +36,53 @@ require([
                 if (model.source.indexOf("www.bilibili.com") >= 0) {
                     let avcode = model.source.substring(model.source.indexOf("www.bilibili.com/video/") + "www.bilibili.com/video/".length);
                     let mobileSource = "https://m.bilibili.com/video/" + avcode.substring(0, avcode.length - 1) + ".html";
-                    return [model.source, mobileSource];
+                    return {
+                        type: "bilibili",
+                        source: model.source,
+                        mobileSource: mobileSource
+                    };
+                } else if (model.source.indexOf("www.pearvideo.com") >= 0) {
+                    return {
+                        type: "pearvideo",
+                        source: model.source,
+                        mobileSource: model.source
+                    }
+                } else {
+                    return {
+                        type: null,
+                        source: null,
+                        mobileSource: null
+                    }
                 }
             } catch(err) { }
         }
-        return [null, null];
+        return {
+            type: null,
+            source: null,
+            mobileSource: null
+        };
     };
 
     let runTask = async(task) => {
         let lego = task.lego;
-        let [source, mobileSource] = extractSource(lego.R);
-        if (source && mobileSource) { } else return;
-        Socket.log("打开网页href=", mobileSource);
-        let tab = new Tab(mobileSource, ["./business/script.js"]);
-        let data = await tab.run();
-        if (data) { } else {
+        let {type, source, mobileSource} = extractWebUrl(lego.R);
+        let tab = null;
+        if (type === "bilibili" && source && mobileSource) {
+            Socket.log("打开网页href=", mobileSource);
+            tab = new Tab(mobileSource, ["./business/script_bilibili.js"]);
+        } else if (type === "pearvideo" && source && mobileSource) {
+            Socket.log("打开网页href=", source);
+            tab = new Tab(source, ["./business/script_pearvideo.js"]);
+        } else {
+            console.log("!!!!!!!不支持的视频来源");
+            return;
+        }
+        let videoSource = await tab.run();
+        tab.remove();
+        if (videoSource) { } else {
             Socket.log("提取出错");
             return;
         }
-        tab.remove();
-        let videoSource = "https:" + data;
         Socket.log("获取视频源地址:", videoSource);
         let req = getRequest(videoSource);
         let deadline = (parseInt(req.deadline || req.um_deadline || req.expires) * 1000) || (Date.now() + 1000 * 60 * 30);

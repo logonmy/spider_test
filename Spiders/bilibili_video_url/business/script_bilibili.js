@@ -1,19 +1,16 @@
-
-
 let inter = setInterval(function(){
-    try{
+    try {
         document.querySelector(".load-layer").click();
         let href = document.querySelector("source").getAttribute("src");
-        console.log(href);
+        if (href) { } else return;
+        href = "https:" + href;
         chrome.runtime.sendMessage(href);
         clearInterval(inter);
         window.close();
-    }catch(e){
+    } catch(e){
         console.log(e);
         chrome.runtime.sendMessage("");
         clearInterval(inter);
         window.close();
     }
 }, 200);
-
-
