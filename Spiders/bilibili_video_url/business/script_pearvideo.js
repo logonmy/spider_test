@@ -1,6 +1,7 @@
 let inter = setInterval(function() {
     try {
         let videos = document.getElementsByTagName("video");
+        console.log(videos);
         if (videos.length === 0) return;
         let source = videos[0].src;
         if (source) { } else return;
@@ -14,4 +15,5 @@ let inter = setInterval(function() {
         clearInterval(inter);
         window.close();
     }
+    console.log("pearing ing");
 }, 200);

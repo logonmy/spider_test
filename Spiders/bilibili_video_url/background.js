@@ -21,8 +21,8 @@ require([
         if (url.indexOf("?") !== -1) {
             let str = url.substr(1);
             let strs = str.split("&");
-            for(let i = 0; i < strs.length; i ++) {
-                request[strs[i].split("=")[0]]=strs[i].split("=")[1];
+            for (let i = 0; i < strs.length; i++) {
+                request[strs[i].split("=")[0]] = strs[i].split("=")[1];
             }
         }
         return request;
@@ -54,7 +54,8 @@ require([
                         mobileSource: null
                     }
                 }
-            } catch(err) { }
+            } catch (err) {
+            }
         }
         return {
             type: null,
@@ -63,7 +64,7 @@ require([
         };
     };
 
-    let runTask = async(task) => {
+    let runTask = async (task) => {
         let lego = task.lego;
         let {type, source, mobileSource} = extractWebUrl(lego.R);
         let tab = null;
@@ -77,9 +78,15 @@ require([
             console.log("!!!!!!!不支持的视频来源");
             return;
         }
+        // let timeout = setTimeout(() => {
+        //     if(tab) tab.remove();
+        //     return;
+        // }, 2000)
         let videoSource = await tab.run();
         tab.remove();
-        if (videoSource) { } else {
+        //clearTimeout(timeout);
+        if (videoSource) {
+        } else {
             Socket.log("提取出错");
             return;
         }
@@ -102,7 +109,7 @@ require([
             let task = null;
             try {
                 task = await Http.call(`https://chatbot.api.talkmoment.com/video/task/fetch`);
-            } catch(err) {
+            } catch (err) {
                 Socket.error("获取任务失败, err=", err.stack);
                 continue;
             }
@@ -115,8 +122,9 @@ require([
             try {
                 await runTask(task);
                 await Http.call(`https://chatbot.api.talkmoment.com/video/task/resolve`, task);
-            } catch(err) {
+            } catch (err) {
                 Socket.error("任务失败, err=", err.stack);
+
                 await Http.call(`https://chatbot.api.talkmoment.com/video/task/reject`, task);
             }
         }

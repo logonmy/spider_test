@@ -90,7 +90,12 @@ define([], function () {
 
     Tab.prototype.remove = function() {
         var self = this;
-        chrome.tabs.remove(self.tabId);
+        try{
+            chrome.tabs.remove(self.tabId);
+        }catch(e){
+            console.log(e);
+        }
+
         //todo 删除messagebox中;
     }
     return Tab;

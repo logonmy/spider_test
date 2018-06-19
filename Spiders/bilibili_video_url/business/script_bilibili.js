@@ -13,4 +13,5 @@ let inter = setInterval(function(){
         clearInterval(inter);
         window.close();
     }
+    console.log("interval 了一次")
 }, 200);

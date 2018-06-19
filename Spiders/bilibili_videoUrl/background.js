@@ -27,6 +27,7 @@ chrome.webRequest.onBeforeSendHeaders.addListener(details => {
         "User-Agent": "Mozilla/5.0 (Linux; Android 5.0; SM-G900P Build/LRX21T)" +
         "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.79 Mobile" +
         "Safari/537.36",
+        //"User-Agent": "bili-universal/6790 CFNetwork/901.1 Darwin/17.6.0",
         "Referer": url,
         "X-Forwarded-for": "127.0.0.1",
         "Cookie":""
