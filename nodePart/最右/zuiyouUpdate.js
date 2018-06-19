@@ -79,6 +79,7 @@ const postWashTask = async (brick_id, data) => {
     };
 
     let d = await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", washTask);
+    d = JSON.parse(d).result;
     return d.id;
 };
 const postDataToMessage = async (data) => {
@@ -274,7 +275,7 @@ const run = async (name, ZeroTime, brick_id) => {
         console.log(e)
         console.log("上传数据的时候不要吊它");
     }
-    await sleep(1)
+    await sleep(1);
     console.log("###############################################")
 }
 

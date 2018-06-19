@@ -120,9 +120,11 @@ const postWashTask = async (brick_id, data) => {
     console.log(brick_id);
     try {
         d = await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", washTask);
+        d = JSON.parse(d).result;
     } catch (e) {
-        await postWashTask(brick_id, data);
+        return await postWashTask(brick_id, data);
     }
+    console.log(d.id);
     return d.id;
 };
 
@@ -352,6 +354,7 @@ let run = async (name, topicId, brick_id, created_at) => {
                 await postDataToDereplicate(data.id);
                 await postDataToMessage(data);
                 let task_id = await postWashTask(brick_id, data);
+                console.log(task_id, "task_id");
                 await Task.countTask(task_id, "jike_update")
                 await sleep(0.5);
             }

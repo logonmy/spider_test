@@ -35,7 +35,8 @@ let getLegoBrickAll = async(brick_id) => {
     let id = result.result[length].id;
 
     while(length === 99){
-		result = getLegoBrickOne(brick_id, id);
+		result = getLegoB
+		rickOne(brick_id, id);
 		datas = datas.concat(result.result);
 	}
 }
@@ -50,14 +51,3 @@ exports.deleteLego = deleteLegoBrick;
 exports.readLegoFirst = readLegoFirst;
 exports.getLegoBrickAll = getLegoBrickAll
 exports.getBrick = getLegoBrick
-
-
-
-
-
-
-
-
-
-
-
