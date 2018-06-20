@@ -1,4 +1,8 @@
 define([], function () {
+    Array.prototype.deleteIndex = function(index){
+        return this.slice(0, index).concat(this.slice(parseInt(index, 10) + 1));
+    }
+
     let G = {
         tabId: void 0,
         script: void 0
@@ -42,8 +46,10 @@ define([], function () {
                     for (var i = 0; i < self.tabs.length; i++) {
                         if (self.tabs[i].tabId === sender.tab.id) {
                             if (request.false) {
+                                clearTimeout(self.tabs[i].timeout);
                                 self.tabs[i].deferred.reject.call(self.tabs[i].deferred, request);
                             } else {
+                                clearTimeout(self.tabs[i].timeout);
                                 self.tabs[i].deferred.resolve.call(self.tabs[i].deferred, request);
                             }
                             self.tabs.splice(i, 1);
@@ -57,27 +63,43 @@ define([], function () {
     }
     MessageBox.addListener();
 
-    function Tab(url, script) {
+    function Tab(url, script, timeout) {
         this.url = url;
         this.script = script;
         this.MessageBox = MessageBox;
         this.deferred = Q.defer();
         this.tabId = void 0;
         this.selected = false;
+        this.timeout = void 0;
+        this.timeoutCount = timeout;
     }
 
     Tab.prototype.participate = function () {
         var self = this;
         self.MessageBox.tabs.push({
             tabId: self.tabId,
-            deferred: self.deferred
+            deferred: self.deferred,
+            timeout: self.timeout
         });
     };
 
+    Tab.prototype.clear = function () {
+        var self = this;
+
+        for (let i = 0; i < a.length; i++) {
+            if (a[i].tabId === self.tabId) {
+                a.deleteIndex[i];
+            }
+        }
+
+    }
+
     Tab.prototype.run = function () {
         var self = this;
+        self.timeout = setTimeout(function () {
+            self.deferred.resolve("timeout");
+        }, self.timeoutCount);
         chrome.tabs.create({url: this.url, selected: this.selected}, function (tab) {
-            console.log(tab);
             self.tabId = tab.id;
             self.participate();
 
@@ -88,15 +110,13 @@ define([], function () {
         return this.deferred.promise;
     };
 
-    Tab.prototype.remove = function() {
+    Tab.prototype.remove = function () {
         var self = this;
-        try{
+        try {
             chrome.tabs.remove(self.tabId);
-        }catch(e){
+        } catch (e) {
             console.log(e);
         }
-
-        //todo 删除messagebox中;
     }
     return Tab;
 })

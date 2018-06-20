@@ -70,24 +70,22 @@ require([
         let tab = null;
         if (type === "bilibili" && source && mobileSource) {
             Socket.log("打开网页href=", mobileSource);
-            tab = new Tab(mobileSource, ["./business/script_bilibili.js"]);
-        } else if (type === "pearvideo" && source && mobileSource) {
-            Socket.log("打开网页href=", source);
-            tab = new Tab(source, ["./business/script_pearvideo.js"]);
+            tab = new Tab(mobileSource, ["./business/script_bilibili.js"], 2000);
         } else {
-            console.log("!!!!!!!不支持的视频来源");
+            console.log("!!!!!!!不支持的视频来源", lego.R);
             return;
         }
-        // let timeout = setTimeout(() => {
-        //     if(tab) tab.remove();
-        //     return;
-        // }, 2000)
-        let videoSource = await tab.run();
+        let videoSource;
+        videoSource = await tab.run();
         tab.remove();
-        //clearTimeout(timeout);
         if (videoSource) {
-        } else {
+        } else if(videoSource == "timeout"){
+            Socket.log("超时了");
+            throw new Error("timeout");
+            return;
+        }else {
             Socket.log("提取出错");
+            throw new Error("提取出错");
             return;
         }
         Socket.log("获取视频源地址:", videoSource);
@@ -106,6 +104,7 @@ require([
     (async () => {
         Socket.startHeartBeat("bilibili_video_url");
         while (true) {
+            console.log("-----------------------------分割线----------------------------");
             let task = null;
             try {
                 task = await Http.call(`https://chatbot.api.talkmoment.com/video/task/fetch`);
@@ -122,10 +121,16 @@ require([
             try {
                 await runTask(task);
                 await Http.call(`https://chatbot.api.talkmoment.com/video/task/resolve`, task);
+                console.log("resolved");
             } catch (err) {
                 Socket.error("任务失败, err=", err.stack);
-
+                if(err.stack && err.stack.indexOf("提取出错") > -1){
+                    task.retry = false;
+                }else{
+                    task.retry = true;
+                }
                 await Http.call(`https://chatbot.api.talkmoment.com/video/task/reject`, task);
+                console.log("reject");
             }
         }
     })();

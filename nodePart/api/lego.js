@@ -1,5 +1,4 @@
 const Http = require("../api/http").Http
-const File = require("fs")
 
 let addLegoBrick = async(name, desc) =>{
 	let morArgs = {
@@ -46,8 +45,19 @@ const getLegoBrick = async (limit) => {
     return result;
 }
 
+const updateLego = async (lego) => {
+	Http.call("http://chatbot.api.talkmoment.com/lego/library/lego/put", lego);
+}
+
+const getLego = async (lego_id) => {
+    let result = await Http.get("http://chatbot.api.talkmoment.com/lego/library/lego/get?id=" + lego_id);
+    return result;
+}
+
 exports.addLego = addLegoBrick;
 exports.deleteLego = deleteLegoBrick;
 exports.readLegoFirst = readLegoFirst;
-exports.getLegoBrickAll = getLegoBrickAll
-exports.getBrick = getLegoBrick
+exports.getLegoBrickAll = getLegoBrickAll;
+exports.getBrick = getLegoBrick;
+exports.getLego = getLego;
+exports.updateLego = updateLego;

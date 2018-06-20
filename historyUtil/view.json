@@ -1,88 +1,12 @@
 {
-  "err_no": 0,
-  "result": {
-    "count": 15,
-    "intask_count": 176,
-    "valid_count": 1913,
-    "invalid_count": 414,
-    "error_count": 238,
-    "sum_count": 2741,
-    "docs": [
-      {
-        "name": "haoqixin_index_detail",
-        "state": "VALID",
-        "count": 5
-      },
-      {
-        "name": "haoqixin_index_detail",
-        "state": "INVALID",
-        "count": 4
-      },
-      {
-        "name": "toutiao_keyword_detail",
-        "state": "ERROR",
-        "count": 238
-      },
-      {
-        "name": "jianshu_index_detail",
-        "state": "VALID",
-        "count": 19
-      },
-      {
-        "name": "pear_index_detail",
-        "state": "VALID",
-        "count": 8
-      },
-      {
-        "name": "toutiao_keyword_detail",
-        "state": "VALID",
-        "count": 1316
-      },
-      {
-        "name": "bilibili_video_detail",
-        "state": "INVALID",
-        "count": 160
-      },
-      {
-        "name": "duowan_news_detail",
-        "state": "INTASK",
-        "count": 4
-      },
-      {
-        "name": "bilibili_video_detail",
-        "state": "VALID",
-        "count": 563
-      },
-      {
-        "name": "toutiao_keyword_detail",
-        "state": "INVALID",
-        "count": 240
-      },
-      {
-        "name": "pear_index_detail",
-        "state": "INVALID",
-        "count": 2
-      },
-      {
-        "name": "duowan_news_detail",
-        "state": "VALID",
-        "count": 2
-      },
-      {
-        "name": "bilibili_video_detail",
-        "state": "INTASK",
-        "count": 172
-      },
-      {
-        "name": "jianshu_index_detail",
-        "state": "INVALID",
-        "count": 6
-      },
-      {
-        "name": "duowan_news_detail",
-        "state": "INVALID",
-        "count": 2
-      }
-    ]
-  }
+  "cover_img": {
+    "src": "http://thumbnail.talkmoment.com/snapshot/b34bd5a161a4d0ec6adf769b3b904af0.jpg",
+    "height": 600,
+    "width": 960,
+    "fmt": "JPEG",
+    "thumb": "http://thumbnail.talkmoment.com/thumb/b34bd5a161a4d0ec6adf769b3b904af0.jpg"
+  },
+  "source": "https://www.bilibili.com/video/av5501173/",
+  "type": "web_url",
+  "title": "二次元机娘劲爽激爆机战"
 }
