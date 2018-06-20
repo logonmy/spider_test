@@ -78,12 +78,11 @@ require([
         let videoSource;
         videoSource = await tab.run();
         tab.remove();
-        if (videoSource) {
-        } else if(videoSource == "timeout"){
+        if (videoSource == "timeout") {
             Socket.log("超时了");
             throw new Error("timeout");
             return;
-        }else {
+        } else if (!videoSource) {
             Socket.log("提取出错");
             throw new Error("提取出错");
             return;
