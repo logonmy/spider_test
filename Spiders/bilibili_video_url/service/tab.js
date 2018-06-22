@@ -69,7 +69,7 @@ define([], function () {
         this.MessageBox = MessageBox;
         this.deferred = Q.defer();
         this.tabId = void 0;
-        this.selected = true;
+        this.selected = false;
         this.timeout = void 0;
         this.timeoutCount = timeout;
     }
