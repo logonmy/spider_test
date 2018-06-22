@@ -122,7 +122,7 @@ require([
                 Socket.error("获取任务失败, err=", err.stack);
                 continue;
             }
-            if (task.id === 0) {
+            if (task.task_id === 0) {
                 Socket.log("暂时没有任务");
                 await Async.sleep(10000);
                 continue;
