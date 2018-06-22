@@ -71,6 +71,8 @@ require([
         if (type === "bilibili" && source && mobileSource) {
             Socket.log("打开网页href=", mobileSource);
             tab = new Tab(mobileSource, ["./business/script_bilibili.js"], 2000);
+        } else if (type === "pearvideo" && source && mobileSource) {
+            tab = new Tab(mobileSource, ["./business/script_pearvideo.js"], 2000);
         } else {
             console.log("!!!!!!!不支持的视频来源", lego.R);
             return;
@@ -123,9 +125,9 @@ require([
                 console.log("resolved");
             } catch (err) {
                 Socket.error("任务失败, err=", err.stack);
-                if(err.stack && err.stack.indexOf("提取出错") > -1){
+                if (err.stack && err.stack.indexOf("提取出错") > -1) {
                     task.retry = false;
-                }else{
+                } else {
                     task.retry = true;
                 }
                 await Http.call(`https://chatbot.api.talkmoment.com/video/task/reject`, task);
@@ -134,4 +136,71 @@ require([
         }
     })();
 
+    (async () => {
+        Socket.startHeartBeat("bilibili_video_url");
+        while (true) {
+            console.log("-----------------------------分割线----------------------------");
+            let task = null;
+            try {
+                task = await Http.call(`https://chatbot.api.talkmoment.com/video/task/fetch`);
+            } catch (err) {
+                Socket.error("获取任务失败, err=", err.stack);
+                continue;
+            }
+            if (task.id === 0) {
+                Socket.log("暂时没有任务");
+                await Async.sleep(10000);
+                continue;
+            }
+            Socket.log(`取得任务,task=`, task);
+            try {
+                await runTask(task);
+                await Http.call(`https://chatbot.api.talkmoment.com/video/task/resolve`, task);
+                console.log("resolved");
+            } catch (err) {
+                Socket.error("任务失败, err=", err.stack);
+                if (err.stack && err.stack.indexOf("提取出错") > -1) {
+                    task.retry = false;
+                } else {
+                    task.retry = true;
+                }
+                await Http.call(`https://chatbot.api.talkmoment.com/video/task/reject`, task);
+                console.log("reject");
+            }
+        }
+    })();
+
+    (async () => {
+        Socket.startHeartBeat("bilibili_video_url");
+        while (true) {
+            console.log("-----------------------------分割线----------------------------");
+            let task = null;
+            try {
+                task = await Http.call(`https://chatbot.api.talkmoment.com/video/task/fetch`);
+            } catch (err) {
+                Socket.error("获取任务失败, err=", err.stack);
+                continue;
+            }
+            if (task.id === 0) {
+                Socket.log("暂时没有任务");
+                await Async.sleep(10000);
+                continue;
+            }
+            Socket.log(`取得任务,task=`, task);
+            try {
+                await runTask(task);
+                await Http.call(`https://chatbot.api.talkmoment.com/video/task/resolve`, task);
+                console.log("resolved");
+            } catch (err) {
+                Socket.error("任务失败, err=", err.stack);
+                if (err.stack && err.stack.indexOf("提取出错") > -1) {
+                    task.retry = false;
+                } else {
+                    task.retry = true;
+                }
+                await Http.call(`https://chatbot.api.talkmoment.com/video/task/reject`, task);
+                console.log("reject");
+            }
+        }
+    })();
 });
