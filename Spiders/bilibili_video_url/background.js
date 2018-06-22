@@ -47,11 +47,17 @@ require([
                         source: model.source,
                         mobileSource: model.source
                     }
+                } else if (model.source.indexOf("ixiaochuan") >= 0) {
+                    return {
+                        type: "zuiyou",
+                        source: model.source,
+                        mobileSource: model.source
+                    }
                 } else {
                     return {
                         type: null,
-                        source: null,
-                        mobileSource: null
+                        source: model.source,
+                        mobileSource: model.source
                     }
                 }
             } catch (err) {
@@ -73,9 +79,12 @@ require([
             tab = new Tab(mobileSource, ["./business/script_bilibili.js"], 2000);
         } else if (type === "pearvideo" && source && mobileSource) {
             tab = new Tab(mobileSource, ["./business/script_pearvideo.js"], 2000);
-        } else {
-            console.log("!!!!!!!不支持的视频来源", lego.R);
+        } else if (type === "zuiyou" && source && mobileSource) {
+            console.log("无需的最右", lego.R);
             return;
+        } else {
+            console.log("!!!!!!!不支持的视频来源 现在使用default", lego.R);
+            tab = new Tab(mobileSource, ["./business/script_default.js"], 2000);
         }
         let videoSource;
         videoSource = await tab.run();
@@ -101,74 +110,6 @@ require([
             deadline: deadline
         });
     };
-
-    (async () => {
-        Socket.startHeartBeat("bilibili_video_url");
-        while (true) {
-            console.log("-----------------------------分割线----------------------------");
-            let task = null;
-            try {
-                task = await Http.call(`https://chatbot.api.talkmoment.com/video/task/fetch`);
-            } catch (err) {
-                Socket.error("获取任务失败, err=", err.stack);
-                continue;
-            }
-            if (task.id === 0) {
-                Socket.log("暂时没有任务");
-                await Async.sleep(10000);
-                continue;
-            }
-            Socket.log(`取得任务,task=`, task);
-            try {
-                await runTask(task);
-                await Http.call(`https://chatbot.api.talkmoment.com/video/task/resolve`, task);
-                console.log("resolved");
-            } catch (err) {
-                Socket.error("任务失败, err=", err.stack);
-                if (err.stack && err.stack.indexOf("提取出错") > -1) {
-                    task.retry = false;
-                } else {
-                    task.retry = true;
-                }
-                await Http.call(`https://chatbot.api.talkmoment.com/video/task/reject`, task);
-                console.log("reject");
-            }
-        }
-    })();
-
-    (async () => {
-        Socket.startHeartBeat("bilibili_video_url");
-        while (true) {
-            console.log("-----------------------------分割线----------------------------");
-            let task = null;
-            try {
-                task = await Http.call(`https://chatbot.api.talkmoment.com/video/task/fetch`);
-            } catch (err) {
-                Socket.error("获取任务失败, err=", err.stack);
-                continue;
-            }
-            if (task.id === 0) {
-                Socket.log("暂时没有任务");
-                await Async.sleep(10000);
-                continue;
-            }
-            Socket.log(`取得任务,task=`, task);
-            try {
-                await runTask(task);
-                await Http.call(`https://chatbot.api.talkmoment.com/video/task/resolve`, task);
-                console.log("resolved");
-            } catch (err) {
-                Socket.error("任务失败, err=", err.stack);
-                if (err.stack && err.stack.indexOf("提取出错") > -1) {
-                    task.retry = false;
-                } else {
-                    task.retry = true;
-                }
-                await Http.call(`https://chatbot.api.talkmoment.com/video/task/reject`, task);
-                console.log("reject");
-            }
-        }
-    })();
 
     (async () => {
         Socket.startHeartBeat("bilibili_video_url");

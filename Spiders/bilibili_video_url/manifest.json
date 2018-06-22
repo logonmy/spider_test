@@ -1,6 +1,6 @@
 {
     "manifest_version": 3,
-    "name": "B站 视频链接提取",
+    "name": "a视频链接提取",
     "version": "0.0.3",
     "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
     "permissions": [ "cookies", "unlimitedStorage", "http://*/*", "https://*/*", "file:///*/*" ],
