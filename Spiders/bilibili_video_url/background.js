@@ -71,6 +71,9 @@ require([
         if (type === "bilibili" && source && mobileSource) {
             Socket.log("打开网页href=", mobileSource);
             tab = new Tab(mobileSource, ["./business/script_bilibili.js"], 2000);
+        } else if (type === "pearvideo" && source) {
+            Socket.log("打开网页href=", source);
+            tab = new Tab(source, ["./business/script_pearvideo.js"], 2000);
         } else {
             console.log("!!!!!!!不支持的视频来源", lego.R);
             return;
