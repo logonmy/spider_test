@@ -47,7 +47,7 @@ require([
                         source: model.source,
                         mobileSource: model.source
                     }
-                } else if (model.source.indexOf("ixiaochuan") >= 0) {
+                } else if (model.source.indexOf("ixiaochuan") >= 0 || model.source.indexOf("izuiyou") >= 0) {
                     return {
                         type: "zuiyou",
                         source: model.source,
@@ -76,15 +76,22 @@ require([
         let tab = null;
         if (type === "bilibili" && source && mobileSource) {
             Socket.log("打开网页href=", mobileSource);
-            tab = new Tab(mobileSource, ["./business/script_bilibili.js"], 2000);
+            tab = new Tab(mobileSource, ["./business/script_bilibili.js"], 5000);
         } else if (type === "pearvideo" && source && mobileSource) {
-            tab = new Tab(mobileSource, ["./business/script_pearvideo.js"], 2000);
+            tab = new Tab(mobileSource, ["./business/script_pearvideo.js"], 5000);
         } else if (type === "zuiyou" && source && mobileSource) {
             console.log("无需的最右", lego.R);
+            await Http.call("https://chatbot.api.talkmoment.com/video/link/post", {
+                web_url: source,
+                video_url: source,
+                img_url: "",
+                created_at: Date.now(),
+                deadline: 9999999999999
+            });
             return;
         } else {
             console.log("!!!!!!!不支持的视频来源 现在使用default", lego.R);
-            tab = new Tab(mobileSource, ["./business/script_default.js"], 2000);
+            tab = new Tab(mobileSource, ["./business/script_default.js"], 5000);
         }
         let videoSource;
         videoSource = await tab.run();
