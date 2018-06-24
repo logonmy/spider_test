@@ -47,15 +47,20 @@ require([
                         source: model.source,
                         mobileSource: model.source
                     }
+                } else if (model.source.indexOf("ixiaochuan") >= 0 || model.source.indexOf("izuiyou") >= 0) {
+                    return {
+                        type: "zuiyou",
+                        source: model.source,
+                        mobileSource: model.source
+                    }
                 } else {
                     return {
                         type: null,
-                        source: null,
-                        mobileSource: null
+                        source: model.source,
+                        mobileSource: model.source
                     }
                 }
-            } catch (err) {
-            }
+            } catch (err) { }
         }
         return {
             type: null,
@@ -64,43 +69,94 @@ require([
         };
     };
 
-    let runTask = async (task) => {
-        let lego = task.lego;
-        let {type, source, mobileSource} = extractWebUrl(lego.R);
-        let tab = null;
-        if (type === "bilibili" && source && mobileSource) {
-            Socket.log("打开网页href=", mobileSource);
-            tab = new Tab(mobileSource, ["./business/script_bilibili.js"], 2000);
-        } else if (type === "pearvideo" && source) {
-            Socket.log("打开网页href=", source);
-            tab = new Tab(source, ["./business/script_pearvideo.js"], 2000);
-        } else {
-            console.log("!!!!!!!不支持的视频来源", lego.R);
-            return;
-        }
-        let videoSource;
-        videoSource = await tab.run();
+    const runBilibiliTask = async(task, webUrl, mobileWebUrl) => {
+        Socket.log("打开Bilibili网页web_url=", mobileWebUrl);
+        let tab = new Tab(mobileWebUrl, ["./business/script_bilibili.js"], 5000);
+        let videoSource = await tab.run();
         tab.remove();
-        if (videoSource == "timeout") {
+        if (videoSource === "timeout") {
             Socket.log("超时了");
             throw new Error("timeout");
-            return;
         } else if (!videoSource) {
             Socket.log("提取出错");
             throw new Error("提取出错");
-            return;
         }
         Socket.log("获取视频源地址:", videoSource);
         let req = getRequest(videoSource);
         let deadline = (parseInt(req.deadline || req.um_deadline || req.expires) * 1000) || (Date.now() + 1000 * 60 * 30);
+        Socket.log("视频过期时间:", new Date(deadline));
         Socket.log("上报视频源地址到目录");
         await Http.call("https://chatbot.api.talkmoment.com/video/link/post", {
-            web_url: source,
+            web_url: webUrl,
             video_url: videoSource,
             img_url: "",
             created_at: Date.now(),
             deadline: deadline
         });
+        tab.remove();
+    };
+
+    const runPearVideoTask = async(task, webUrl) => {
+        Socket.log("打开PearVideo网页web_url=", webUrl);
+        let tab = new Tab(webUrl, ["./business/script_pearvideo.js"], 5000);
+        let videoSource = await tab.run();
+        tab.remove();
+        if (videoSource === "timeout") {
+            Socket.log("超时了");
+            throw new Error("timeout");
+        } else if (!videoSource) {
+            Socket.log("提取出错");
+            throw new Error("提取出错");
+        }
+        Socket.log("获取视频源地址:", videoSource);
+        let deadline = Date.now() + 1000 * 60 * 60 * 24 * 30;
+        Socket.log("视频过期时间:", new Date(deadline));
+        Socket.log("上报视频源地址到目录");
+        await Http.call("https://chatbot.api.talkmoment.com/video/link/post", {
+            web_url: webUrl,
+            video_url: videoSource,
+            img_url: "",
+            created_at: Date.now(),
+            deadline: deadline
+        });
+    };
+
+    const runDefaultTask = async(task, webUrl) => {
+        console.log("!!!!!!!未知的视频来源 打开网页web_url=", webUrl);
+        let tab = new Tab(webUrl, ["./business/script_default.js"], 5000);
+        let videoSource = await tab.run();
+        tab.remove();
+        if (videoSource == "timeout") {
+            Socket.log("超时了");
+            throw new Error("timeout");
+        } else if (!videoSource) {
+            Socket.log("提取出错");
+            throw new Error("提取出错");
+        }
+        Socket.log("获取视频源地址:", videoSource);
+        let deadline = Date.now() + 1000 * 60 * 10;
+        Socket.log("上报视频源地址到目录");
+        await Http.call("https://chatbot.api.talkmoment.com/video/link/post", {
+            web_url: webUrl,
+            video_url: videoSource,
+            img_url: "",
+            created_at: Date.now(),
+            deadline: deadline
+        });
+    };
+
+    let runTask = async (task) => {
+        let lego = task.lego;
+        let {type, source, mobileSource} = extractWebUrl(lego.R);
+        if (type === "bilibili" && source && mobileSource) {
+            await runBilibiliTask(task, source, mobileSource);
+        } else if (type === "pearvideo" && source) {
+            await runPearVideoTask(task, source);
+        } else if (type === "zuiyou" && source) {
+            // DO NOTHING
+        } else {
+            await runDefaultTask(task, source);
+        }
     };
 
     (async () => {
@@ -116,7 +172,7 @@ require([
             }
             if (task.task_id === 0) {
                 Socket.log("暂时没有任务");
-                await Async.sleep(10000);
+                await Async.sleep(3000);
                 continue;
             }
             Socket.log(`取得任务,task=`, task);
@@ -126,15 +182,14 @@ require([
                 console.log("resolved");
             } catch (err) {
                 Socket.error("任务失败, err=", err.stack);
-                if(err.stack && err.stack.indexOf("提取出错") > -1){
-                    task.retry = false;
-                }else{
-                    task.retry = true;
+                if (err.stack && err.stack.indexOf("提取出错") >= 0) {
+                    task.failed_count = 1000;
+                } else {
+                    ++task.failed_count;
                 }
                 await Http.call(`https://chatbot.api.talkmoment.com/video/task/reject`, task);
                 console.log("reject");
             }
         }
     })();
-
 });

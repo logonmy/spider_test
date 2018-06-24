@@ -1,12 +1,9 @@
 let inter = setInterval(function() {
     try {
-        let videos = document.getElementsByTagName("video");
-        console.log(videos);
-        if (videos.length === 0) return;
-        let source = videos[0].src;
-        if (source) { } else return;
-        console.log(source);
-        chrome.runtime.sendMessage(source);
+        var a = document.getElementsByTagName('html')[0].innerHTML
+        a = a.split('srcUrl="')[1].split('",')[0];
+        console.log(a);
+        chrome.runtime.sendMessage(a);
         clearInterval(inter);
         window.close();
     } catch (err){
@@ -17,3 +14,5 @@ let inter = setInterval(function() {
     }
     console.log("pearing ing");
 }, 200);
+
+//http://video.pearvideo.com/mp4/short/20171223/cont-1232833-11311280-hd.mp4
