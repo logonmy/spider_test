@@ -24,7 +24,8 @@ const filterItems = async (data) => {
     res = JSON.parse(res);
     return res.result.filter_result;
 };
-const askPic = async (str) => {
+
+const askPic = (() => {
     const suckUrl = (url) => {
         url = url.split("/");
         let l = url.length;
@@ -54,20 +55,27 @@ const askPic = async (str) => {
             });
         })
     }
-    str = encodeURIComponent(str);
-    let url = "http://chatbot.api.talkmoment.com/image/battle/battle/by/text?text=" + str + "&uid=0&limit=10";
-    let re = await getApi(url);
-    for (let r of re.result) {
-        if (JSON.parse(r.R).src.indexOf("jpg") >= 0) {
-            let path = await downloadPic(JSON.parse(r.R).src);
-            return {
-                text: JSON.parse(r.R).text,
-                path: path,
-                src: JSON.parse(r.R).src
+    return (str) => {
+        str = encodeURIComponent(str);
+        let url = "http://chatbot.api.talkmoment.com/image/battle/battle/by/text?text=" + str + "&uid=0&limit=10";
+        let re = await
+        getApi(url);
+        for (let r of re.result) {
+            if (JSON.parse(r.R).src.indexOf("jpg") >= 0) {
+                let path = await
+                downloadPic(JSON.parse(r.R).src);
+                return {
+                    text: JSON.parse(r.R).text,
+                    path: path,
+                    src: JSON.parse(r.R).src
+                }
             }
         }
     }
-}
+})()
+const postData = (() => {
+    //todo
+})()
 
 let hotQueue = [];
 let expandQueue = [];
@@ -99,7 +107,6 @@ const launchBrowser = async () => {
         await pages[0].reload();
         await sleep();
         return;
-
     }
     console.log("已启动");
 };
@@ -200,6 +207,7 @@ const searchHot = async () => {
             }, 50)
         })
     });
+    //todo 不是feed_list_item 好像是feed_content
     let blogNodes = await pages[1].$$("div[action-type=feed_list_item]");
     //剔除重复热门
     let hrefs = await pages[1].evaluate(() => {
@@ -212,17 +220,17 @@ const searchHot = async () => {
             resolve(hrefs);
         })
     })
-
     hrefs = await filterItems(hrefs);
     for (let i = 0; i < blogNodes.length; i++) {
-        if(!hrefs[i]){
-
+        if (!hrefs[i]) {
+            await blogNodes[i].$$eval("[node-type=feed_content]", (node) => {
+                node.remove();
+            })
         }
     }
 
     blogNodes = await pages[1].$$("div[action-type=feed_list_item]");
-
-    // 点击评论 没点开的直接删除
+    // 点击评论
     for (let i = 0; i < blogNodes.length; i++) {
         try {
             let item = blogNodes[i];
@@ -232,9 +240,142 @@ const searchHot = async () => {
             console.log(e);
         }
     }
+    //点开所有点开全文 并删除点开全文/收起全文按钮
+    for (let i = 0; i < blogNodes.length; i++) {
+        let openButton = blogNodes[i];
+        try {
+            let button = await openButton.$$(".WB_text_opt");
+            if (button && button[0]) {
+                button = button[0]
+                await button.click()
+            }
+            ;
+            button = await openButton.$$(".WB_text_opt");
+            if (button && button[0]) {
+                button = button[0]
+                await button.click()
+            }
+        } catch (e) {
+            console.log(e);
+        }
+    }
+    await pages[0].evaluate(() => {
+        let buttons = document.querySelectorAll(".WB_text_opt");
+        for (let button of buttons) {
+            button.remove();
+        }
+    })
+
+    // 获取内容并上传到每日库
+    let pageResult = await pages[1].evaluate(() => {
+        return new Promise((resolve, reject) => {
+            var blogNodes = document.querySelectorAll("div[action-type=feed_list_item]:not([isforward='1'])");
+            var result = []
+            for (var blogNode of blogNodes) {
+                var TemplateData = {
+                    title: "",
+                    transmieCount: 0,
+                    commentCount: 0,
+                    agreeCount: 0,
+                    created_at: 0,
+                    comments: [],
+                    imgs: [],
+                    video: {
+                        src: "",
+                        cover_img: {
+                            src: "",
+                            width: 0,
+                            height: 0
+                        }
+                    },
+                    detailUrl: ""
+                }
+                let existAndReturn = (str) => {
+                    if (blogNode.querySelectorAll(str)) {
+                        let result = parseInt(blogNode.querySelectorAll(str)[1].innerText.trim());
+                        if (result === null) {
+                            return 0
+                        }
+                        return result;
+                    } else {
+                        return 0;
+                    }
+                }
+                TemplateData.transmieCount = existAndReturn("[action-type=fl_forward] .line.S_line1 em");
+                TemplateData.commentCount = existAndReturn("[action-type=fl_comment] .line.S_line1 em");
+                TemplateData.agreeCount = existAndReturn("[action-type=fl_like] .line.S_line1 em");
+
+                try {
+                    let created_at = new Date(blogNode.querySelector(".feed_list_item_date em").innerText);
+                    if (created_at == "Invalid Date") {
+                        throw new Error("时间格式不对");
+                    } else {
+                        TemplateData.created_at = created_at.getTime();
+                    }
+                } catch (e) {
+                    TemplateData.created_at = new Date().getTime();
+                }
+
+                if (blogNode.querySelector("[node-type=feed_list_content_full]")) {
+                    TemplateData.title = blogNode.querySelector("[node-type=feed_list_content_full]").innerText;
+                } else if (blogNode.querySelector("[node-type=feed_list_content]")) {
+                    TemplateData.title = blogNode.querySelector("[node-type=feed_list_content]").innerText;
+                }
+                console.log(blogNode);
+                TemplateData.detailUrl = blogNode.querySelector("[node-type=feed_list_item_date]").getAttribute("href");
+
+                //comment
+                var comments = blogNode.querySelectorAll("[node-type=feed_list_repeat] [node-type=replywrap] .WB_text");
+                for (var comment of comments) {
+                    TemplateData.comments.push(comment.innerText);
+                }
+                //img
+                var imgs = blogNode.querySelectorAll(".WB_pic img");
+                for (var img of imgs) {
+                    var tempImg = {
+                        src: "",
+                        width: 0,
+                        height: 0
+                    };
+                    tempImg.src = "http:" + img.getAttribute("src");
+                    tempImg.width = img.naturalWidth;
+                    tempImg.height = img.naturalHeight;
+                    TemplateData.imgs.push(tempImg)
+                }
+
+                //video
+                if (blogNode.querySelector(".WB_video")) {
+                    var video = blogNode.querySelector(".WB_video");
+                    TemplateData.video.cover_img.src = "http:" + video.querySelector(".con-1.hv-pos img").getAttribute("src");
+                    TemplateData.video.cover_img.width = video.querySelector(".con-1.hv-pos img").naturalWidth;
+                    TemplateData.video.cover_img.height = video.querySelector(".con-1.hv-pos img").naturalHeight;
+                    TemplateData.video.src = video.querySelector("video").getAttribute("src");
+                }
+
+                result.push(TemplateData);
+            }
+            resolve(result);
+        })
+    })
+    await postData(pageResult);
+
+    // 删除所有不给评论的
+    blogNodes = await pages[1].$$("div[action-type=feed_content]");
+    //算了 不想写了 我回家了 啊 心累 怎么办 这里 算一下那个标是不是绿的 应该是看一下class
+    for (let i = 0; i < blogNodes.length; i++) {
+        if (!hrefs[i]) {
+            await blogNodes[i].$$eval("[node-type=feed_content]", (node) => {
+                node.remove();
+            })
+        }
+    }
+
+    //好了 反正这里就已经是一个完美的页面了 然后
+    await callbackPic();
+}
+const callbackPic = async () => {
 
 }
-
 
 const recentPic = async () => {
     console.log("开始发图了 你晓得的吧");

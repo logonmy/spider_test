@@ -392,7 +392,7 @@ const searchKeyword = async () => {
 
             result.push(TemplateData);
         }
-
+        console.log(result);
         return result;
     })
 
