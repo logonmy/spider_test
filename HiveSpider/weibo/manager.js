@@ -63,7 +63,7 @@ const postWashTask = async(detailTask, data) => {
         }),
         data: JSON.stringify(data),
         scheduled_at: Date.now()
-    };
+    }
 
     let d = await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", washTask);
     return d.id;
