@@ -4,27 +4,26 @@ const getApi = require("./api/fetch").getApi;
 const http = require("http");
 const fs = require("fs");
 //这个东西要是能发着发着 顺便入到每日更新就好了
-
+const beeName = "weibolHot";
 const log = (str) => {
     let date = new Date();
-    console.log(str + ">>>>>" + date);
-};
+    console.log(str + ">>>>>" + date);l
+};l
 const sleep = (s = 5) => {
     return new Promise(resolve => setTimeout(resolve, s * 1000))
-};
+};l
 const deletePic = async (path) => {
     fs.unlinkSync(path);
 }
 const filterItems = async (data) => {
     let query = {
-        partition: "weibohot",
-        keys: data
+        partition: beeName,
+        keys: datal
     };
     let res = await Http.call(`http://bee.api.talkmoment.com/dereplicate/filter/by/history`, query);
     res = JSON.parse(res);
     return res.result.filter_result;
 };
-
 const askPic = (() => {
     const suckUrl = (url) => {
         url = url.split("/");
@@ -73,8 +72,83 @@ const askPic = (() => {
         }
     }
 })()
-const postData = (() => {
-    //todo
+const postData = (async (datas) => {
+    let brick_id = (async () => {
+        let getTrueName = () => {
+            var date = new Date();
+            var yyyy = date.getFullYear();
+            var mm = date.getMonth() + 1;
+            if (mm < 10) {
+                mm = "0" + mm.toString();
+            }
+            var dd = date.getDate();
+            if (dd < 10) {
+                dd = "0" + dd.toString();
+            }
+            var name = yyyy + mm + dd + "更新";
+            return name;
+        }
+
+        let trueName = getTrueName();
+
+        let data = await Http.get("http://chatbot.api.talkmoment.com/lego/library/brick/list?limit=20&version=002");
+        data = JSON.parse(data);
+        data = data.result;
+        for(let da of data){
+            if(da.name == trueName){
+                return da.id;
+            }
+        }
+
+        return false;
+    })()
+    const postDataToMessage = async (data) => {
+        await Http.call(`http://bee.api.talkmoment.com/message/publish?topic=${beeName}`, data);
+    }
+    const postDataToDereplicate = (data) => {
+        let query = {
+            partition: beeName,
+            key: data.detailUrl.split("?")[0]
+        };
+        await Http.call(`http://bee.api.talkmoment.com/dereplicate/history/add`, query);
+    }
+    const postWashTask = (data) => {
+        let washTask = {
+            name: "wash_corpus",
+            value: "",
+            config: JSON.stringify({
+                bee_source: beeName,
+                brick_id: brick_id,
+                publish: true
+            }),
+            data: JSON.stringify(data),
+            scheduled_at: Date.now()
+        }
+        let d = await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", washTask);
+        return d.id;
+    }
+    const countTask = (task_id, bee_name) => {
+        let query = {
+            task_id: task_id,
+            name: beeName,
+            state: "INTASK",
+            created_at: Date.now()
+        }
+        await Http.call('http://bee.api.talkmoment.com/bee/wash/state/put', query);
+    }
+
+    return async (datas) => {
+        try{
+            for(let data of datas){
+                await postDataToMessage(data);
+                await postDataToDereplicate(data);
+                let task_id = await postWashTask(data);
+                await countTask(task_id);
+            }
+        }catch(e){
+            console.log(e, "回答数据出错");
+        }
+    }
 })()
 
 let hotQueue = [];
@@ -92,6 +166,7 @@ const launchBrowser = async () => {
     log("启动浏览器成功");
 
     pages[0] = await browser.newPage();
+    pages[1] = await browser.newPage();
     await pages[0].setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko)" +
         " Chrome/62.0.3202.75 Safari/537.36");
     await pages[0].setViewport({
@@ -163,11 +238,67 @@ const openIndex = async (user) => {
         return;
     }
     log("登录成功");
-    await recentPic();
 };
+
+//回复原微博
+const recentBlog = (blogNode, context) => {
+    return new Promise((resolve, reject) => {
+        let input = await blogNode.$("input[type=file]");
+        let pic = await askPic(context);
+        await input.uploadFile(pic.path);
+        console.log("注入了 图片内容");
+        let interval = setInterval(async () => {
+            let post = await blogNode.$("div[action-type=feed_list_item] a[action-type=post]");
+            await post.click();
+            console.log("点击了 评论按钮");
+            if (post.toString().indexOf("提交中") > 0 || todoidsadadsfhdajsdhewadfdsa) {
+                clearInterval(interval);
+                resolve(pic);
+            }
+        }, 2000);
+    })
+}
+
+//回复微博的第一条评论
+const recentComment = async (blogNode, comment) => {
+    return new Promise((resolve, reject) => {
+        let btn = await blogNode.$(".WB_feed_repeat [node-type=reply]");
+        await btn.click();
+        try{
+            let input = await blogNode.$(".WB_feed_repeat input[type=file]");
+            let pic = await askPic(comment);
+            await input.uploadFile(pic.path);
+            console.log("注入了 图片内容");
+            let interval = setInterval(async () => {
+            let post = await blogNode.$(".WB_feed_repeat div[action-type=feed_list_item] a[action-type=post]");
+            await post.click();
+            console.log("点击了 评论按钮");
+            if (post.toString().indexOf("提交中") > 0 || todoidsadadsfhdajsdhewadfdsa) {
+                clearInterval(interval);
+                resolve(pic);
+            }
+        }, 2000);
+        }catch(e){
+            await recentComment(blogNode, comment);
+        }
+    })
+}
+
+//记录评论记录
+const recordDown = async (a,b,c,d) => {
+    let recordName = "weiboRecord";
+    let data = {
+        context: a,
+        context_img: b,
+        comment: c,
+        comment_img:d
+    }
+    await Http.call(`http://bee.api.talkmoment.com/message/publish?topic=${recordName}`, data);
+}
 
 //热门行动 
 const searchHot = async () => {
+    console.log("开始searchHot酱紫");
     const hotUrl = "https://d.weibo.com/";
     await pages[1].goto(hotUrl);
 
@@ -246,15 +377,9 @@ const searchHot = async () => {
         try {
             let button = await openButton.$$(".WB_text_opt");
             if (button && button[0]) {
-                button = button[0]
-                await button.click()
-            }
-            ;
-            button = await openButton.$$(".WB_text_opt");
-            if (button && button[0]) {
-                button = button[0]
-                await button.click()
-            }
+                button = button[0];
+                await button.click();
+            };
         } catch (e) {
             console.log(e);
         }
@@ -273,6 +398,7 @@ const searchHot = async () => {
             var result = []
             for (var blogNode of blogNodes) {
                 var TemplateData = {
+                    source: "热门微博",
                     title: "",
                     transmieCount: 0,
                     commentCount: 0,
@@ -357,78 +483,45 @@ const searchHot = async () => {
             resolve(result);
         })
     })
-    await postData(pageResult);
+    
+    postData(pageResult);
 
     // 删除所有不给评论的
     blogNodes = await pages[1].$$("div[action-type=feed_content]");
-    //算了 不想写了 我回家了 啊 心累 怎么办 这里 算一下那个标是不是绿的 应该是看一下class
     for (let i = 0; i < blogNodes.length; i++) {
-        if (!hrefs[i]) {
+        let unable = await blogNodes[i].$$eval(".W_ficon.ficon_image.S_ficon_dis");
+        if(!unable){
             await blogNodes[i].$$eval("[node-type=feed_content]", (node) => {
                 node.remove();
             })
         }
     }
 
-    //好了 反正这里就已经是一个完美的页面了 然后
-    await callbackPic();
-}
-const callbackPic = async () => {
-
-}
-
-const recentPic = async () => {
-    console.log("开始发图了 你晓得的吧");
-    let href = "https://weibo.com/mamypokocn?profile_ftype=1&is_all=1#1529895889374";
-    await pages[0].goto(href);
-
-    try {
-        await pages[0].waitForSelector("div[action-type=feed_list_item] a[action-type=fl_comment]");
-    } catch (e) {
-        console.log("recent失败了 现在在重试");
-        await pages[0].reload();
-        await sleep();
-        await recentPic();
-        return;
+    //现在已经是完美的页面与完美的blogNodes了
+    blogNodes = await pages[1].$$("div[action-type=feed_content]");
+    for(let blogNode of blogNodes){
+        let context = blogNode.$("[node-type=feed_list_content]", (node) => {
+            return node.innerText;
+        })
+        let comment = blogNode.$("[node-type=replywrap] .WB_text", (node) => {
+            return node.innerText;
+        })
+        let context_img = await recentBlog(blogNode, context);    
+        let comment_img = await recentComment(blogNode, comment);
+        await recordDown(context, context_img, comment, comment_img);
     }
-    //todo something replace sleep
-    await sleep(1);
-    let commentBtn = await pages[0].$("div[action-type=feed_list_item] a[action-type=fl_comment]");
-    await commentBtn.click();
-    console.log("打开了 评论的列表");
-    try {
-        await pages[0].waitForSelector("input[type=file]");
-    } catch (e) {
-        console.log("recent失败了 现在在重试");
-        await pages[0].reload();
-        await sleep();
-        await recentPic();
-        return;
-    }
-    let input = await pages[0].$("input[type=file]");
-    await input.uploadFile("/Users/cqcpcqp/Downloads/test.jpg");
-    console.log("注入了 图片内容");
-    let interval = setInterval(async () => {
-        let post = await pages[0].$("div[action-type=feed_list_item] a[action-type=post]");
-        await post.click();
-        console.log("点击了 评论按钮");
-        if (post.toString().indexOf("提交中") > 0) {
-            clearInterval(interval);
-        }
-    }, 2000);
-};
+}
 
 (async () => {
-    // let user = {
-    //     username: "guyiyang@gmail.com",
-    //     password: "Washu1234"
-    // }
-    // await launchBrowser();
-    // await openIndex(user);
-    // console.log("跑完了 老哥 现在麻烦你去检查一下");
-    //let data = await askPic("迷茫");
-    //let re = await askPic("老哥");
+    let user = {
+        username: "guyiyang@gmail.com",
+        password: "Washu1234"
+    }
+    await launchBrowser();
+    await openIndex(user);
+    while (true) {
+        await searchHot();
+        console.log("跑完了 老哥 现在麻烦你去检查一下");
+    }
 
-    //await deletePic(re.path);
-    //console.log(re);
 })();
