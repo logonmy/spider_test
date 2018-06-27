@@ -20,3 +20,5 @@
 是否为每日更新入库
 config内包含publish
 是否走爬虫平台/前端也scheduled_at
+cqcpcqp2@163.com Washu1234
+541498885@qq.com Washu1234

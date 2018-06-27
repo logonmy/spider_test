@@ -525,16 +525,17 @@ const debug = true;
         let blogCount = 0;
         for (let blogNode of blogNodes) {
             try{
-                let context = blogNode.$("[node-type=feed_list_content]", (node) => {
+                let context = await blogNode.$eval("[node-type=feed_list_content]", (node) => {
                     return node.innerText;
-                })
+                });
                 console.log(context, "这是一个即将发过去的text", blogCount++);
-                let comment = blogNode.$("[node-type=replywrap] .WB_text", (node) => {
+                let comment = await blogNode.$eval("[node-type=replywrap] .WB_text", (node) => {
                     return node.innerText;
-                })
+                });
                 let context_img = await recentBlog(blogNode, context);
                 //let comment_img = await recentComment(blogNode, comment);
-                await recordDown(context, context_img, comment, comment_img);
+                await recordDown(context, context_img, comment);
+                //await recordDown(context, context_img, comment, comment_img);
                 await sleep();
             }catch(e){
                 await sleep();
