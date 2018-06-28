@@ -170,8 +170,8 @@ const debug = true;
         await pages[0].setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko)" +
             " Chrome/62.0.3202.75 Safari/537.36");
         await pages[0].setViewport({
-            width: 1360,
-            height: 1000,
+            width: 1860,
+            height: 1500,
             isLandscape: true
         });
         log("打开微博首页");
@@ -253,13 +253,14 @@ const debug = true;
 
                 let text = await blogNode.$("textarea[action-type=check]");
                 await text.click();
+                await sleep(90);
                 pic.text = pic.text || "怼图啦 欢迎来战";
                 await text.type(pic.text,{delay: 50});
 
                 let post = await blogNode.$("div[action-type=feed_list_item] a[action-type=post]");
                 await post.click();
                 console.log("点击了 评论按钮");
-                await sleep();
+                await sleep(90);
                 resolve(pic);
 
             }catch(e){
@@ -295,9 +296,10 @@ const debug = true;
     }
 
 //记录评论记录
-    const recordDown = async (a, b, c, d) => {
+    const recordDown = async (url, a, b, c, d) => {
         let recordName = "weiboRecord";
         let data = {
+            url: url,
             context: a,
             context_img: b,
             comment: c,
@@ -317,224 +319,231 @@ const debug = true;
         } catch (e) {
             console.log("search失败了 现在在重试");
             await pages[1].reload();
-            await sleep();
+            await sleep(90);
             await searchHot();
             return;
         }
-
+        let blogNodes;
         // 滚到底部
-        await pages[1].evaluate((debug) => {
-            return new Promise((resolve, reject) => {
-                let scrollTemp = 0;
-                let bottomCount = 0;
-                let interval = setInterval(function () {
-                    window.scrollTo(0, document.documentElement.scrollTop + 100);
-                    //todo 触底
-                    try {
-                        document.querySelector(".WB_cardmore.WB_cardmore_noborder").click();
-                        document.querySelector(".WB_cardwrap.S_bg2 .empty_con a").click();
-                    } catch (e) {
-                        console.log("whatever");
-                    }
-                    if (window.scrollTop == scrollTemp) {
-                        bottomCount++;
-                        if (bottomCount >= 200) {
-                            clearInterval(interval);
-                            clearTimeout(timeout);
-                            resolve();
+        try{
+            await pages[1].evaluate((debug) => {
+                return new Promise((resolve, reject) => {
+                    let scrollTemp = 0;
+                    let bottomCount = 0;
+                    let interval = setInterval(function () {
+                        window.scrollTo(0, document.documentElement.scrollTop + 100);
+                        //todo 触底
+                        try {
+                            document.querySelector(".WB_cardmore.WB_cardmore_noborder").click();
+                            document.querySelector(".WB_cardwrap.S_bg2 .empty_con a").click();
+                        } catch (e) {
+                            console.log("whatever");
                         }
-                    } else {
-                        scrollTemp = window.scrollTop;
-                        bottomCount = 0;
-                    }
-                }, 100)
-                let timeout = setTimeout(function () {
-                    clearInterval(interval);
-                    resolve();
-                }, debug ? 10 : 9999);
-            })
-        }, debug);
-        log("已经滚到底部了");
-        //todo 不是feed_list_item 好像是feed_content
-        let blogNodes = await pages[1].$$("div[action-type=feed_list_item]");
-        //剔除重复热门
-        let hrefs = await pages[1].evaluate(() => {
-            return new Promise((resolve, reject) => {
-                let hrefs = [];
-                let dates = document.querySelectorAll("div[action-type=feed_list_item] [node-type=feed_list_item_date]");
-                for (let da of dates) {
-                    hrefs.push(da.getAttribute("href"));
-                }
-                resolve(hrefs);
-            })
-        })
-        hrefs = await filterItems(hrefs);
-        for (let i = 0; i < blogNodes.length; i++) {
-            if (!hrefs[i]) {
-                await blogNodes[i].$$eval("[node-type=feed_content]", (node) => {
-                    node.remove();
+                        if (window.scrollTop == scrollTemp) {
+                            bottomCount++;
+                            if (bottomCount >= 200) {
+                                clearInterval(interval);
+                                clearTimeout(timeout);
+                                resolve();
+                            }
+                        } else {
+                            scrollTemp = window.scrollTop;
+                            bottomCount = 0;
+                        }
+                    }, 100)
+                    let timeout = setTimeout(function () {
+                        clearInterval(interval);
+                        resolve();
+                    }, debug ? 10 : 9999);
                 })
-            }
-        }
-        log("已经删除重复热门");
-
-        blogNodes = await pages[1].$$("div[action-type=feed_list_item]");
-        // 点击评论
-        let length = debug ? 10 : blogNodes.length;
-        for (let i = 0; i < length; i++) {
-            try {
-                let item = blogNodes[i];
-                let commentBtn = await item.$("a[action-type=fl_comment]");
-                await commentBtn.click();
-                await sleep(2);
-            } catch (e) {
-                console.log(e);
-            }
-        }
-        log("已经点击所有评论");
-        //点开所有点开全文 并删除点开全文/收起全文按钮
-        for (let i = 0; i < blogNodes.length; i++) {
-            let openButton = blogNodes[i];
-            try {
-                let button = await openButton.$$(".WB_text_opt");
-                if (button && button[0]) {
-                    button = button[0];
-                    await button.click();
+            }, debug);
+            log("已经滚到底部了");
+            //todo 不是feed_list_item 好像是feed_content
+            blogNodes = await pages[1].$$("div[action-type=feed_list_item]");
+            //剔除重复热门
+            let hrefs = await pages[1].evaluate(() => {
+                return new Promise((resolve, reject) => {
+                    let hrefs = [];
+                    let dates = document.querySelectorAll("div[action-type=feed_list_item] [node-type=feed_list_item_date]");
+                    for (let da of dates) {
+                        hrefs.push(da.getAttribute("href"));
+                    }
+                    resolve(hrefs);
+                })
+            })
+            hrefs = await filterItems(hrefs);
+            for (let i = 0; i < blogNodes.length; i++) {
+                if (!hrefs[i]) {
+                    await blogNodes[i].$$eval("[node-type=feed_content]", (node) => {
+                        node.remove();
+                    })
                 }
-                ;
-            } catch (e) {
-                console.log(e);
             }
-        }
-        await pages[0].evaluate(() => {
-            let buttons = document.querySelectorAll(".WB_text_opt");
-            for (let button of buttons) {
-                button.remove();
+            log("已经删除重复热门");
+
+            blogNodes = await pages[1].$$("div[action-type=feed_list_item]");
+            // 点击评论
+            let length = debug ? 10 : blogNodes.length;
+            for (let i = 0; i < length; i++) {
+                try {
+                    let item = blogNodes[i];
+                    let commentBtn = await item.$("a[action-type=fl_comment]");
+                    await commentBtn.click();
+                    await sleep(2);
+                } catch (e) {
+                    console.log(e);
+                }
             }
-        })
-        log("已经点开所有点开全文");
-        // 获取内容并上传到每日库
-        let pageResult = await pages[1].evaluate(() => {
-            return new Promise((resolve, reject) => {
-                var blogNodes = document.querySelectorAll("div[action-type=feed_list_item]:not([isforward='1'])");
-                var result = []
-                for (var blogNode of blogNodes) {
-                    var TemplateData = {
-                        source: "热门微博",
-                        title: "",
-                        transmieCount: 0,
-                        commentCount: 0,
-                        agreeCount: 0,
-                        created_at: 0,
-                        comments: [],
-                        imgs: [],
-                        video: {
-                            src: "",
-                            cover_img: {
+            log("已经点击所有评论");
+            //点开所有点开全文 并删除点开全文/收起全文按钮
+            for (let i = 0; i < blogNodes.length; i++) {
+                let openButton = blogNodes[i];
+                try {
+                    let button = await openButton.$$(".WB_text_opt");
+                    if (button && button[0]) {
+                        button = button[0];
+                        await button.click();
+                    }
+                    ;
+                } catch (e) {
+                    console.log(e);
+                }
+            }
+            await pages[0].evaluate(() => {
+                let buttons = document.querySelectorAll(".WB_text_opt");
+                for (let button of buttons) {
+                    button.remove();
+                }
+            })
+            log("已经点开所有点开全文");
+            // 获取内容并上传到每日库
+            let pageResult = await pages[1].evaluate(() => {
+                return new Promise((resolve, reject) => {
+                    var blogNodes = document.querySelectorAll("div[action-type=feed_list_item]:not([isforward='1'])");
+                    var result = []
+                    for (var blogNode of blogNodes) {
+                        var TemplateData = {
+                            source: "热门微博",
+                            title: "",
+                            transmieCount: 0,
+                            commentCount: 0,
+                            agreeCount: 0,
+                            created_at: 0,
+                            comments: [],
+                            imgs: [],
+                            video: {
+                                src: "",
+                                cover_img: {
+                                    src: "",
+                                    width: 0,
+                                    height: 0
+                                }
+                            },
+                            detailUrl: ""
+                        }
+                        let existAndReturn = (str) => {
+                            if (blogNode.querySelectorAll(str)) {
+                                let result = parseInt(blogNode.querySelectorAll(str)[1].innerText.trim());
+                                if (result === null) {
+                                    return 0
+                                }
+                                return result;
+                            } else {
+                                return 0;
+                            }
+                        }
+                        TemplateData.transmieCount = existAndReturn("[action-type=fl_forward] .line.S_line1 em");
+                        TemplateData.commentCount = existAndReturn("[action-type=fl_comment] .line.S_line1 em");
+                        TemplateData.agreeCount = existAndReturn("[action-type=fl_like] .line.S_line1 em");
+
+                        try {
+                            let created_at = new Date(blogNode.querySelector(".feed_list_item_date em").innerText);
+                            if (created_at == "Invalid Date") {
+                                throw new Error("时间格式不对");
+                            } else {
+                                TemplateData.created_at = created_at.getTime();
+                            }
+                        } catch (e) {
+                            TemplateData.created_at = new Date().getTime();
+                        }
+
+                        if (blogNode.querySelector("[node-type=feed_list_content_full]")) {
+                            TemplateData.title = blogNode.querySelector("[node-type=feed_list_content_full]").innerText;
+                        } else if (blogNode.querySelector("[node-type=feed_list_content]")) {
+                            TemplateData.title = blogNode.querySelector("[node-type=feed_list_content]").innerText;
+                        }
+                        console.log(blogNode);
+                        TemplateData.detailUrl = blogNode.querySelector("[node-type=feed_list_item_date]").getAttribute("href");
+
+                        //comment
+                        var comments = blogNode.querySelectorAll("[node-type=feed_list_repeat] [node-type=replywrap] .WB_text");
+                        for (var comment of comments) {
+                            TemplateData.comments.push(comment.innerText);
+                        }
+                        //img
+                        var imgs = blogNode.querySelectorAll(".WB_pic img");
+                        for (var img of imgs) {
+                            var tempImg = {
                                 src: "",
                                 width: 0,
                                 height: 0
-                            }
-                        },
-                        detailUrl: ""
-                    }
-                    let existAndReturn = (str) => {
-                        if (blogNode.querySelectorAll(str)) {
-                            let result = parseInt(blogNode.querySelectorAll(str)[1].innerText.trim());
-                            if (result === null) {
-                                return 0
-                            }
-                            return result;
-                        } else {
-                            return 0;
+                            };
+                            tempImg.src = "http:" + img.getAttribute("src");
+                            tempImg.width = img.naturalWidth;
+                            tempImg.height = img.naturalHeight;
+                            TemplateData.imgs.push(tempImg)
                         }
-                    }
-                    TemplateData.transmieCount = existAndReturn("[action-type=fl_forward] .line.S_line1 em");
-                    TemplateData.commentCount = existAndReturn("[action-type=fl_comment] .line.S_line1 em");
-                    TemplateData.agreeCount = existAndReturn("[action-type=fl_like] .line.S_line1 em");
 
-                    try {
-                        let created_at = new Date(blogNode.querySelector(".feed_list_item_date em").innerText);
-                        if (created_at == "Invalid Date") {
-                            throw new Error("时间格式不对");
-                        } else {
-                            TemplateData.created_at = created_at.getTime();
+                        //video
+                        if (blogNode.querySelector(".WB_video")) {
+                            var video = blogNode.querySelector(".WB_video");
+                            TemplateData.video.cover_img.src = "http:" + video.querySelector(".con-1.hv-pos img").getAttribute("src");
+                            TemplateData.video.cover_img.width = video.querySelector(".con-1.hv-pos img").naturalWidth;
+                            TemplateData.video.cover_img.height = video.querySelector(".con-1.hv-pos img").naturalHeight;
+                            TemplateData.video.src = video.querySelector("video").getAttribute("src");
                         }
-                    } catch (e) {
-                        TemplateData.created_at = new Date().getTime();
-                    }
 
-                    if (blogNode.querySelector("[node-type=feed_list_content_full]")) {
-                        TemplateData.title = blogNode.querySelector("[node-type=feed_list_content_full]").innerText;
-                    } else if (blogNode.querySelector("[node-type=feed_list_content]")) {
-                        TemplateData.title = blogNode.querySelector("[node-type=feed_list_content]").innerText;
+                        result.push(TemplateData);
                     }
-                    console.log(blogNode);
-                    TemplateData.detailUrl = blogNode.querySelector("[node-type=feed_list_item_date]").getAttribute("href");
-
-                    //comment
-                    var comments = blogNode.querySelectorAll("[node-type=feed_list_repeat] [node-type=replywrap] .WB_text");
-                    for (var comment of comments) {
-                        TemplateData.comments.push(comment.innerText);
-                    }
-                    //img
-                    var imgs = blogNode.querySelectorAll(".WB_pic img");
-                    for (var img of imgs) {
-                        var tempImg = {
-                            src: "",
-                            width: 0,
-                            height: 0
-                        };
-                        tempImg.src = "http:" + img.getAttribute("src");
-                        tempImg.width = img.naturalWidth;
-                        tempImg.height = img.naturalHeight;
-                        TemplateData.imgs.push(tempImg)
-                    }
-
-                    //video
-                    if (blogNode.querySelector(".WB_video")) {
-                        var video = blogNode.querySelector(".WB_video");
-                        TemplateData.video.cover_img.src = "http:" + video.querySelector(".con-1.hv-pos img").getAttribute("src");
-                        TemplateData.video.cover_img.width = video.querySelector(".con-1.hv-pos img").naturalWidth;
-                        TemplateData.video.cover_img.height = video.querySelector(".con-1.hv-pos img").naturalHeight;
-                        TemplateData.video.src = video.querySelector("video").getAttribute("src");
-                    }
-
-                    result.push(TemplateData);
-                }
-                resolve(result);
-            })
-        })
-        postData(pageResult);
-
-        // 删除所有不给评论的
-        blogNodes = await pages[1].$$("div[action-type=feed_content]");
-        for (let i = 0; i < blogNodes.length; i++) {
-            let unable = await blogNodes[i].$$eval(".W_ficon.ficon_image.S_ficon_dis");
-            if (!unable) {
-                await blogNodes[i].$$eval("[node-type=feed_content]", (node) => {
-                    node.remove();
+                    resolve(result);
                 })
+            })
+            postData(pageResult);
+
+            // 删除所有不给评论的
+            blogNodes = await pages[1].$$("div[action-type=feed_content]");
+            for (let i = 0; i < blogNodes.length; i++) {
+                let unable = await blogNodes[i].$$eval(".W_ficon.ficon_image.S_ficon_dis");
+                if (!unable) {
+                    await blogNodes[i].$$eval("[node-type=feed_content]", (node) => {
+                        node.remove();
+                    })
+                }
             }
+            console.log("已经删除了所有不给评论的");
+        }catch(e){
+            console.log("在展现页面的时候坏掉了", e);
         }
-        console.log("已经删除了所有不给评论的");
         //现在已经是完美的页面与完美的blogNodes了
-        await sleep();
+        await sleep(30);
         blogNodes = await pages[1].$$("div[action-type=feed_list_item]");
         console.log(blogNodes.length, "最后剩余的blogNodes数量");
         let blogCount = 0;
         for (let blogNode of blogNodes) {
             try{
+                let url = await blogNode.$eval("[node-type=feed_list_item_date]", (node) => {
+                    return node.getAttribute("href")
+                })
                 let context = await blogNode.$eval("[node-type=feed_list_content]", (node) => {
                     return node.innerText;
                 });
                 console.log(context, "这是一个即将发过去的text", blogCount++);
-                let comment = await blogNode.$eval("[node-type=replywrap] .WB_text", (node) => {
-                    return node.innerText;
-                });
+                // let comment = await blogNode.$eval("[node-type=replywrap] .WB_text", (node) => {
+                //     return node.innerText;
+                // });
                 let context_img = await recentBlog(blogNode, context);
                 //let comment_img = await recentComment(blogNode, comment);
-                await recordDown(context, context_img, comment);
+                await recordDown(url, context, context_img, comment);
                 //await recordDown(context, context_img, comment, comment_img);
                 await sleep();
             }catch(e){

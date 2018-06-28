@@ -15,6 +15,8 @@ require([
         let lt = new Tab(lh, ["./business/script.js"]);
         let result = await lt.run();
         console.log(result);
-    })()
+        })()
+
+
 
 });

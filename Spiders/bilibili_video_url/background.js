@@ -187,8 +187,14 @@ require([
                 } else {
                     ++task.failed_count;
                 }
-                await Http.call(`https://chatbot.api.talkmoment.com/video/task/reject`, task);
-                console.log("reject");
+
+                try{
+                    await Http.call(`https://chatbot.api.talkmoment.com/video/task/reject`, task);
+                    console.log("reject");
+                }catch(e){
+                    console.log("这我就没招数了");
+                    console.log(e);
+                }
             }
         }
     })();
