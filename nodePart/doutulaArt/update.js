@@ -13,10 +13,10 @@ const filterItems = async (data) => {
         partition: "doutula_photo_id",
         keys: data.map((item) => {
             let sp = item.href.split("/");
+            console.log("filter", sp[sp.length -1]);
             return sp[sp.length - 1];
         })
     };
-    console.log(query);
     let res = await Http.call(`http://bee.api.talkmoment.com/dereplicate/filter/by/history`, query);
     console.log(res);
     res = JSON.parse(res);
@@ -78,16 +78,19 @@ const postWashTask = async (brick_id, data) => {
                     src: img.getAttribute("data-original"),
                     href: a.getAttribute("href")
                 }
-                console.log(re);
                 File.appendFileSync("getcuichegn", JSON.stringify(re) + "\n");
                 result.push(re);
             }
             result = await filterItems(result);
             for (let re of result) {
-                console.log("上传一个");
-                await postDataToDereplicate(re.href);
-                await postDataToMessage(re);
-                await postWashTask(19179, re);
+                let data = re.href;
+                let sp = data.split("/");
+                sp = parseInt(sp[sp.length - 1]);
+                console.log(sp, "postdereplicate");
+                //console.log("上传一个");
+                //await postDataToDereplicate(re.href);
+                //await postDataToMessage(re);
+                //await postWashTask(19179, re);
             }
         }
         console.log("开始漫长的等待");

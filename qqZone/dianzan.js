@@ -10,7 +10,7 @@
 // 3441282935----ep3k4bw //die
 // 3088230281----cl4r40q //die
 // 3168895110----scuxr1z4 //die
-// 3196302579----lu542941
+// 3196302579----lu542941 //die
 // 3498462319----ttksrknl
 
 // 2915297041----Washu1234----您父亲的姓名是？----UmDNbw----您母亲的姓名是？----HauVNE----您母亲的职业是？----BEfzyz
@@ -21,7 +21,6 @@
 //延长发评论后 跳转到新页面时间
 //添加滚来滚去操作
 //增强账号信用程度
-//跳转方式优化 没做
 
 const puppeteer = require('puppeteer');
 const getApi = require("../nodePart/api/fetch").getApi;
@@ -44,8 +43,10 @@ const askText = async (str) => {
 }
 
 let debugCount = 0;
-let taskUrls = ["https://user.qzone.qq.com/2895615237"];
+let taskUrls = ["https://user.qzone.qq.com/1272516124"];
 let dereplicateSet = new Set();
+let permissionCount = 0;
+let addFriendCount = 0;
 
 const launchBrowser = async () => {
     browser = await puppeteer.launch({
@@ -75,8 +76,8 @@ const login = async (username, password) => {
 
     //let switchButton = await pages[0].$("#switcher_plogin");
     let loginFrame = pages[0].mainFrame().childFrames()[0];
-    let switchBtton = await loginFrame.$("#switcher_plogin");
-    await switchBtton.click();
+    let switchButton = await loginFrame.$("#switcher_plogin");
+    await switchButton.click();
 
 
     let nameInput = await loginFrame.$(".inputstyle[type=text]");
@@ -139,9 +140,11 @@ let startOut = async () => {
     let url = taskUrls.shift();
     await onePage(pages[0], url);
     console.log("==========  finish ONE  ==========");
-    await sleep(5);
+    await sleep(1);
     await startOut();
 }
+
+//跳转方式优化
 
 //加好友
 let addFriend = async (page) => {
@@ -150,16 +153,17 @@ let addFriend = async (page) => {
     // document.querySelector("[data-cmd=add_friend]").click()
     // document.querySelector(".txt")
 
-    try{
-        let addButton = await page.$("[data-cmd=add_friend]");
-        await addButton.click();
-        let confirmButton = await page.$(".txt");
-        await confirmButton.click();
-        await askPermission();
-    }catch(e){
-        console.log(e)
-        console.log("点赞出错");
-    }
+    // try {
+    //     let addButton = await page.$("[data-cmd=add_friend]");
+    //     await addButton.click();
+    //     await sleep(1);
+    //     let confirmButton = await page.$(".txt");
+    //     await confirmButton.click();
+    //     console.log("已经添加好友了了", addFriendCount++, "人");
+    // } catch (e) {
+    //     console.log(e)
+    //     console.log("点赞出错");
+    // }
 
 }
 
@@ -170,67 +174,39 @@ let askPermission = async (page) => {
     // document.querySelector("#msg-area")
     // document.querySelector(".qz_dialog_layer_btn.qz_dialog_layer_sub")
 
-    try{
-        let requestButton = await page.$("");
+    try {
+        let requestButton = await page.$("[data-cmd=apply_request]");
         await requestButton.click();
-        let textArea = await page.$("#mag-area");
+        await sleep(1);
+        let textArea = await page.$("#msg-area");
         await textArea.click();
-        await textArea.type("麻烦同意一下喽");
+        await textArea.type("麻烦同意一下喽", {delay: 100});
         let confirmButton = await page.$(".qz_dialog_layer_btn.qz_dialog_layer_sub");
         await confirmButton.click();
-    }catch(e){
+        console.log("已经申请访问了", permissionCount++, "人");
+        await addFriend(page)
+    } catch (e) {
         console.log(e)
         console.log("申请访问出错");
-        await addFriend();
+
     }
 
 }
 
-
 let onePage = async (page, url) => {
-    url = url || "https://user.qzone.qq.com/909265728";
+    url = url || "https://user.qzone.qq.com/303093558";
     try {
 
         await sleep(2);
         await page.goto(url, "domcontentloaded");
         await sleep(2);
 
-        await page.evaluate(() => {
-            return new Promise((resolve, reject) => {
-                window.scrollTo(0, document.documentElement.scrollTop + 100);
-                setTimeout(function () {
-                    window.scrollTo(0, document.documentElement.scrollTop + 500);
-                }, 100)
-                setTimeout(function () {
-                    window.scrollTo(0, document.documentElement.scrollTop + 500);
-                }, 800)
-                setTimeout(function () {
-                    window.scrollTo(0, document.documentElement.scrollTop + 400);
-                }, 1500)
-                setTimeout(function () {
-                    resolve();
-                    window.scrollTo(0, document.documentElement.scrollTop - 400);
-                }, 2200)
-            });
-        });
-
-
         let contentFrame = page.mainFrame().childFrames()[0];
 
         //对第一条说说进行评论
-        let rawText = await contentFrame.$$eval(".f-info", nodes => nodes.map(n => n.innerText));
-        let text = await askText(rawText);
-        let input = await contentFrame.$(".textinput.textinput-default a");
-        await input.click();
-        console.log("click input");
-        await sleep(1);
-        await input.type(text, {delay: 100});
-        console.log("文字输入");
-        await sleep(1);
-        let sendButton = await contentFrame.$(".btn-post.gb_bt.evt_click");
-        await sendButton.click();
-        await sleep(1);
-        console.log("send text");
+        let agreeButton = await contentFrame.$(".fui-icon.icon-op-praise");
+        await agreeButton.click();
+        console.log("点击完毕了， 还是蛮鸡儿惊人的");
 
         //获取所有别人的链接
         let b = await contentFrame.$$eval(".q_namecard", nodes => nodes.map(n => n.getAttribute("href")));
@@ -242,18 +218,17 @@ let onePage = async (page, url) => {
         }
         console.log(debugCount++, "这是已经遍历完的第多少页");
         console.log(taskUrls.length, "现在已经存的taskUrl长度");
-
     } catch (e) {
         console.log(e);
         console.log("getOnePage发生了以上错误");
+        console.log("那我就去申请访问 请求好友了");
+        await askPermission(page);
     }
 }
 
 let run = async () => {
-
     await launchBrowser();
-    await login("2915297041", "Washu1234");
+    await login("3498462319", "ttksrknl");
     await startOut();
-
 }
 run();

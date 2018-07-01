@@ -244,23 +244,23 @@ const debug = true;
     const recentBlog = (blogNode, context) => {
         return new Promise(async (resolve, reject) => {
             try{
-                let input = await blogNode.$("input[type=file]");
+                //let input = await blogNode.$("input[type=file]");
                 let pic = await askPic(context);
-                console.log(context, "输入进来的context");
-                await input.uploadFile(pic.path);
-                await deletePic(pic.path);
-                console.log("注入了 图片内容");
+                //console.log(context, "输入进来的context");
+                //await input.uploadFile(pic.path);
+                //await deletePic(pic.path);
+                //console.log("注入了 图片内容");
 
                 let text = await blogNode.$("textarea[action-type=check]");
                 await text.click();
-                await sleep(90);
+                // await sleep(90);
                 pic.text = pic.text || "怼图啦 欢迎来战";
-                await text.type(pic.text,{delay: 50});
+                await text.type("http://t.cn/RZhKPkO",{delay: 50});
 
                 let post = await blogNode.$("div[action-type=feed_list_item] a[action-type=post]");
                 await post.click();
                 console.log("点击了 评论按钮");
-                await sleep(90);
+                // await sleep(90);
                 resolve(pic);
 
             }catch(e){
@@ -525,7 +525,7 @@ const debug = true;
             console.log("在展现页面的时候坏掉了", e);
         }
         //现在已经是完美的页面与完美的blogNodes了
-        await sleep(30);
+        // await sleep(30);
         blogNodes = await pages[1].$$("div[action-type=feed_list_item]");
         console.log(blogNodes.length, "最后剩余的blogNodes数量");
         let blogCount = 0;
@@ -543,7 +543,7 @@ const debug = true;
                 // });
                 let context_img = await recentBlog(blogNode, context);
                 //let comment_img = await recentComment(blogNode, comment);
-                await recordDown(url, context, context_img, comment);
+                await recordDown(url);
                 //await recordDown(context, context_img, comment, comment_img);
                 await sleep();
             }catch(e){
@@ -555,8 +555,8 @@ const debug = true;
 
     (async () => {
         let user = {
-            username: "guyiyang@gmail.com",
-            password: "Washu1234"
+            username: "15351702865",
+            password: "cqcp815"
         }
         await launchBrowser();
         await openIndex(user);
