@@ -24,9 +24,12 @@
 
 const puppeteer = require('puppeteer');
 const getApi = require("../nodePart/api/fetch").getApi;
+const RedisClient = require("../nodePart/api/redis").RedisClient;
+const redis = new RedisClient({host: "127.0.0.1", port: 6379});
 
 let pages = [void 0, void 0, void 0, void 0, void 0, void 0];
 let browser;
+let chongfuCount = 0;
 
 const sleep = (s = 5) => {
     return new Promise(resolve => setTimeout(resolve, s * 1000))
@@ -212,8 +215,16 @@ let onePage = async (page, url) => {
         let b = await contentFrame.$$eval(".q_namecard", nodes => nodes.map(n => n.getAttribute("href")));
         for (let a of b) {
             if (a && !dereplicateSet.has(a)) {
-                dereplicateSet.add(a);
-                taskUrls.push(a);
+                await redis.connect();
+                let re = await redis.sadd("qqZoneTask", a);
+                if(re === 0){
+                    chongfuCount++;
+                    console.log("已经重复了多少次了", chongfuCount++);
+                }else{
+                    dereplicateSet.add(a);
+                    taskUrls.push(a);
+                }
+                await redis.end();
             }
         }
         console.log(debugCount++, "这是已经遍历完的第多少页");
@@ -224,11 +235,48 @@ let onePage = async (page, url) => {
         console.log("那我就去申请访问 请求好友了");
         await askPermission(page);
     }
+
+    console.log("不管是申请访问的 还是点赞的 都统一处理入不再便利库中");
+    try{
+        await redis.connect();
+        await redis.sadd("qqZoneAlready", url);
+        await redis.end();
+    }catch(e){
+        console.log(e);
+        console.log("加入本地去重库出错");
+    }
+}
+
+let popSet = async (key) => {
+    try{
+        await redis.connect();
+        let re = await redis.srandmember(key, 1);
+        await redis.srem(key, re[0]);
+        await redis.end();
+        return re[0];
+    }catch(e){
+        console.log("whatever");
+    }
 }
 
 let run = async () => {
-    await launchBrowser();
-    await login("3498462319", "ttksrknl");
-    await startOut();
+    //提前先导入数据 别忘了
+
+
+    // await launchBrowser();
+    // await login("3498462319", "ttksrknl");
+    //
+    // let re = await popSet("qqZoneTask");
+    // taskUrls.push(re);
+    //
+    // await startOut();
+
+    await redis.connect();
+    await redis.sadd("qqZoneTask", "https://user.qzone.qq.com/2606118571");
+    await redis.sadd("qqZoneTask", "https://user.qzone.qq.com/995865869");
+    await redis.end();
 }
 run();
+
+
+

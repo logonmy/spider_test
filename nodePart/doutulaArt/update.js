@@ -5,6 +5,8 @@ const iconv = require('iconv-lite');
 const Http = require("../api/http").Http;
 const getPage = require("../api/fetch").getPage;
 const File = require("fs");
+const RedisClient = require("../api/redis").RedisClient;
+const redis = new RedisClient({host: "127.0.0.1", port: 6379});
 
 const BEE_NAME = "doutulaQueue";
 
@@ -17,6 +19,7 @@ const filterItems = async (data) => {
             return sp[sp.length - 1];
         })
     };
+    console.log(query);
     let res = await Http.call(`http://bee.api.talkmoment.com/dereplicate/filter/by/history`, query);
     console.log(res);
     res = JSON.parse(res);
@@ -61,7 +64,7 @@ const postWashTask = async (brick_id, data) => {
 
 (async () => {
     while(true){
-        for (let i = 1; i < 11; i++) {
+        for (let i = 1; i < 5; i++) {
             console.log("已经到了下一页了  ", i);
             let baseHref = "http://www.doutula.com/photo/list/?page=";
             let runHref = baseHref + i;
@@ -82,11 +85,25 @@ const postWashTask = async (brick_id, data) => {
                 result.push(re);
             }
             result = await filterItems(result);
+            console.log("filter完了    ^^^^^^^^^^^^^^^");
             for (let re of result) {
                 let data = re.href;
                 let sp = data.split("/");
                 sp = parseInt(sp[sp.length - 1]);
                 console.log(sp, "postdereplicate");
+
+                await redis.connect();
+                let test = await redis.sadd("doutula", sp);
+                await redis.end();
+                if(test == 0){
+                    console.log("已经存在了 痕迹吧恐怖 明明filter过的");
+                    continue;
+                }else{
+
+                    console.log("上传一条内容");
+                    await postDataToDereplicate(re.href);
+                }
+
                 //console.log("上传一个");
                 //await postDataToDereplicate(re.href);
                 //await postDataToMessage(re);
