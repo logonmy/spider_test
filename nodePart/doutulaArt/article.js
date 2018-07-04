@@ -6,7 +6,7 @@ const readLine = require("lei-stream").readLine;
 (async () => {
     const baseHref = "http://www.doutula.com/article/list/";
     let href;
-    for (let i = 0; i < 557; i++) {
+    for (let i = 0; i < 3; i++) {
         href = baseHref + "?page=" + i;
         if (i == 0) href = baseHref;
         let html = await getPage(href);
@@ -18,7 +18,7 @@ const readLine = require("lei-stream").readLine;
             try {
                 let href = a.getAttribute("href");
                 if (href.indexOf("article/detail/") > -1) {
-                    File.appendFileSync("articleHrefs.txt", href + "\n");
+                    File.appendFileSync("articleHrefs2.txt", href + "\n");
                 }
             } catch (e) {
                 //console.log(e);

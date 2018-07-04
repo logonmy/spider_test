@@ -99,15 +99,13 @@ const postWashTask = async (brick_id, data) => {
                     console.log("已经存在了 痕迹吧恐怖 明明filter过的");
                     continue;
                 }else{
-
-                    console.log("上传一条内容");
+                    console.log("上传一个");
                     await postDataToDereplicate(re.href);
+                    await postDataToMessage(re);
+                    await postWashTask(19179, re);
                 }
 
-                //console.log("上传一个");
-                //await postDataToDereplicate(re.href);
-                //await postDataToMessage(re);
-                //await postWashTask(19179, re);
+
             }
         }
         console.log("开始漫长的等待");

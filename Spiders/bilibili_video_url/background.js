@@ -120,6 +120,9 @@ require([
             deadline: deadline
         });
     };
+    const postDataToMessage = async(data) => {
+        await Http.call(`http://bee.api.talkmoment.com/message/publish?topic=suck_url_fail`, data);
+    };
 
     const runDefaultTask = async(task, webUrl) => {
         console.log("!!!!!!!未知的视频来源 打开网页web_url=", webUrl);
@@ -130,6 +133,7 @@ require([
             Socket.log("超时了");
             throw new Error("timeout");
         } else if (!videoSource) {
+            await postDataToMessage(task);
             Socket.log("提取出错");
             throw new Error("提取出错");
         }
