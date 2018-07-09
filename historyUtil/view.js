@@ -71,11 +71,11 @@ class c extends events {
 // 可以利用函数执行时的返回句柄的next方法回到之前暂停处继续执行
 // next执行的返回值的value即是yield关键字后面部分的表达式结果
 // 下一个next的唯一参数值可以作为yield的整体返回值，并赋值给a变量
-function* test(p) {
-    console.log(p);
-    var a = yield p + 1
-    console.log(a);
-}
+// function* test(p) {
+//     console.log(p);
+//     var a = yield p + 1
+//     console.log(a);
+// }
 
 // var gen = test(1);
 // var res = gen.next();
@@ -119,7 +119,7 @@ function* test(p) {
 // }
 // template();
 
-// view try
+// // view try
 // const fun = () => {
 //     let fun2 = () => {
 //         try{
@@ -138,3 +138,10 @@ function* test(p) {
 //     console.log("finish");
 // }
 // fun();
+
+
+var fn = function(){
+    console.log("fn1212")
+}
+var a = null;
+a || fn()

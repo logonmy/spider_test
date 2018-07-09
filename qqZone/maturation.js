@@ -6,45 +6,56 @@ const RedisClient = require("../nodePart/api/redis").RedisClient;
 const redis = new RedisClient({host: "127.0.0.1", port: 6379});
 
 const config = {
-    fatherScore: 0,
-    firstTimeScore: 0,
-    intervalScore: 0,
-    agreeCommentScore: 0,
+    firstTimeScore_b: 2,
+    firstTimeScore_s: 1,
+    intervalScore_b: 2,
+    intervalScore_s: 1,
+    agreeCommentScore_b: 2,
+    agreeCommentScore_s: 1,
 
     addFriendRequire: 20,
     agreeRequire: 200,
     commentRequire: 20,
     applyRequire: 50,
 
-    taskName: "qqZoneTask",
-    alreadyName: "qqZoneAlready"
-}
+    addFriendBlock: 20,
+    applyBlock: 5,
 
+    taskName: "qqZoneTask",
+    alreadyName: "qqZoneAlready",
+
+    commentEnd: false,
+    addFriendEnd: false,
+    applyEnd: false,
+    agreeEnd: false
+}
+let logData = {
+    chongfuCount: 0,
+    debugCount: 0,
+    permissionCount: 0,
+    addFriendCount: 0,
+    dianzanCount: 0,
+    commentCount: 0,
+}
 
 let pages = [void 0, void 0, void 0, void 0, void 0, void 0];
 let browser;
-let chongfuCount = 0;
 
 const sleep = (s = 5) => {
     return new Promise(resolve => setTimeout(resolve, s * 1000))
 }
-
-const askText = async (str) => {
-    str = encodeURIComponent(str);
-    let url = "http://chatbot.api.talkmoment.com/image/battle/battle/by/text?text=" + str + "&uid=0&limit=10";
-    let re = await getApi(url);
-    for (let r of re.result) {
-        if (JSON.parse(r.R).src.indexOf("jpg") >= 0) {
-            return JSON.parse(r.R).text;
-        }
+const popSet = async (key) => {
+    try {
+        await redis.connect();
+        let re = await redis.srandmember(key, 1);
+        await redis.srem(key, re[0]);
+        await redis.end();
+        return re[0];
+    } catch (e) {
+        console.log(e);
+        console.log("popSeta出错");
     }
 }
-
-let debugCount = 0;
-let dereplicateSet = new Set();
-let permissionCount = 0;
-let addFriendCount = 0;
-
 
 const launchBrowser = async () => {
     browser = await puppeteer.launch({
@@ -90,8 +101,6 @@ const login = async (username, password) => {
 
     let check = async () => {
         let Pages = await browser.pages();
-        console.log(Pages[0].url(), "0")
-        console.log(Pages[1].url(), "1")
         if (Pages[1].url().indexOf("i.qq.com") > -1) {
             await sleep(1);
             await check();
@@ -102,86 +111,160 @@ const login = async (username, password) => {
     };
 
     await check();
-
     console.log("#######################")
 }
 
 let startOut = async () => {
-    let url = await popSet("")
-    let url = taskUrls.shift();
+    let url = await popSet(config.taskName);
     await onePage(pages[0], url);
     console.log("==========  finish ONE  ==========");
     await sleep(1);
+    if (config.commentEnd && config.addFriendEnd && config.applyEnd && config.agreeEnd) {
+        return;
+    }
     await startOut();
 }
 
-//加好友
-let addFriend = async (page) => {
+const addFriend = async (page) => {
+    if (config.addFriendEnd || logData.addFriendCount > config.addFriendRequire) {
+        config.addFriendEnd = true;
+        return;
+    }
     try {
-        let addButton = await page.$("[data-cmd=add_friend]");
+        let addButton = await page.$("#add_friend");
         await addButton.click();
         await sleep(1);
         let confirmButton = await page.$(".txt");
         await confirmButton.click();
-        console.log("已经添加好友了了", addFriendCount++, "人");
+        console.log("已经添加好友了了", ++logData.addFriendCount, "人");
     } catch (e) {
         console.log(e)
         console.log("点赞出错");
     }
-}
-
-//申请访问
-let askPermission = async (page) => {
-    try {
-        let requestButton = await page.$("[data-cmd=apply_request]");
-        await requestButton.click();
-        await sleep(1);
-        let textArea = await page.$("#msg-area");
-        await textArea.click();
-        await textArea.type("麻烦同意一下喽", {delay: 100});
-        let confirmButton = await page.$(".qz_dialog_layer_btn.qz_dialog_layer_sub");
-        await confirmButton.click();
-        console.log("已经申请访问了", permissionCount++, "人");
-        await addFriend(page)
-    } catch (e) {
-        console.log(e)
-        console.log("申请访问出错");
+};
+const askPermission = (() => {
+    let lastTime = 0;
+    return async (page) => {
+        if (config.applyEnd || logData.permissionCount > config.applyRequire) {
+            config.applyEnd = true;
+            return;
+        }
+        if (Date.now() - config.applyBlock * 60 * 1000 < lastTime) {
+            return;
+        }
+        try {
+            let requestButton = await page.$("[data-cmd=apply_request]");
+            await requestButton.click();
+            await sleep(1);
+            let textArea = await page.$("#msg-area");
+            await textArea.click();
+            await textArea.type("麻烦同意一下喽", {delay: 100});
+            let confirmButton = await page.$(".qz_dialog_layer_btn.qz_dialog_layer_sub");
+            await confirmButton.click();
+            console.log("已经申请访问了", ++logData.permissionCount, "人");
+        } catch (e) {
+            console.log(e)
+            console.log("申请访问出错");
+        }
     }
+})();
+const commentBack = (() => {
+    let lastTime = 0;
+    const askText = async (str) => {
+        str = encodeURIComponent(str);
+        let url = "http://chatbot.api.talkmoment.com/image/battle/battle/by/text?text=" + str + "&uid=0&limit=10";
+        let re = await getApi(url);
+        for (let r of re.result) {
+            if (JSON.parse(r.R).src.indexOf("jpg") >= 0) {
+                return JSON.parse(r.R).text;
+            }
+        }
+    }
+    return async (page) => {
+        if (config.commentEnd || logData.commentCount > config.commentRequire) {
+            config.commentEnd = true;
+            return;
+        }
+
+        if (Date.now() - config.addFriendBlock * 60 * 1000 < lastTime) {
+            return;
+        }
+        lastTime = Date.now();
+        try {
+            let contentFrame = page.mainFrame().childFrames()[0];
+            let rawText = await contentFrame.$$eval(".f-info", nodes => nodes.map(n => n.innerText));
+            let text = await askText(rawText);
+            let input = await contentFrame.$(".textinput.textinput-default a");
+            await input.click();
+            await sleep(1);
+            await input.type(text, {delay: 100});
+            await sleep(1);
+            let sendButton = await contentFrame.$(".btn-post.gb_bt.evt_click");
+            await sendButton.click();
+            await sleep(1);
+            console.log("已经回复回去了", ++logData.commentCount, "人");
+        } catch (e) {
+            console.log(e);
+            console.log("评论出错");
+        }
+    }
+})()
+const agreeTalkTalk = async (page) => {
+    if (config.agreeEnd || logData.dianzanCount > config.agreeRequire) {
+        config.agreeEnd = true;
+        return;
+    }
+    try {
+        let contentFrame = page.mainFrame().childFrames()[0];
+        let agreeButton = await contentFrame.$(".fui-icon.icon-op-praise");
+        await agreeButton.click();
+        console.log("已经点过赞了", ++logData.dianzanCount, "人");
+    } catch (e) {
+        console.log(e);
+        console.log("点赞出错了");
+    }
+}
+const expandUrl = async (page) => {
+    let contentFrame = page.mainFrame().childFrames()[0];
+    let b = await contentFrame.$$eval(".q_namecard", nodes => nodes.map(n => n.getAttribute("href")));
+    await redis.connect();
+    for (let a of b) {
+        a && await redis.sadd("qqZoneTask", a) && logData.chongfuCount++;
+    }
+    console.log("目前重复已达", logData.chongfuCount);
+    await redis.end();
 
 }
+const grade = async (page) => {
+    let score = 0;
+    try {
+        if (Math.random() > 0.8) {
+            score = 5
+        }
+    } catch (e) {
 
-let onePage = async (page, url) => {
-    url = url || "https://user.qzone.qq.com/303093558";
+    }
+    console.log("此页面的分数为", score);
+    return score;
+}
+
+const onePage = async (page, url) => {
+    url = url;
     try {
 
         await sleep(2);
         await page.goto(url, "domcontentloaded");
         await sleep(2);
 
-        let contentFrame = page.mainFrame().childFrames()[0];
-
-        //对第一条说说进行评论
-        let agreeButton = await contentFrame.$(".fui-icon.icon-op-praise");
-        await agreeButton.click();
-        console.log("点击完毕了， 还是蛮鸡儿惊人的");
-
-        //获取所有别人的链接
-        let b = await contentFrame.$$eval(".q_namecard", nodes => nodes.map(n => n.getAttribute("href")));
-        for (let a of b) {
-            if (a && !dereplicateSet.has(a)) {
-                await redis.connect();
-                let re = await redis.sadd("qqZoneTask", a);
-                if(re === 0){
-                    console.log("已经重复了多少次了", chongfuCount++);
-                }else{
-                    dereplicateSet.add(a);
-                    taskUrls.push(a);
-                }
-                await redis.end();
-            }
+        let score = await grade(page);
+        if (score >= 4) {
+            await commentBack(page);
+            await addFriend(page);
+        } else {
+            await agreeTalkTalk(page);
         }
-        console.log(debugCount++, "这是已经遍历完的第多少页");
-        console.log(taskUrls.length, "现在已经存的taskUrl长度");
+
+        await expandUrl(page);
     } catch (e) {
         console.log(e);
         console.log("getOnePage发生了以上错误");
@@ -189,26 +272,13 @@ let onePage = async (page, url) => {
         await askPermission(page);
     }
 
-    console.log("不管是申请访问的 还是点赞的 都统一处理入不再便利库中");
-    try{
+    try {
         await redis.connect();
         await redis.sadd("qqZoneAlready", url);
         await redis.end();
-    }catch(e){
+    } catch (e) {
         console.log(e);
         console.log("加入本地去重库出错");
-    }
-}
-
-let popSet = async (key) => {
-    try{
-        await redis.connect();
-        let re = await redis.srandmember(key, 1);
-        await redis.srem(key, re[0]);
-        await redis.end();
-        return re[0];
-    }catch(e){
-        console.log("whatever");
     }
 }
 
@@ -217,15 +287,8 @@ let run = async () => {
     await launchBrowser();
     await login("1634129053", "cqcp815");
 
-    let re = await popSet("qqZoneTask");
-    taskUrls.push(re);
-
     await startOut();
-
-    // await redis.connect();
-    // await redis.sadd("qqZoneTask", "https://user.qzone.qq.com/2606118571");
-    // await redis.sadd("qqZoneTask", "https://user.qzone.qq.com/995865869");
-    // await redis.end();
+    process.exit();
 }
 run();
 
