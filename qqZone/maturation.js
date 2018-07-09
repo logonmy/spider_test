@@ -1,4 +1,6 @@
 // 1634129053---- cqcp815 大号
+//todo 封号暂停并提示
+//todo 分数获取
 const puppeteer = require('puppeteer');
 const getApi = require("../nodePart/api/fetch").getApi;
 
@@ -296,8 +298,8 @@ const onePage = async (page, url) => {
         a = await askPermission(page) && a;
     }
 
-    a && console.log("大家都被限制了干脆休息")
-    a && await sleep(60)
+    a && console.log("大家都被限制了干脆休息");
+    a && await sleep(60);
 
     try {
         await redis.connect();
