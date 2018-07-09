@@ -1,31 +1,25 @@
 // 1634129053---- cqcp815 大号
-// https://user.qzone.qq.com/1634129053
-
-// 账号库存
-// 3381904441----f1b38o8 //die
-// 2534227914----pt07hwdwvf //die
-// 3262987041----44xzgph //die
-// 3021353180----zmji04c8r //die
-// 2050435249----wf7x5pl6 //强大的号 耐得住摧残
-// 3441282935----ep3k4bw //die
-// 3088230281----cl4r40q //die
-// 3168895110----scuxr1z4 //die
-// 3196302579----lu542941 //die
-// 3498462319----ttksrknl
-
-// 2915297041----Washu1234----您父亲的姓名是？----UmDNbw----您母亲的姓名是？----HauVNE----您母亲的职业是？----BEfzyz
-
-//优化记录
-//语料变更为以图怼文字 返回的title
-//优化评论内容文字输入间隔
-//延长发评论后 跳转到新页面时间
-//添加滚来滚去操作
-//增强账号信用程度
-
 const puppeteer = require('puppeteer');
 const getApi = require("../nodePart/api/fetch").getApi;
+
 const RedisClient = require("../nodePart/api/redis").RedisClient;
 const redis = new RedisClient({host: "127.0.0.1", port: 6379});
+
+const config = {
+    fatherScore: 0,
+    firstTimeScore: 0,
+    intervalScore: 0,
+    agreeCommentScore: 0,
+
+    addFriendRequire: 20,
+    agreeRequire: 200,
+    commentRequire: 20,
+    applyRequire: 50,
+
+    taskName: "qqZoneTask",
+    alreadyName: "qqZoneAlready"
+}
+
 
 let pages = [void 0, void 0, void 0, void 0, void 0, void 0];
 let browser;
@@ -34,6 +28,7 @@ let chongfuCount = 0;
 const sleep = (s = 5) => {
     return new Promise(resolve => setTimeout(resolve, s * 1000))
 }
+
 const askText = async (str) => {
     str = encodeURIComponent(str);
     let url = "http://chatbot.api.talkmoment.com/image/battle/battle/by/text?text=" + str + "&uid=0&limit=10";
@@ -46,10 +41,10 @@ const askText = async (str) => {
 }
 
 let debugCount = 0;
-let taskUrls = ["https://user.qzone.qq.com/1272516124"];
 let dereplicateSet = new Set();
 let permissionCount = 0;
 let addFriendCount = 0;
+
 
 const launchBrowser = async () => {
     browser = await puppeteer.launch({
@@ -71,7 +66,6 @@ const launchBrowser = async () => {
     await pages[0].goto('https://i.qq.com/', "domcontentloaded");
     console.log("已启动");
 };
-
 const login = async (username, password) => {
     console.log("开始登陆");
 
@@ -111,35 +105,9 @@ const login = async (username, password) => {
 
     console.log("#######################")
 }
-// const transmit = async () => {
-//     console.log("开始转发");
-//     let click = async () => {
-//         try {
-//             let textInput = await pages[0].$(".fui-icon.icon-op-share");
-//             await textInput.click();
-//
-//             let confirmButton = await pages[0].$("input[type=button].gb_bt.gb_bt2");
-//             await confirmButton.click();
-//         } catch (e) {
-//             await sleep(1);
-//             await click();
-//         }
-//     }
-//     await click();
-//     console.log("#######################")
-// }
-// const public = async(text) => {
-//     await sleep();
-//     let textInput = await pages[0].$(".textinput.textarea.c_tx3");
-//     await textInput.click();
-//     await textInput.type(text);
-//
-//     let send = await pages[0].$(".btn-post.gb_bt.evt_click");
-//     await send.click();
-//     console.log("#######################")
-// }
 
 let startOut = async () => {
+    let url = await popSet("")
     let url = taskUrls.shift();
     await onePage(pages[0], url);
     console.log("==========  finish ONE  ==========");
@@ -147,36 +115,23 @@ let startOut = async () => {
     await startOut();
 }
 
-//跳转方式优化
-
 //加好友
 let addFriend = async (page) => {
-    // https://user.qzone.qq.com/249563160
-    // https://user.qzone.qq.com/1448091956
-    // document.querySelector("[data-cmd=add_friend]").click()
-    // document.querySelector(".txt")
-
-    // try {
-    //     let addButton = await page.$("[data-cmd=add_friend]");
-    //     await addButton.click();
-    //     await sleep(1);
-    //     let confirmButton = await page.$(".txt");
-    //     await confirmButton.click();
-    //     console.log("已经添加好友了了", addFriendCount++, "人");
-    // } catch (e) {
-    //     console.log(e)
-    //     console.log("点赞出错");
-    // }
-
+    try {
+        let addButton = await page.$("[data-cmd=add_friend]");
+        await addButton.click();
+        await sleep(1);
+        let confirmButton = await page.$(".txt");
+        await confirmButton.click();
+        console.log("已经添加好友了了", addFriendCount++, "人");
+    } catch (e) {
+        console.log(e)
+        console.log("点赞出错");
+    }
 }
 
 //申请访问
 let askPermission = async (page) => {
-    // https://user.qzone.qq.com/1448091956
-    // document.querySelector("[data-cmd=apply_request]")
-    // document.querySelector("#msg-area")
-    // document.querySelector(".qz_dialog_layer_btn.qz_dialog_layer_sub")
-
     try {
         let requestButton = await page.$("[data-cmd=apply_request]");
         await requestButton.click();
@@ -258,8 +213,6 @@ let popSet = async (key) => {
 }
 
 let run = async () => {
-    //提前先导入数据 别忘了
-
 
     await launchBrowser();
     await login("1634129053", "cqcp815");

@@ -176,7 +176,7 @@ require([
             }
             if (task.task_id === 0) {
                 Socket.log("暂时没有任务");
-                await Async.sleep(3000);
+                await Async.sleep(1000);
                 continue;
             }
             Socket.log(`取得任务,task=`, task);

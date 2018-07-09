@@ -191,6 +191,7 @@ let askPermission = async (page) => {
     } catch (e) {
         console.log(e)
         console.log("申请访问出错");
+
     }
 
 }
@@ -217,6 +218,7 @@ let onePage = async (page, url) => {
                 await redis.connect();
                 let re = await redis.sadd("qqZoneTask", a);
                 if(re === 0){
+                    chongfuCount++;
                     console.log("已经重复了多少次了", chongfuCount++);
                 }else{
                     dereplicateSet.add(a);
@@ -262,17 +264,13 @@ let run = async () => {
 
 
     await launchBrowser();
-    await login("1634129053", "cqcp815");
+    await login("3498462319", "ttksrknl");
 
     let re = await popSet("qqZoneTask");
     taskUrls.push(re);
 
     await startOut();
 
-    // await redis.connect();
-    // await redis.sadd("qqZoneTask", "https://user.qzone.qq.com/2606118571");
-    // await redis.sadd("qqZoneTask", "https://user.qzone.qq.com/995865869");
-    // await redis.end();
 }
 run();
 
