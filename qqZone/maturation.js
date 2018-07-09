@@ -20,6 +20,8 @@ const config = {
 
     addFriendBlock: 20,
     applyBlock: 5,
+    commentBackBlock: 20,
+    agreeBlock: 2,
 
     taskName: "qqZoneTask",
     alreadyName: "qqZoneAlready",
@@ -125,23 +127,33 @@ let startOut = async () => {
     await startOut();
 }
 
-const addFriend = async (page) => {
-    if (config.addFriendEnd || logData.addFriendCount > config.addFriendRequire) {
-        config.addFriendEnd = true;
-        return;
+const addFriend = (() => {
+    let lastTime = 0;
+    return async (page) => {
+        if (config.addFriendEnd || logData.addFriendCount > config.addFriendRequire) {
+            config.addFriendEnd = true;
+            return;
+        }
+        if (Date.now() - config.addFriendBlock * 60 * 1000 < lastTime) {
+            console.log("添加好友频率限制 现在还不能访问");
+            return true;
+        }
+        lastTime = Date.now();
+        try {
+            let addButton = await page.$("#add_friend");
+            await addButton.click();
+            await sleep(1);
+            let confirmButton = await page.$(".txt");
+            await confirmButton.click();
+            console.log("已经添加好友了了", ++logData.addFriendCount, "人");
+        } catch (e) {
+            console.log(e)
+            console.log("点赞出错");
+        }
     }
-    try {
-        let addButton = await page.$("#add_friend");
-        await addButton.click();
-        await sleep(1);
-        let confirmButton = await page.$(".txt");
-        await confirmButton.click();
-        console.log("已经添加好友了了", ++logData.addFriendCount, "人");
-    } catch (e) {
-        console.log(e)
-        console.log("点赞出错");
-    }
-};
+})()
+
+
 const askPermission = (() => {
     let lastTime = 0;
     return async (page) => {
@@ -150,8 +162,10 @@ const askPermission = (() => {
             return;
         }
         if (Date.now() - config.applyBlock * 60 * 1000 < lastTime) {
-            return;
+            console.log("申请访问频率限制 现在还不能访问");
+            return true;
         }
+        lastTime = Date.now();
         try {
             let requestButton = await page.$("[data-cmd=apply_request]");
             await requestButton.click();
@@ -186,8 +200,9 @@ const commentBack = (() => {
             return;
         }
 
-        if (Date.now() - config.addFriendBlock * 60 * 1000 < lastTime) {
-            return;
+        if (Date.now() - config.commentBackBlock * 60 * 1000 < lastTime) {
+            console.log("评论频率限制 现在还不能回复");
+            return true;
         }
         lastTime = Date.now();
         try {
@@ -209,21 +224,29 @@ const commentBack = (() => {
         }
     }
 })()
-const agreeTalkTalk = async (page) => {
-    if (config.agreeEnd || logData.dianzanCount > config.agreeRequire) {
-        config.agreeEnd = true;
-        return;
+const agreeTalkTalk = (() => {
+    let lastTime = 0;
+    return async (page) => {
+        if (config.agreeEnd || logData.dianzanCount > config.agreeRequire) {
+            config.agreeEnd = true;
+            return;
+        }
+        if (Date.now() - config.agreeBlock * 60 * 1000 < lastTime) {
+            console.log("点赞频率限制 现在还不能回复");
+            return true;
+        }
+        lastTime = Date.now();
+        try {
+            let contentFrame = page.mainFrame().childFrames()[0];
+            let agreeButton = await contentFrame.$(".fui-icon.icon-op-praise");
+            await agreeButton.click();
+            console.log("已经点过赞了", ++logData.dianzanCount, "人");
+        } catch (e) {
+            console.log(e);
+            console.log("点赞出错了");
+        }
     }
-    try {
-        let contentFrame = page.mainFrame().childFrames()[0];
-        let agreeButton = await contentFrame.$(".fui-icon.icon-op-praise");
-        await agreeButton.click();
-        console.log("已经点过赞了", ++logData.dianzanCount, "人");
-    } catch (e) {
-        console.log(e);
-        console.log("点赞出错了");
-    }
-}
+})()
 const expandUrl = async (page) => {
     let contentFrame = page.mainFrame().childFrames()[0];
     let b = await contentFrame.$$eval(".q_namecard", nodes => nodes.map(n => n.getAttribute("href")));
@@ -250,6 +273,7 @@ const grade = async (page) => {
 
 const onePage = async (page, url) => {
     url = url;
+    let a = true;
     try {
 
         await sleep(2);
@@ -258,10 +282,10 @@ const onePage = async (page, url) => {
 
         let score = await grade(page);
         if (score >= 4) {
-            await commentBack(page);
-            await addFriend(page);
+            a = await commentBack(page) && a;
+            a = await addFriend(page) && a;
         } else {
-            await agreeTalkTalk(page);
+            a = await agreeTalkTalk(page) && a;
         }
 
         await expandUrl(page);
@@ -269,12 +293,15 @@ const onePage = async (page, url) => {
         console.log(e);
         console.log("getOnePage发生了以上错误");
         console.log("那我就去申请访问 请求好友了");
-        await askPermission(page);
+        a = await askPermission(page) && a;
     }
+
+    a && console.log("大家都被限制了干脆休息")
+    a && await sleep(60)
 
     try {
         await redis.connect();
-        await redis.sadd("qqZoneAlready", url);
+        a ? await redis.sadd("qqZoneTask", url) : await redis.sadd("qqZoneAlready", url);
         await redis.end();
     } catch (e) {
         console.log(e);
