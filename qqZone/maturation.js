@@ -122,6 +122,7 @@ let startOut = async () => {
     let url = await popSet(config.taskName);
     await onePage(pages[0], url);
     console.log("==========  finish ONE  ==========");
+    console.log(logData, "以上为至今的成果");
     await sleep(1);
     if (config.commentEnd && config.addFriendEnd && config.applyEnd && config.agreeEnd) {
         return;
@@ -149,7 +150,7 @@ const addFriend = (() => {
             await confirmButton.click();
             console.log("已经添加好友了了", ++logData.addFriendCount, "人");
         } catch (e) {
-            console.log(e)
+            console.log(e);
             console.log("点赞出错");
         }
     }
