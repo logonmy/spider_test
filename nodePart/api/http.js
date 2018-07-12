@@ -79,4 +79,40 @@ Http.get = async (path) => {
     })
 }
 
+Http.proxyGet = async (path, proxy) => {
+    let options = {
+        host: proxy,
+        //port: "",
+        method: "GET",
+        path: path,
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    }
+    return new Promise((resolve, reject) => {
+
+        let req = http.request(options, (res) => {
+            let data = "";
+            res.setEncoding('utf-8');
+            res.on("data", (chunk) => {
+                data += chunk;
+            })
+            res.on("end", () => {
+                resolve(data);
+            })
+        })
+
+        req.setTimeout(timeout, () => {
+            reject("timeout")
+        })
+
+        req.on("error", (e) => {
+            console.log(e);
+            reject(e);
+        })
+
+        req.end();
+    })
+}
+
 exports.Http = Http;

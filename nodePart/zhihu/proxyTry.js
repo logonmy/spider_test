@@ -3,7 +3,9 @@ const fetch = require("node-fetch");
 const jsdom = require("jsdom");
 const jq = require("jquery");
 const File = require("fs");
-const Http = require("../api/http").Http;
+const Http = require("../api/https").Http;
+const request = require("request");
+
 const safeFetch = async (url, moreArgs = {}) => {
     try {
         return await fetch(url, moreArgs);
@@ -12,11 +14,6 @@ const safeFetch = async (url, moreArgs = {}) => {
         console.error(e);
     }
 };
-
-const sleep = (s = 5) => {
-    return new Promise(resolve => setTimeout(resolve, s * 1000))
-}
-
 const getPage = async (url, moreArgs = {
     headers: {
         'Content-Type': 'charset=utf-8',
@@ -32,7 +29,6 @@ const getPage = async (url, moreArgs = {
         return false;
     }
 };
-
 const getApi = async (url, moreArgs = {
     headers: {
         "Content-Type": "application/json",
@@ -47,17 +43,48 @@ const getApi = async (url, moreArgs = {
         return false;
     }
 };
+const getProxy = async () => {
+    const href = "http://d.jghttp.golangapi.com/getip?num=1&type=2&pro=&city=0&yys=0&port=11&pack=1141&ts=0&ys=0&cs=0&lb=1&sb=0&pb=4&mr=0&regions=";
+    let re = await getApi(href)
+    re = re.data[0]
+    re = "http://" + re.ip + ":" + re.port
+    return re;
+}
+const sleep = (s = 5) => {
+    return new Promise(resolve => setTimeout(resolve, s * 1000))
+}
+const requestSync = (option) => {
+    return new Promise((resolve, reject) => {
+        request(option, (err, res) => {
+            if (err) {
+                return reject("request failed");
+            }
+            return resolve(res.body);
+        })
+    })
+};
 
+//todo add follow topics
+//todo
+let proxy;
 const userAll = async (userName) => {
     const getAllAnswers = async (userName) => {
-        const blockTime = 4;
         const getAnswers = async (userName, offset = 0, limit = 20) => {
-            // console.log("获取", userName, "的answer一次");
+            console.log("获取", userName, "的answer一次");
             let href = "https://www.zhihu.com/api/v4/members/" + userName + "/answers?include=data[*].is_normal,admin_closed_comment,reward_info,is_collapsed,annotation_action,annotation_detail,collapse_reason,collapsed_by,suggest_edit,comment_count,can_comment,content,voteup_count,reshipment_settings,comment_permission,mark_infos,created_time,updated_time,review_info,question,excerpt,relationship.is_authorized,voting,is_author,is_thanked,is_nothelp;data[*].author.badge[?(type=best_answerer)].topics&offset=" +
                 offset +
                 "&limit=" + limit + "&sort_by=created";
-            let re = await getApi(href);
-            await sleep(blockTime)
+            let re = await requestSync({
+                url: href,
+                proxy: proxy,
+                headers: {
+                    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.79 Safari/537.36",
+                    'Content-Type': 'application/json',
+                }
+            })
+            re = JSON.parse(re);
+            // console.log(re, " getAnswers");
+            // await sleep(Math.random() * 2);
             return re;
         }
         let result = []
@@ -79,16 +106,23 @@ const userAll = async (userName) => {
         }
     }
     const getAllQuestions = async (userName) => {
-        const blockTime = 4;
         const getQuestion = async (userName, offset = 0, limit = 20) => {
-            // console.log("获取", userName, "的question一次");
+            console.log("获取", userName, "的question一次");
             let href = "https://www.zhihu.com/api/v4/members/" + userName + "/questions?include=data[*].created,answer_count,follower_count,author,admin_closed_comment&offset=" +
                 offset +
                 "&limit=" + limit;
 
-
-            await sleep(blockTime);
-            let re = await getApi(href);
+            let re = await requestSync({
+                url: href,
+                proxy: proxy,
+                headers: {
+                    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.79 Safari/537.36",
+                    'Content-Type': 'application/json',
+                }
+            })
+            re = JSON.parse(re);
+            // console.log(re, "getQuestion");
+            // await sleep(Math.random() * 2);
             return re;
         }
         let result = [];
@@ -111,7 +145,6 @@ const userAll = async (userName) => {
 
     }
     const getName = async (userName) => {
-        // console.log("获取用户自己取的名字");
         try {
             let href = "https://www.zhihu.com/people/" + userName;
             let d = await getPage(href);
@@ -132,65 +165,13 @@ const userAll = async (userName) => {
     return userData;
 }
 
-const questionAll = async (qId) => {
-    const getQuestion = async (qId, offset = 0, limit = 20) => {
-        const blockTime = 1;
-        let href = "https://www.zhihu.com/api/v4/questions/" + qId
-            + "/answers?include=data[*].is_normal,admin_closed_comment,reward_info,is_collapsed,annotation_action,annotation_detail,collapse_reason,is_sticky,collapsed_by,suggest_edit,comment_count,can_comment,content,editable_content,voteup_count,reshipment_settings,comment_permission,created_time,updated_time,review_info,relevant_info,question,excerpt,relationship.is_authorized,is_author,voting,is_thanked,is_nothelp;data[*].mark_infos[*].url;data[*].author.follower_count,badge[?(type=best_answerer)].topics&offset=" +
-            offset +
-            "&limit=" +
-            limit +
-            "&sort_by=default"
-        await sleep(blockTime);
-        let re = await getApi(href);
-        return re;
-    }
-
-    //https://www.zhihu.com/api/v4/questions/284737507/answers?include=data[*].is_normal,admin_closed_comment,reward_info,is_collapsed,annotation_action,annotation_detail,collapse_reason,is_sticky,collapsed_by,suggest_edit,comment_count,can_comment,content,editable_content,voteup_count,reshipment_settings,comment_permission,created_time,updated_time,review_info,relevant_info,question,excerpt,relationship.is_authorized,is_author,voting,is_thanked,is_nothelp;data[*].mark_infos[*].url;data[*].author.follower_count,badge[?(type=best_answerer)].topics&offset=0&limit=20&sort_by=default
-    //https://www.zhihu.com/api/v4/questions/284737508/answers?include=data[*].is_normal,admin_closed_comment,reward_info,is_collapsed,annotation_action,annotation_detail,collapse_reason,is_sticky,collapsed_by,suggest_edit,comment_count,can_comment,content,editable_content,voteup_count,reshipment_settings,comment_permission,created_time,updated_time,review_info,relevant_info,question,excerpt,relationship.is_authorized,is_author,voting,is_thanked,is_nothelp;data[*].mark_infos[*].url;data[*].author.follower_count,badge[?(type=best_answerer)].topics&limit=5&offset=5&sort_by=default"
-
-    let result = [];
-    try {
-        let offset = 0;
-        let limit = 20;
-        let re = await getQuestion(qId);
-        result = result.concat(re.data);
-        while (!re.paging.is_end) {
-            offset += limit;
-            re = await getQuestion(qId, offset, limit);
-            result = result.concat(re.data);
-        }
-        console.log("该页面是成功的", qId);
-        return result;
-    } catch (e) {
-        console.log(e);
-        console.log("获取回答出错，不管他");
-        return result;
-    }
-
+const file_log = (log) => {
+    console.log(log);
+    File.appendFileSync("log3.txt", log + " " + "\n");
 }
 
 (async () => {
-
-    //往下走 和查询全部内容
-    // let ht = await getPage("https://www.zhihu.com/people/bai-guo-shuai-12/answers");
-    // let d = new jsdom.JSDOM(ht);
-    // let document = d.window.document;
-    // let lists = document.querySelectorAll(".List-item");
-    // let answers = [];
-    // for(let li of lists){
-    //     answers.push({
-    //         title: li.querySelector(".ContentItem-title [itemprop=name]meta").getAttribute("content"),
-    //         href: li.querySelector(".ContentItem-title [itemprop=url]meta").getAttribute("content")
-    //     })
-    // }
-    // console.log(answers);
-
-    // let re = await getAllQuestions("li-xin-92-29");
-    // for (let r of re) {
-    //     File.appendFileSync("try.txt", JSON.stringify(r) + "\n");
-    // }
-
+    file_log(Date.now() + " 开始了 ");
     let testGuys = [
         "hua-si-lin",
         "zhou-wei-ji-15",
@@ -383,94 +364,15 @@ const questionAll = async (qId) => {
         "qing_meng",
         "hua-qing-xin"
     ]
-
-    console.log("开始时间", Date.now());
     for (let i = 0; i < testGuys.length; i++) {
-        console.log("现在时间", Date.now());
-        console.log("到底几个了", i);
-        console.log(testGuys[i])
-        let re = await userAll(testGuys[i]);
-        File.appendFileSync("try.txt", JSON.stringify(re) + "\n");
-    }
-    console.log("结束时间", Date.now())
-    let i = 284734526;
-    while (i--) {
-        let re = await questionAll(i);
-        try {
-            File.appendFileSync("result.txt", JSON.stringify(re) + "\n")
-        } catch (e) {
-            console.log(e);
-            console.log("appendFile的时候出错了");
+
+        if (i % 20 == 0) {
+            proxy = await getProxy();
+            file_log(Date.now() + " 获取了一个新的proxy " + proxy + "      " + i);
         }
-        console.log(i);
-        console.log("成功一个了")
+        let usr = await userAll(testGuys[i]);
+        File.appendFileSync("or.txt", JSON.stringify(usr) + "\n");
+        file_log(Date.now() + " 完成了一个 " + testGuys[i]);
     }
-
-
-    const getProxy = async () => {
-        const href = "http://d.jghttp.golangapi.com/getip?num=1&type=2&pro=&city=0&yys=0&port=11&pack=1141&ts=0&ys=0&cs=0&lb=1&sb=0&pb=4&mr=0&regions=";
-        let re = await getApi(href)
-        re = re.data[0]
-        console.log(data);
-    }
-
-    const softProxy = async () => {
-        const onePage = async (page) => {
-            const href = "http://api.apehorse.com/api/server/get_server_list_mac";
-            let moreArgs = {
-                method: "POST",
-                body: {
-                    "province": "",
-                    "city": "",
-                    "page": page
-                },
-                headers: {
-                    "Host": " api.apehorse.com",
-                    "zm-username": " jg_cqcpcqp",
-                    "zm-language": " cn",
-                    "User-Agent": " jiguangmac/1.0.3 (com.prodects.jiguangmac; build:6; OS X 10.13.3) Alamofire/4.5.1",
-                    "zm-sign": " edaa7d8f87f1d40325519f13316021d5",
-                    "zm-version": " 1.0",
-                    "zm-session-id": " 2e434dec51746034b5fe6c0085f2bc7f",
-                    "zm-uid": " 940712",
-                    "Content-Length": " 34",
-                    "zm-platform": " ios",
-                    "zm-union-id": " d41d8cd98f00b204e9800998ecf8427e",
-                    "zm-auth-name": " jg",
-                    "Accept-Language": " zh-Hans-CN;q=1.0",
-                    "Accept": " */*",
-                    "Content-Type": " application/json",
-                    "Accept-Encoding": " gzip;q=1.0, compress;q=0.5",
-                    "zm-timestamp": " 1531374757",
-                    "zm-oem": " jiguangdaili",
-                    "Connection": "keep - alive"
-                }
-            }
-            let re = await getApi(href, moreArgs)
-            return re;
-        }
-        let result = [];
-        for (let i = 1; i < 6; i++) {
-
-            try {
-                let re = await onePage(i);
-                result = result.concat(re.ret_data.list);
-            } catch (e) {
-                console.log(e);
-                console.log("获取一页内容时出错");
-            }
-        }
-        return result;
-    }
-    let proxys = [];
-    let re = await softProxy();
-    for (let r of re) {
-        proxys.push({
-            ip: r.ip,
-            name: r.name
-        });
-    }
-
-
 })();
-
+//useless
