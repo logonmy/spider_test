@@ -1,4 +1,11 @@
 // 1634129053---- cqcp815 大号
+
+// 2110998942----t2hjuvtu6upv 表情套图 每日更新 Washu1234
+// 3185303424----r9wrumgj14c1 全网最骚贱表情包
+// 2728703162----23wf07xtddij
+// 2657981304----1gc5nxjwp83s
+// 3275440566----nte77f9p5nn6
+
 //todo 封号暂停并提示
 //todo 分数获取
 const puppeteer = require('puppeteer');
@@ -6,7 +13,25 @@ const getApi = require("../nodePart/api/fetch").getApi;
 
 const RedisClient = require("../nodePart/api/redis").RedisClient;
 const redis = new RedisClient({host: "127.0.0.1", port: 6379});
+const logNow = () => {
+    function pad(number) {
+        if (number < 10) {
+            return "0" + number;
+        }
+        return number;
+    }
 
+    function toLastModifiedString(date) {
+        return pad(date.getMonth() + 1) +
+            "/" + pad(date.getDate()) +
+            "/" + date.getFullYear() +
+            " " + pad(date.getHours()) +
+            ":" + pad(date.getMinutes()) +
+            ":" + pad(date.getSeconds());
+    }
+
+    console.log(toLastModifiedString(new Date()));
+}
 const config = {
     firstTimeScore_b: 2,
     firstTimeScore_s: 1,
@@ -122,6 +147,7 @@ let startOut = async () => {
     let url = await popSet(config.taskName);
     await onePage(pages[0], url);
     console.log("==========  finish ONE  ==========");
+    logNow();
     console.log(logData, "以上为至今的成果");
     await sleep(1);
     if (config.commentEnd && config.addFriendEnd && config.applyEnd && config.agreeEnd) {
@@ -257,7 +283,6 @@ const expandUrl = async (page) => {
     for (let a of b) {
         a && await redis.sadd("qqZoneTask", a) && logData.chongfuCount++;
     }
-    console.log("目前重复已达", logData.chongfuCount);
     await redis.end();
 
 }
@@ -298,7 +323,7 @@ const onePage = async (page, url) => {
         console.log("那我就去申请访问 请求好友了");
         a = await askPermission(page) && a;
     }
-
+    //todo 仅点赞的情况下 还是会出错 但影响不大 基本可以不用管
     a && console.log("大家都被限制了干脆休息");
     a && await sleep(60);
 
@@ -315,7 +340,7 @@ const onePage = async (page, url) => {
 let run = async () => {
 
     await launchBrowser();
-    await login("1634129053", "cqcp815");
+    await login("3185303424", "r9wrumgj14c1");
 
     await startOut();
     process.exit();

@@ -4,7 +4,7 @@ const redis = new RedisClient({host: "127.0.0.1", port: 6379});
 (async () => {
 
     await redis.connect();
-    let re = await redis.sadd("qqZoneAlready", "http://user.qzone.qq.com/2456011283");
+    let re = await redis.sadd("qqZoneAlready", "http://user.qzone.qq.com/2296323469");
     console.log(re);
     await redis.end();
 

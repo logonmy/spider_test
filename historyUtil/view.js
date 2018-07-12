@@ -118,7 +118,6 @@ class c extends events {
 //     });
 // }
 // template();
-
 // // view try
 // const fun = () => {
 //     let fun2 = () => {
@@ -139,9 +138,19 @@ class c extends events {
 // }
 // fun();
 
+const Http = require("../nodePart/api/http").Http;
+const File = require("fs");
+let se = new Set();
 
-var fn = function(){
-    console.log("fn1212")
-}
-var a = null;
-a || fn()
+(async () => {
+    let d = await Http.call("http://bee.api.talkmoment.com/message/detail?topic=weiboFollowBoy&limit=6485&offset=0")
+    d = JSON.parse(d).result;
+    for(let r of d){
+        r = r.replace('"', "").replace('"', "")
+        console.log(r);
+        se.add(r);
+    }
+    for(let s of se){
+        File.appendFileSync("qwe.txt", s + "\n");
+    }
+})()

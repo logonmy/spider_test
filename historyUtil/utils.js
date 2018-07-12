@@ -31,7 +31,7 @@ getPageCount(a)
 //         requestHeaders: headers
 //     };
 // }, {
-//     urls: ["*://www.baidu.com/*"]
+//     urls.txt: ["*://www.baidu.com/*"]
 // }, ["requestHeaders", "blocking"]);
 
 let  hrefToJson = (str) => {

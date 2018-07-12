@@ -3,9 +3,12 @@ const Http = require("./api/http").Http;
 const getApi = require("./api/fetch").getApi;
 const http = require("http");
 const fs = require("fs");
+const readLine = require("lei-stream").readLine;
 //这个东西要是能发着发着 顺便入到每日更新就好了
 
-const debug = true;
+const sleep = (s = 5) => {
+    return new Promise(resolve => setTimeout(resolve, s * 1000))
+}
 
 (async () => {
 
@@ -28,7 +31,6 @@ const debug = true;
         });
         log("启动浏览器成功");
         pages[0] = await browser.newPage();
-        pages[1] = await browser.newPage();
         await pages[0].setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko)" +
             " Chrome/62.0.3202.75 Safari/537.36");
         await pages[0].setViewport({
@@ -102,6 +104,63 @@ const debug = true;
         log("登录成功");
     };
 
+    const oneUser = async (url) => {
+        await pages[0].goto(url);
+        let result = [];
+        let data = [];
+
+        let getData = async () => {
+            let pageResult = [];
+            try {
+                pageResult = await pages[0].evaluate(() => {
+                    let follows = [];
+                    try {
+
+                        let items = document.querySelectorAll(".follow_item.S_line2");
+                        for (let item of items) {
+                            let re = {}
+                            re.url = item.querySelector(".info_name a").getAttribute("href");
+                            re.name = item.querySelector(".info_name a").innerText;
+                            re.desc = item.querySelector(".info_intro").innerText;
+                            follows.push(re);
+                            console.log(re);
+                        }
+                    } catch (e) {
+
+                    }
+                    return follows;
+                })
+
+                let q = await pages[0].evaluate(() => {
+
+                })
+                let as = await pages[0].$$(".W_pages a");
+
+                await as[as.length].click();
+
+            } catch (e) {
+
+            }
+
+
+            return pageResult;
+        }
+
+        for (let i = 0; i < 1; i++) {
+            await sleep(1);
+            data = await getData();
+
+            if (data.length == 0) {
+                break;
+            }
+            result = result.concat(data);
+        }
+        console.log(result);
+        for(let re of result){
+            fs.appendFileSync("www.txt", JSON.stringify(re) + "\n");
+        }
+    }
+
 
     (async () => {
         let user = {
@@ -110,9 +169,18 @@ const debug = true;
         }
         await launchBrowser();
         await openIndex(user);
-        await searchHot();
-        console.log("跑完了 老哥 现在麻烦你去检查一下");
-        //while (true) {}
+        let i = 1;
+        readLine("urls.txt").go(async (data, next) => {
+            if(i < 4577){
+                i++;
+                console.log(i, "跳过");
+                next();
+            }else{
+                await oneUser(data);
+                console.log("已经跑完第 ", i++, " 个");
+                next();
+            }
+        })
 
     })();
 })()
