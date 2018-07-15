@@ -1,6 +1,6 @@
 // 1634129053---- cqcp815 大号
 
-// 2110998942----t2hjuvtu6upv 表情套图 每日更新 Washu1234
+// 2110998942----dddd6666 表情套图 每日更新 Washu1234
 // 3185303424----r9wrumgj14c1 全网最骚贱表情包
 // 2728703162----23wf07xtddij
 // 2657981304----1gc5nxjwp83s
@@ -340,7 +340,8 @@ const onePage = async (page, url) => {
 let run = async () => {
 
     await launchBrowser();
-    await login("2110998942", "t2hjuvtu6upv");
+    // 3275440566----nte77f9p5nn6
+    await login("3185303424", "r9wrumgj14c1");
 
     await startOut();
     process.exit();
