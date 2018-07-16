@@ -96,6 +96,7 @@ require([
                 let pageCount = await tab0.run();
                 Socket.log("当前图库有"+ pageCount + "张图片");
 
+
                 let dataArray = [];
                 for(let i = 1;i <= pageCount; i++){
                     let pageUrl = task.value;

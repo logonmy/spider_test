@@ -1,5 +1,6 @@
 const puppeteer = require("puppeteer");
 let firstHref = "https://passport.baidu.com/v2/?login";
+const queue = require("../api/queue").Queue;
 
 
 let pages = [void 0, void 0];
@@ -40,39 +41,55 @@ const waha = async () => {
 }
 
 const main = async (number) => {
-    let input = await pages[0].$(".pass-text-input.pass-text-input-phone");
-    await input.click();
-    await input.type(number);
-    let input2 = await pages[0].$(".pass-text-input.pass-text-input-password");
-    await input2.click();
-
     try {
-        await pages[0].waitForSelector(".pass-button.pass-button-grey.cancel");
+        await pages[0].waitForSelector(".pass-text-input.pass-text-input-phone");
+        let input = await pages[0].$(".pass-text-input.pass-text-input-phone");
+        await input.click();
+        await input.type(number);
+        let input2 = await pages[0].$(".pass-text-input.pass-text-input-password");
+        await input2.click();
+    } catch (e) {
+        console.log(e)
+        return;
+    }
+    try {
+        await pages[0].waitForSelector(".pass-button.pass-button-grey.cancel", {
+            timeout: 2000
+        });
         console.log("好号码");
+        await queue.postDataToMessage("activeGDPhoneNum", number);
     } catch (e) {
         console.log("坏号码");
     }
 }
-
-
 (async () => {
     await launchBrowser();
-    await waha();
+    while (true) {
+        await sleep(3);
+        let number = await queue.getDataFromMessage("guangdongPhoneNum");
+        number = number.result;
+        number = number.replace('"', "").replace('"', "");
+        console.log(number);
 
-    let bu = await pages[0].$(".pass-reglink.pass-link");
-    await bu.click();
+        await waha();
 
-    let check = async () => {
-        let Pages = await browser.pages();
-        if (Pages.length === 2) {
-            await sleep(0.1);
-            await check();
-        } else {
-            pages[0] = Pages[2];
-            await Pages[1].close();
-            await main("15351799999");
+        let bu = await pages[0].$(".pass-reglink.pass-link");
+        await bu.click();
+
+        console.log("切换了");
+
+        let check = async () => {
+            let Pages = await browser.pages();
+            if (Pages.length === 2) {
+                await sleep(0.1);
+                await check();
+            } else {
+                pages[0] = Pages[2];
+                await Pages[1].close();
+                await main(number);
+            }
         }
+        await check();
     }
-    await check();
 })()
 
