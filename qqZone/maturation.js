@@ -6,10 +6,15 @@
 // 2657981304----washu123456
 // 3275440566----washu123456
 
+// http://chatbot.api.talkmoment.com/image/battle/user/lego/list?uid=3002 1000 - 3970
+
 //todo 封号暂停并提示
 //todo 分数获取
 const puppeteer = require('puppeteer');
 const getApi = require("../nodePart/api/fetch").getApi;
+
+//是否执行所有操作
+const openMind = true;
 
 const RedisClient = require("../nodePart/api/redis").RedisClient;
 const redis = new RedisClient({host: "127.0.0.1", port: 6379});
@@ -32,7 +37,32 @@ const logNow = () => {
 
     console.log(toLastModifiedString(new Date()));
 }
-const config = {
+const config = openMind ? {
+    firstTimeScore_b: 2,
+    firstTimeScore_s: 1,
+    intervalScore_b: 2,
+    intervalScore_s: 1,
+    agreeCommentScore_b: 2,
+    agreeCommentScore_s: 1,
+
+    addFriendRequire: 10000,
+    agreeRequire: 10000,
+    commentRequire: 10000,
+    applyRequire: 10000,
+
+    addFriendBlock: 0,
+    applyBlock: 0,
+    commentBackBlock: 0,
+    agreeBlock: 0,
+
+    taskName: "qqZoneTask",
+    alreadyName: "qqZoneAlready",
+
+    commentEnd: false,
+    addFriendEnd: false,
+    applyEnd: false,
+    agreeEnd: false
+} : {
     firstTimeScore_b: 2,
     firstTimeScore_s: 1,
     intervalScore_b: 2,
@@ -153,6 +183,7 @@ let startOut = async () => {
     if (config.commentEnd && config.addFriendEnd && config.applyEnd && config.agreeEnd) {
         return;
     }
+    openMind && await sleep(30);
     await startOut();
 }
 
@@ -293,8 +324,9 @@ const grade = async (page) => {
             score = 5
         }
     } catch (e) {
-
+        score = 5;
     }
+    score = 5;
     console.log("此页面的分数为", score);
     return score;
 }
@@ -337,16 +369,13 @@ const onePage = async (page, url) => {
     }
 }
 
-let run = async () => {
-
+let run = async (a) => {
     await launchBrowser();
-    // 3275440566----nte77f9p5nn6
-    await login("3185303424", "washu123456");
-
+    await login(a.usr, a.pas);
     await startOut();
-    process.exit();
 }
-run();
 
-
-
+process.on("message", async function(d){
+    console.log("收到爸爸的指导",d);
+    await run(d.user);
+})

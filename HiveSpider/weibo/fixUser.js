@@ -13,8 +13,8 @@ const sleep = (s = 5) => {
 };
 
 let user = {
-    username: "15351702865",
-    password: "cqcp815"
+    username: "1028166012@qq.com",
+    password: "ding/19930731"
 }
 
 let browser;
@@ -104,10 +104,9 @@ let browser;
         let href = "http://s.weibo.com/user/" + key + "&auth=ord&gender=man&age=22y"
 
         await pages[0].goto(href);
-        let result = [];
 
         const getPageContent = async () => {
-            await pages[0].evaluate(() => {
+            let pageContents = await pages[0].evaluate(() => {
                 let results = [];
                 let guys = document.querySelectorAll(".list_person");
                 for (let guy of guys) {
@@ -120,8 +119,12 @@ let browser;
                     da.url = guy.querySelector(".person_addr a").getAttribute("href");
                     results.push(da);
                 }
+                return results;
             })
-
+            console.log(pageContents);
+            for(let c of pageContents){
+                await queue.postDataToMessage("weiboManUsers", c);
+            }
         };
         const jumpToNextPage = async () => {
             await pages[0].waitForSelector(".page.next.S_txt1.S_line1");
@@ -132,24 +135,22 @@ let browser;
             await sleep(Math.random() * 5 + 4);
             try {
                 await getPageContent();
-                await sleep(Math.random() * 4);
+                await sleep(Math.random() * 5 + 4);
                 await jumpToNextPage();
                 await run()
             } catch (e) {
                 console.log(e);
                 console.log("???????");
-                return result;
             }
         };
-        result = await run();
-        return result;
+        await run();
     }
 
 
     (async () => {
         let user = {
-            username: "15351702865",
-            password: "cqcp815"
+            username: "1028166012@qq.com",
+            password: "ding/19930731"
         }
         await launchBrowser();
         await openIndex(user);
@@ -160,16 +161,13 @@ let browser;
             while (key.indexOf('"') > -1) {
                 key = key.replace('"', '');
             }
-            console.log(key, "获取到关键词为")
-
-            let re = await searchOneWord(key);
-
-            for (let r of re) {
-                File.appendFileSync("fixUserResult.txt", JSON.stringify(r) + "\n")
+            console.log(key, "获取到关键词为");
+            try{
+                await searchOneWord(key);
+            }catch(e){
+                console.log("whatever hahahaha");
             }
-
         }
-
     })();
 
 })()
