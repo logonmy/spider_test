@@ -8,7 +8,8 @@ echo %DATE%
 echo %TIME%
 
 start "" "C:/User/Administrator/AppData/Local/Google/Chrome/Application/chrome.exe"
-node "D:/spider4.0/nodePart/phoneCheck/check.js"
+start node "D:/spider4.0/nodePart/phoneCheck/check.js"
+start node "D:/spider5.0/HiveSpider/weibo/fixUser.js"
 
 echo "运行完成"
 

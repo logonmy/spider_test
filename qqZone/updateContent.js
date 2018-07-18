@@ -37,10 +37,18 @@ const sleep = (s = 5) => {
 }
 
 const launchBrowser = async () => {
+    const args = [
+        '-no-sandbox',
+        '--disable-setuid-sandbox',
+        '--ppapi-flash-version=30.0.0.134',
+        '--ppapi-flash-path=/Library/Internet\\ Plug-Ins/PepperFlashPlayer/PepperFlashPlayer.plugin'
+    ]
+
     browser = await puppeteer.launch({
         headless: false,
-        executablePath: '/Applications/Chromium.app/Contents/MacOS/Chromium',
+        executablePath: '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary',
         timeout: 0,
+        args
     });
     console.log("启动浏览器成功");
 
@@ -118,7 +126,7 @@ var us = {
 run(us);
 
 
-process.on("message", async function(d){
-    console.log("收到爸爸的指导",d);
+process.on("message", async function (d) {
+    console.log("收到爸爸的指导", d);
     await run(d.user);
 })

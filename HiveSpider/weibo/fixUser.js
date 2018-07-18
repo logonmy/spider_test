@@ -119,9 +119,13 @@ let browser;
                     da.url = guy.querySelector(".person_addr a").getAttribute("href");
                     results.push(da);
                 }
+
+                setInterval(function(){
+                    window.scrollTo(0, document.documentElement.scrollTop + 100);
+                }, 200)
+
                 return results;
             })
-            console.log(pageContents);
             for(let c of pageContents){
                 await queue.postDataToMessage("weiboManUsers", c);
             }
@@ -132,11 +136,11 @@ let browser;
             await nextButton.click();
         };
         const run = async () => {
-            await sleep(Math.random() * 5 + 4);
             try {
                 await getPageContent();
                 await sleep(Math.random() * 5 + 4);
                 await jumpToNextPage();
+                await sleep(Math.random() * 5 + 1);
                 await run()
             } catch (e) {
                 console.log(e);
@@ -156,12 +160,13 @@ let browser;
         await openIndex(user);
 
         while (true) {
+            await sleep(Math.random() * 5 + 4);
             let key = await queue.getDataFromMessage("3499KeyWord");
             key = key.result;
             while (key.indexOf('"') > -1) {
                 key = key.replace('"', '');
             }
-            console.log(key, "获取到关键词为");
+            console.log("获取到一大批的关键词");
             try{
                 await searchOneWord(key);
             }catch(e){

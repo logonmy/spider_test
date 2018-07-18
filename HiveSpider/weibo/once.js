@@ -2002,7 +2002,7 @@ var a = ["the",
 
 (async () => {
     for (let i of a) {
-        await queue.postDataToMessage("3499KeyWord2", i);
+        await queue.postDataToMessage("3499KeyWord", i);
         console.log(j++);
     }
 })()
