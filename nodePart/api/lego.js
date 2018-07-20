@@ -32,12 +32,20 @@ let getLegoBrickAll = async(brick_id) => {
     result = JSON.parse(result);
     let length = result.result.length - 1;
     let id = result.result[length].id;
-
     while(length === 99){
-		result = getLegoB
-		rickOne(brick_id, id);
-		datas = datas.concat(result.result);
+    	try{
+    		console.log("....loading");
+            result = await getLegoBrickOne(brick_id, id);
+            result = JSON.parse(result);
+            length = result.result.length - 1;
+            id = result.result[length].id;
+            datas = datas.concat(result.result);
+		}catch(e){
+			console.log(e);
+            console.log("getLegoBrickOne Error");
+		}
 	}
+	return datas;
 }
 
 const getLegoBrick = async (limit) => {

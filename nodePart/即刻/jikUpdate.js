@@ -22,7 +22,12 @@ const postDataToDereplicate = async (data) => {
         partition: "jike",
         key: data
     };
-    await Http.call(`http://bee.api.talkmoment.com/dereplicate/history/add`, query);
+    try{
+        await Http.call(`http://bee.api.talkmoment.com/dereplicate/history/add`, query);
+    }catch(e){
+        console.log(e);
+        console.log("添加到去重库出错");
+    }
 };
 
 function FormatDate(strTime) {
@@ -122,7 +127,8 @@ const postWashTask = async (brick_id, data) => {
         d = await Http.call("http://bee.api.talkmoment.com/scheduler/task/post", washTask);
         d = JSON.parse(d).result;
     } catch (e) {
-        return await postWashTask(brick_id, data);
+        console.log(e)
+        console.log("postWashTask出错");
     }
     console.log(d.id);
     return d.id;
@@ -335,33 +341,39 @@ const getBrickId = async() => {
 }
 
 let run = async (name, topicId, brick_id, created_at) => {
-    let result = await getAllTopicContent(topicId, null, created_at);
-    if (result) {
-        for (let data of result) {
+    try{
+        let result = await getAllTopicContent(topicId, null, created_at);
+        if (result) {
+            for (let data of result) {
 
-            if(data.commentCount < 3){
-                console.log("评论稍微有点少了")
-                continue;
-            }
+                if(data.commentCount < 3){
+                    console.log("评论稍微有点少了")
+                    continue;
+                }
 
-            console.log("开始检测是否已经爬取");
-            let test = await redis.sadd("jike_" + brick_id, data.messageId);
-            if (test == 0) {
-                console.log("已经存在了")
-                continue
-            } else {
-                console.log("上传" + data.title + "  的  " + data.content);
-                await postDataToDereplicate(data.id);
-                await postDataToMessage(data);
-                let task_id = await postWashTask(brick_id, data);
-                console.log(task_id, "task_id");
-                await Task.countTask(task_id, "jike_update")
-                await sleep(0.5);
+                console.log("开始检测是否已经爬取");
+                let test = await redis.sadd("jike_" + brick_id, data.messageId);
+                if (test == 0) {
+                    console.log("已经存在了")
+                    continue
+                } else {
+                    console.log("上传" + data.title + "  的  " + data.content);
+                    await postDataToDereplicate(data.id);
+                    await postDataToMessage(data);
+                    let task_id = await postWashTask(brick_id, data);
+                    console.log(task_id, "task_id");
+                    await Task.countTask(task_id, "jike_update")
+                    await sleep(0.5);
+                }
             }
+            await sleep(2);
+            console.log("###############################################");
         }
-        await sleep(2);
-        console.log("###############################################");
+    }catch(e){
+        console.log(e)
+        console.log("外面包的大run出错了 很恐怖");
     }
+
 
 }
 

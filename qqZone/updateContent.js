@@ -46,7 +46,7 @@ const launchBrowser = async () => {
 
     browser = await puppeteer.launch({
         headless: false,
-        executablePath: '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary',
+        executablePath: '/Applications/Google Chrome 2.app/Contents/MacOS/Google Chrome',
         timeout: 0,
         args
     });

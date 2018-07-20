@@ -3,8 +3,8 @@
 // 2110998942----washu123456 表情套图 每日更新 Washu1234
 // 3185303424----washu123456 全网最骚贱表情包
 // 2728703162----washu123456  //嗝屁了
-// 2657981304----washu123456
-// 3275440566----washu123456
+// 2657981304----washu123456  //嗝屁了
+// 3275440566----washu123456  //嗝屁了
 
 // http://chatbot.api.talkmoment.com/image/battle/user/lego/list?uid=3002 1000 - 3970
 
@@ -203,9 +203,13 @@ const addFriend = (() => {
             let addButton = await page.$("#add_friend");
             await addButton.click();
             await sleep(1);
-            let confirmButton = await page.$(".txt");
-            await confirmButton.click();
-            console.log("已经添加好友了了", ++logData.addFriendCount, "人");
+            let confirmButton = await page.$$ % (".txt");
+            for (let i = 0; i < confirmButton.length; i++) {
+                if (i == confirmButton.length - 1) {
+                    await confirmButton[i].click();
+                    console.log("已经添加好友了了", ++logData.addFriendCount, "人");
+                }
+            }
         } catch (e) {
             console.log(e);
             console.log("点赞出错");
@@ -268,7 +272,9 @@ const commentBack = (() => {
         try {
             let contentFrame = page.mainFrame().childFrames()[0];
             let rawText = await contentFrame.$$eval(".f-info", nodes => nodes.map(n => n.innerText));
-            let text = await askText(rawText);
+            // let text = await askText(rawText);
+            // let text = "不好意思打扰了，喜欢表情包的话 +下我吧 空间持续更新表情包〰️";
+            let text = "爸爸！！回访下我的空间吧！";
             let input = await contentFrame.$(".textinput.textinput-default a");
             await input.click();
             await sleep(1);
@@ -375,7 +381,7 @@ let run = async (a) => {
     await startOut();
 }
 
-process.on("message", async function(d){
-    console.log("收到爸爸的指导",d);
+process.on("message", async function (d) {
+    console.log("收到爸爸的指导", d);
     await run(d.user);
 })
