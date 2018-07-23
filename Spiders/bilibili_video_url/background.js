@@ -123,6 +123,9 @@ require([
     const postDataToMessage = async(data) => {
         await Http.call(`http://bee.api.talkmoment.com/message/publish?topic=suck_url_fail`, data);
     };
+    const postDataToMessage2 = async(data) => {
+        await Http.call(`http://bee.api.talkmoment.com/message/publish?topic=suck_url_timeout`, data);
+    };
 
     const runDefaultTask = async(task, webUrl) => {
         console.log("!!!!!!!未知的视频来源 打开网页web_url=", webUrl);
@@ -130,6 +133,11 @@ require([
         let videoSource = await tab.run();
         tab.remove();
         if (videoSource == "timeout") {
+            let timeoutData = {
+                task: task,
+                timeout: "ttTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTtt"
+            }
+            await postDataToMessage2(timeoutData);
             Socket.log("超时了");
             throw new Error("timeout");
         } else if (!videoSource) {

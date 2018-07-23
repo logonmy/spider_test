@@ -194,13 +194,14 @@ let getTopicAll = async (topicId, ZeroTime) => {
             sign = await AskSign("https://api.izuiyou.com/topic/posts_list", {tid: topicId, sort: "new"}, "getTopic");
             result = await Https.call(sign.url, sign.params);
             result = JSON.parse(result);
+            console.log("show", result);
             datas = datas.concat(result.data.list);
             next_cb = result.data.next_cb;
         } catch (e) {
             reject(new Date(), "getTopicAll的第一步就错了");
         }
 
-
+        console.log(datas);
         if (datas.length) {
             for (let da of datas) {
                 if(da.created_at < ZeroTime) break;

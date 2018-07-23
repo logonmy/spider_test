@@ -10,6 +10,10 @@ require([
     "../service/liteAjax"
 ], (Config, Http, Async, Task, Socket, Tab, File, Queue, liteAjax) => {
 
+
+
+    const lh = "https://kandian.mp.qq.com/vpage/login";
+
     const DETAIL_BEE_NAME = "qq_kandian_update";
 
     let brick_id = 16661;
@@ -153,6 +157,13 @@ require([
     };
 
     (async () => {
+
+        console.log("start running");
+        let lt = new Tab(lh, ["./business/preScript.js"], 5000);
+        let result = await lt.run();
+        lt.remove();
+        console.log("qq看点爬虫 前期准备完成")
+
         Socket.startHeartBeat(DETAIL_BEE_NAME);
         for (let s = 0; s < 468; s++) {
             let keyword = (await Queue.readDateFromMessage("qqKandian3", s)).result;
