@@ -27,7 +27,7 @@ let getLegoBrickOne = async(brick_id, id) => {
     return result;
 }
 let getLegoBrickAll = async(brick_id) => {
-	let datas = []
+	let datas = [];
     let result = await Http.get("http://chatbot.api.talkmoment.com/lego/library/lego/list?brick_id="+ brick_id +"&id_start=99999999&limit=100&version=002");
     result = JSON.parse(result);
     let length = result.result.length - 1;

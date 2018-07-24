@@ -7,7 +7,7 @@ let idSet = new Set();
 (async () => {
     try {
 
-        let da = await getLegoBrickAll("22443");
+        let da = await getLegoBrickAll("22821");
         for (let i = 0; i < da.length; i++) {
             let title = da[i].R.split("||")[0];
             if (legoSet.has(title) && !idSet.has(da[i].id)) {
@@ -18,7 +18,7 @@ let idSet = new Set();
             idSet.add(da[i].id);
 
             let data = JSON.stringify(da[i]);
-            File.appendFileSync("reeeee.txt", data + "\n");
+            File.appendFileSync("reeeee724.txt", data + "\n");
         }
     } catch (e) {
         console.log(e)

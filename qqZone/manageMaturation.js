@@ -8,8 +8,8 @@ let getUser = (() => {
         // {usr: "2110998942", pas: "washu123456"},
         // {usr: "3185303424", pas: "washu123456"},
         // {usr: "2728703162", pas: "washu123456"},
-        {usr: "2657981304", pas: "washu123456"},
-        {usr: "3275440566", pas: "washu123456"}
+        {usr: "2657981304", pas: "washu12345"},
+        {usr: "3275440566", pas: "washu1234"}
     ]
     return () => {
         let result = users.shift();

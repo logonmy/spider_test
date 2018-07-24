@@ -41,7 +41,7 @@ const debug = true;
                 http.get(url, function (res) {
                     let imgData = "";
 
-                    res.setEncoding("binary"); //一定要设置response的编码为binary否则会下载下来的图片打不开
+                    res.setEncoding("binary");
 
 
                     res.on("data", function (chunk) {
