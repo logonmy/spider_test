@@ -8,6 +8,12 @@ let sleep = async (s = 10) => {
     })
 }
 
+process.on('uncaughtException', (err) => {
+    console.log("error");
+    process.exit();
+});
+
+
 (async () => {
     while(true){
         let data = await queue.getDataFromMessage("searchDog");
