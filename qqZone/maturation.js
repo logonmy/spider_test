@@ -274,7 +274,7 @@ const commentBack = (() => {
             let rawText = await contentFrame.$$eval(".f-info", nodes => nodes.map(n => n.innerText));
             // let text = await askText(rawText);
             // let text = "不好意思打扰了，喜欢表情包的话 +下我吧 空间持续更新表情包〰️";
-            let text = "爸爸！！回访下我的空间吧！";
+            let text = "爸爸！！回访下我的空间吧！ (nss+)";
             let input = await contentFrame.$(".textinput.textinput-default a");
             await input.click();
             await sleep(1);
