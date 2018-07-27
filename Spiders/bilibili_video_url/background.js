@@ -35,7 +35,8 @@ require([
                 let model = JSON.parse(part);
                 if (model.source.indexOf("www.bilibili.com") >= 0) {
                     let avcode = model.source.substring(model.source.indexOf("www.bilibili.com/video/") + "www.bilibili.com/video/".length);
-                    let mobileSource = "https://m.bilibili.com/video/" + avcode.substring(0, avcode.length - 1) + ".html";
+                    let cutLength = avcode[avcode.length - 1] == "/" ? 1 : 0;
+                    let mobileSource = "https://m.bilibili.com/video/" + avcode.substring(0, avcode.length - cutLength) + ".html";
                     return {
                         type: "bilibili",
                         source: model.source,
@@ -161,12 +162,16 @@ require([
         let lego = task.lego;
         let {type, source, mobileSource} = extractWebUrl(lego.R);
         if (type === "bilibili" && source && mobileSource) {
+            console.log("使用的是 B站 SCRIPT");
             await runBilibiliTask(task, source, mobileSource);
         } else if (type === "pearvideo" && source) {
+            console.log("使用的是 梨视频 SCRIPT");
             await runPearVideoTask(task, source);
         } else if (type === "zuiyou" && source) {
             // DO NOTHING
+            console.log("使用的是 最右 SCRIPT");
         } else {
+            console.log("使用的是 默认的 SCRIPT");
             await runDefaultTask(task, source);
         }
     };

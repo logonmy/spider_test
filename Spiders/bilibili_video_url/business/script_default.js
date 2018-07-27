@@ -166,7 +166,7 @@ function findVideoAndCoverImg() {
             }, 100);
             return;
         }
-        console.log(model);
+        console.log(model, "这就是最后的结果");
         chrome.runtime.sendMessage(model.source, function (response) {
             window.close();
         });
@@ -198,7 +198,7 @@ function findVideoAndCoverImg() {
 
     model.source = src;
     model.cover_img = cover_img;
-    console.log(model);
+    console.log(model, "这就是最后的结果");
     chrome.runtime.sendMessage(model.source, function (response) {
         window.close();
     });
