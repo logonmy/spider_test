@@ -130,7 +130,7 @@ require([
 
     const runDefaultTask = async(task, webUrl) => {
         console.log("!!!!!!!未知的视频来源 打开网页web_url=", webUrl);
-        let tab = new Tab(webUrl, ["./business/script_default.js"], 5000);
+        let tab = new Tab(webUrl, ["./business/script_default.js"], 10000);
         let videoSource = await tab.run();
         tab.remove();
         if (videoSource == "timeout") {

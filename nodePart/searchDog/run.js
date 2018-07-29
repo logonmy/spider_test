@@ -16,7 +16,7 @@ process.on('uncaughtException', (err) => {
 
 (async () => {
     while(true){
-        let data = await queue.getDataFromMessage("searchDog");
+        let data = await queue.getDataFromMessage("searchDog.txt");
         console.log(data);
         data = JSON.parse(data.result);
         console.log(data.word);
