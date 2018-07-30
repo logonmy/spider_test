@@ -265,6 +265,16 @@ var templateData = {
     comments: []
 }
 
+setTimeout(function() {
+     chrome.runtime.sendMessage({
+            error: "just timeout error",
+            data: templateData,
+            url: window.location.href,
+            false: true
+        }, function (response) {
+        });
+        window.close();
+}, 15000)
 
 setTimeout(function () {
     try {
@@ -312,7 +322,7 @@ setTimeout(function () {
     catch (e) {
         chrome.runtime.sendMessage({
             error: e,
-            data: TemplateData,
+            data: templateData,
             url: window.location.href,
             false: true
         }, function (response) {

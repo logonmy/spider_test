@@ -282,6 +282,17 @@ const sleep = (s = 5) => {
     }
 })()
 
+setTimeout(function() {
+     chrome.runtime.sendMessage({
+            error: "just timeout error",
+            data: templateData,
+            url: window.location.href,
+            false: true
+        }, function (response) {
+    });
+    window.close();
+}, 15000)
+
 
 setTimeout(function(){
 
