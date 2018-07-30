@@ -13,6 +13,14 @@ require([
     "../service/tab",
 ], (Config, Http, Async, Task, Socket, FileControll, Tab) => {
 
+    const isTrueURL = (url) => {
+        let c = url.substr(url.indexOf("http") + 2);
+        if(c.indexOf("http") > 0){
+            return false;
+        }
+        return true;
+    }
+
     const DETAIL_BEE_NAME = "haoqixin_index_detail";
 
     const filterItem = async(task) => {
@@ -60,6 +68,10 @@ require([
             if (!filter) {
                 Socket.log(`网页(url=${task.value})已经爬取过, 跳过`);
             } else {
+                if(!isTrueURL(task.value)){
+                    Socket.log(`网页(url=${task.value})是个坏URL, 跳过`);
+                    return;
+                }
                 Socket.log(`打开网页Tab(url=${task.value}), 注入爬取逻辑`);
                 let tab = new Tab(task.value, ["./business/script.js"]);
 
