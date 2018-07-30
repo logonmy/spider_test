@@ -11,6 +11,16 @@ var TemplateData = {
     comments: [],
     created_at: 0
 }
+setTimeout(function () {
+    console.log("timeout");
+    chrome.runtime.sendMessage({
+        error: "just timeout error",
+        data: TemplateData,
+        url: window.location.href,
+        false: true
+    }, function (response) {});
+    window.close();
+}, 15000)
 try{
     try{
         TemplateData.type = document.getElementById("select").children[0].textContent;

@@ -15,6 +15,13 @@ require([
 
     const DETAIL_BEE_NAME = "pear_index_detail";
 
+    const isTrueURL = (url) => {
+        if(url.indexOf("/video") > -1){
+            return true;
+        }
+        return false;
+    }
+
     const filterItem = async(task) => {
         let query = {
             partition: DETAIL_BEE_NAME,
@@ -57,7 +64,7 @@ require([
             Socket.log(`开始处理爬取任务,task=`, task);
 
             let filter = await filterItem(task);
-            if (!filter) {
+            if (!filter || !isTrueURL(task.value)) {
                 Socket.log(`网页(url=${task.value})已经爬取过, 跳过`);
             } else {
                 Socket.log(`打开网页Tab(url=${task.value}), 注入爬取逻辑`);
