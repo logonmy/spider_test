@@ -62,6 +62,12 @@ const getLego = async (lego_id) => {
     return result;
 }
 
+const postOneLego = async (data) => {
+	let d = await Http.call("http://chatbot.api.talkmoment.com/lego/library/lego/post", data);
+	return d;
+}
+
+
 exports.addLego = addLegoBrick;
 exports.deleteLego = deleteLegoBrick;
 exports.readLegoFirst = readLegoFirst;
@@ -69,3 +75,4 @@ exports.getLegoBrickAll = getLegoBrickAll;
 exports.getBrick = getLegoBrick;
 exports.getLego = getLego;
 exports.updateLego = updateLego;
+exports.postOneLego = postOneLego;
