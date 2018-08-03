@@ -1,37 +1,6 @@
-//大量账号 大量ua 大量代理
 const fetch = require("node-fetch");
-const jsdom = require("jsdom");
-const jq = require("jquery");
 const File = require("fs");
-const safeFetch = async (url, moreArgs = {}) => {
-    try {
-        return await fetch(url, moreArgs);
-    } catch (e) {
-        return false;
-        console.error(e);
-    }
-};
-
-const sleep = (s = 5) => {
-    return new Promise(resolve => setTimeout(resolve, s * 1000))
-}
-
-const getPage = async (url, moreArgs = {
-    headers: {
-        'Content-Type': 'charset=utf-8',
-        "User-Agent": "Baiduspider-news",
-        // "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.79 Safari/537.36",
-        "Connection": "keep-alive",
-    }
-}) => {
-    let res = await safeFetch(url, moreArgs);
-    if (res !== undefined && res.status === 200) {
-        return res.text();
-    } else {
-        return false;
-    }
-};
-
+const Queue = require("../api/queue").Queue;
 const getApi = async (url, moreArgs = {
     headers: {
         "Content-Type": "application/json",
@@ -39,6 +8,14 @@ const getApi = async (url, moreArgs = {
         "Connection": "keep-alive",
     }
 }) => {
+    const safeFetch = async (url, moreArgs = {}) => {
+        try {
+            return await fetch(url, moreArgs);
+        } catch (e) {
+            return false;
+            console.error(e);
+        }
+    };
     let res = await safeFetch(url, moreArgs);
     if (res !== undefined && res.status === 200) {
         return res.json();
@@ -46,6 +23,10 @@ const getApi = async (url, moreArgs = {
         return false;
     }
 };
+const sleep = (s = 5) => {
+    return new Promise(resolve => setTimeout(resolve, s * 1000))
+}
+
 const questionAll = async (qId) => {
     const getQuestion = async (qId, offset = 0, limit = 20) => {
         const blockTime = 1;
@@ -80,8 +61,10 @@ const questionAll = async (qId) => {
 
 }
 (async () => {
-    let i = 284724526;
-    while (i--) {
+    while (true) {
+        console.log("==========================");
+        let i = await Queue.getDataFromMessage("zhihuquestionContent");
+        i = i.result;
         let re = await questionAll(i);
         try {
             File.appendFileSync("result.txt", JSON.stringify(re) + "\n")
@@ -91,7 +74,7 @@ const questionAll = async (qId) => {
         }
         console.log(i);
         console.log("成功一个了")
+        i = false;
     }
-
 })();
 
