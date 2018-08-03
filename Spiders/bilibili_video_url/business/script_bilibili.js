@@ -9,6 +9,9 @@ let inter = setInterval(function(){
         window.close();
     } catch(e){
         console.log(e);
+
+    }
+    if(document.querySelector(".index__sorry__src-noFound-notFound-")){
         chrome.runtime.sendMessage("");
         clearInterval(inter);
         window.close();

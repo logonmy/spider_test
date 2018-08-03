@@ -1,9 +1,10 @@
 domExtension(window);
+
 function domExtension(window) {
     var srcUrl;
 
     if (window.Node.prototype.byId == undefined) {
-        window.Node.prototype.byId = function(t, ignoreCheck) {
+        window.Node.prototype.byId = function (t, ignoreCheck) {
             var node = window.document.getElementById(t);
             if (node == undefined && ignoreCheck != true) {
                 warning(getUrl() + " | byId \"" + t + "\" fail!");
@@ -13,7 +14,7 @@ function domExtension(window) {
     }
 
     if (window.Node.prototype.byTags == undefined) {
-        window.Node.prototype.byTags = function(t, ignoreCheck) {
+        window.Node.prototype.byTags = function (t, ignoreCheck) {
             var nodes = this.getElementsByTagName(t);
             if (nodes.length == 0 && ignoreCheck != true) {
                 warning(getUrl() + " | byTags \"" + t + "\" empty!");
@@ -63,7 +64,7 @@ function domExtension(window) {
     }
 
     if (window.Node.prototype.removeId == undefined) {
-        window.Node.prototype.removeId = function(id) {
+        window.Node.prototype.removeId = function (id) {
             var node = this.byId(id, true);
             if (node) {
                 node.parentNode.removeChild(node);
@@ -72,7 +73,7 @@ function domExtension(window) {
     }
 
     if (window.Node.prototype.removeClass == undefined) {
-        window.Node.prototype.removeClass = function(c) {
+        window.Node.prototype.removeClass = function (c) {
             var node = this.byClass(c, true);
             if (node) {
                 node.parentNode.removeChild(node);
@@ -81,7 +82,7 @@ function domExtension(window) {
     }
 
     if (window.Node.prototype.removeClasses == undefined) {
-        window.Node.prototype.removeClasses = function(c) {
+        window.Node.prototype.removeClasses = function (c) {
             var nodes = this.byClasses(c, true);
             while (nodes.length > 0) {
                 var node = nodes[0];
@@ -91,7 +92,7 @@ function domExtension(window) {
     }
 
     if (window.Node.prototype.removeTag == undefined) {
-        window.Node.prototype.removeTag = function(t) {
+        window.Node.prototype.removeTag = function (t) {
             var node = this.byTag(t, true);
             if (node) {
                 node.parentNode.removeChild(node);
@@ -100,7 +101,7 @@ function domExtension(window) {
     }
 
     if (window.Node.prototype.removeTags == undefined) {
-        window.Node.prototype.removeTags = function(t) {
+        window.Node.prototype.removeTags = function (t) {
             var nodes = this.byTags(t, true);
             while (nodes.length > 0) {
                 var node = nodes[0];
@@ -122,29 +123,51 @@ function domExtension(window) {
 }
 
 
-findVideoAndCoverImg();
+let inter = setInterval(function () {
+    try {
+        if (document.querySelector("h1").innerText == "414 Request-URI Too Large") {
+            //todo
+            console.log("过长的URL 无法处理 提取失败");
+            clearInterval(inter);
+            chrome.runtime.sendMessage("");
+            window.close();
+        }
+    }catch(e){
+        console.log(e);
+    }
+    try{
+        if(document.querySelector("em.S_link1").innerText == "抱歉，网络繁忙"){
+            console.log("可能是短链接 网络繁忙 无法处理 提取失败");
+            clearInterval(inter);
+            chrome.runtime.sendMessage("");
+            window.close();
+        }
+    }catch(e){
+        console.log(e)
+    }
+    try{
+        if(document.querySelector("p.h5-4con").innerText == "抱歉，网络繁忙"){
+            console.log("微博不存在或无查看权限");
+            clearInterval(inter);
+            chrome.runtime.sendMessage("");
+            window.close();
+        }
+    }catch(e){
 
-var bilibiliTryCount = 0;
+    }
+    findVideoAndCoverImg();
+}, 200);
+
+
 function findVideoAndCoverImg() {
     var model = {};
-
-    // 已包含bilibili代码 无需
-    // if (window.location.href.indexOf("bilibili") > 0) {
-    //     console.log("bilibili here");
-    //
-    //     bilibiliTryCount = 0;
-    //     extractBilibili();
-    //
-    //     return;
-    // }
-
 
     var video = document.byTag("video");
     if (!video) {
         var btn = document.byClass("m-btn-media");
         if (btn) {
             btn.click();
-            setTimeout(function() {
+            setTimeout(function () {
                 findVideoAndCoverImg();
             }, 100);
             return;
@@ -153,7 +176,7 @@ function findVideoAndCoverImg() {
         var btn = document.byClass("player-icon");
         if (btn) {
             btn.click();
-            setTimeout(function() {
+            setTimeout(function () {
                 findVideoAndCoverImg();
             }, 100);
             return;
@@ -161,12 +184,12 @@ function findVideoAndCoverImg() {
         var btn = document.byClass("mwbv-play-button");
         if (btn) {
             btn.click();
-            setTimeout(function() {
+            setTimeout(function () {
                 findVideoAndCoverImg();
             }, 100);
             return;
         }
-        console.log(model, "这就是最后的结果");
+        console.log(model, "这就是最后的结果0000000000");
         chrome.runtime.sendMessage(model.source, function (response) {
             window.close();
         });
@@ -183,31 +206,9 @@ function findVideoAndCoverImg() {
         }
     }
 
-    var cover_img = "";
-    cover_img = video.attr("poster");
-
-    var videoimg = document.byClass("videoimg");
-    if (videoimg) {
-        var cover = videoimg.byClass("cover");
-        cover_img = extractBackgroundImage(cover);
-    }
-    var fBgImg = document.byClass("f-bg-img");
-    if (fBgImg) {
-        cover_img = extractBackgroundImage(fBgImg);
-    }
-
     model.source = src;
-    model.cover_img = cover_img;
-    console.log(model, "这就是最后的结果");
+    console.log(model, "这就是最后的结果11111111");
     chrome.runtime.sendMessage(model.source, function (response) {
         window.close();
     });
-}
-
-function extractBackgroundImage(node) {
-    var src = node.style.backgroundImage;
-    if (src.indexOf("url(") == 0) {
-        src = src.substring(5, src.length - 2);
-    }
-    return src;
 }

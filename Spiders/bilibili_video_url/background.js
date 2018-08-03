@@ -73,7 +73,7 @@ require([
 
     const runBilibiliTask = async(task, webUrl, mobileWebUrl) => {
         Socket.log("打开Bilibili网页web_url=", mobileWebUrl);
-        let tab = new Tab(mobileWebUrl, ["./business/script_bilibili.js"], 5000);
+        let tab = new Tab(mobileWebUrl, ["./business/script_bilibili.js"], 10000);
         let videoSource = await tab.run();
         tab.remove();
         if (videoSource === "timeout") {
@@ -100,7 +100,7 @@ require([
 
     const runPearVideoTask = async(task, webUrl) => {
         Socket.log("打开PearVideo网页web_url=", webUrl);
-        let tab = new Tab(webUrl, ["./business/script_pearvideo.js"], 5000);
+        let tab = new Tab(webUrl, ["./business/script_pearvideo.js"], 10000);
         let videoSource = await tab.run();
         tab.remove();
         if (videoSource === "timeout") {
@@ -217,3 +217,13 @@ require([
         }
     })();
 });
+
+//微信里面的视频
+//https://mp.weixin.qq.com/s?__biz=MzI5NjQzMzQ0MQ%3D%3D&mid=2247484472&idx=2&sn=85c0bdf3e7282a6265a9bef77999640e#wechat_redirect
+
+//易车网
+//http://vc.yiche.com/vplay/357099.html
+
+//pptv
+//youku
+//iqiyi

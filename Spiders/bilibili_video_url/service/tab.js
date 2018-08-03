@@ -14,7 +14,8 @@ define([], function () {
             var self = this;
 
             chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
-                if (changeInfo.status == 'complete' && tabId == G.tabId) {
+                // if (changeInfo.status == 'complete' && tabId == G.tabId) {
+                if (tabId == G.tabId) {
 
                     function implantation(index) {
                         if (G.script[index].indexOf(".js") > -1) {
@@ -69,7 +70,7 @@ define([], function () {
         this.MessageBox = MessageBox;
         this.deferred = Q.defer();
         this.tabId = void 0;
-        this.selected = false;
+        this.selected = true;
         this.timeout = void 0;
         this.timeoutCount = timeout;
     }
