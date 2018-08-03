@@ -35,6 +35,7 @@ require([
                 let model = JSON.parse(part);
                 if (model.source.indexOf("www.bilibili.com") >= 0) {
                     let avcode = model.source.substring(model.source.indexOf("www.bilibili.com/video/") + "www.bilibili.com/video/".length);
+                    avcode = avcode.split("/")[0];
                     let cutLength = avcode[avcode.length - 1] == "/" ? 1 : 0;
                     let mobileSource = "https://m.bilibili.com/video/" + avcode.substring(0, avcode.length - cutLength) + ".html";
                     return {
@@ -130,7 +131,7 @@ require([
 
     const runDefaultTask = async(task, webUrl) => {
         console.log("!!!!!!!未知的视频来源 打开网页web_url=", webUrl);
-        let tab = new Tab(webUrl, ["./business/script_default.js"], 10000);
+        let tab = new Tab(webUrl, ["./business/script_default.js"], 20000);
         let videoSource = await tab.run();
         tab.remove();
         if (videoSource == "timeout") {
