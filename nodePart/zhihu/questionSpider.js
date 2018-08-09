@@ -29,15 +29,21 @@ const sleep = (s = 5) => {
 
 const questionAll = async (qId) => {
     const getQuestion = async (qId, offset = 0, limit = 20) => {
+        let timeout = setTimeout(() => {
+            console.log("超时了5秒了呀 这个东西就应该丢弃掉了");
+            process.exit();
+        }, 5000);
+        console.log(qId, offset, limit);
         const blockTime = 1;
         let href = "https://www.zhihu.com/api/v4/questions/" + qId
             + "/answers?include=data[*].is_normal,admin_closed_comment,reward_info,is_collapsed,annotation_action,annotation_detail,collapse_reason,is_sticky,collapsed_by,suggest_edit,comment_count,can_comment,content,editable_content,voteup_count,reshipment_settings,comment_permission,created_time,updated_time,review_info,relevant_info,question,excerpt,relationship.is_authorized,is_author,voting,is_thanked,is_nothelp;data[*].mark_infos[*].url;data[*].author.follower_count,badge[?(type=best_answerer)].topics&offset=" +
             offset +
             "&limit=" +
             limit +
-            "&sort_by=default"
+            "&sort_by=default";
         await sleep(blockTime);
         let re = await getApi(href);
+        clearTimeout(timeout);
         return re;
     }
     let result = [];
@@ -64,6 +70,7 @@ const questionAll = async (qId) => {
     while (true) {
         console.log("==========================");
         let i = await Queue.getDataFromMessage("zhihuquestionContent");
+
         i = i.result;
         let re = await questionAll(i);
         try {
