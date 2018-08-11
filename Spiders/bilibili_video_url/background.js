@@ -55,6 +55,12 @@ require([
                         source: model.source,
                         mobileSource: model.source
                     }
+                } else if (model.source.indexOf("bubble") >= 0) {
+                    return {
+                        type: "bubble",
+                        source: model.source,
+                        mobileSource: model.source
+                    }
                 } else {
                     return {
                         type: null,
@@ -62,7 +68,8 @@ require([
                         mobileSource: model.source
                     }
                 }
-            } catch (err) { }
+            } catch (err) {
+            }
         }
         return {
             type: null,
@@ -71,7 +78,7 @@ require([
         };
     };
 
-    const runBilibiliTask = async(task, webUrl, mobileWebUrl) => {
+    const runBilibiliTask = async (task, webUrl, mobileWebUrl) => {
         Socket.log("打开Bilibili网页web_url=", mobileWebUrl);
         let tab = new Tab(mobileWebUrl, ["./business/script_bilibili.js"], 10000);
         let videoSource = await tab.run();
@@ -98,7 +105,34 @@ require([
         tab.remove();
     };
 
-    const runPearVideoTask = async(task, webUrl) => {
+    const runBubbleVideoTask = async (task, webUrl, mobileWebUrl) => {
+        Socket.log("打开爱奇艺泡泡的网页web_url=", mobileWebUrl);
+        let tab = new Tab(mobileWebUrl, ["./business/script_iqiyi.js"], 10000);
+        let videoSource = await tab.run();
+        tab.remove();
+        if (videoSource === "timeout") {
+            Socket.log("超时了");
+            throw new Error("timeout");
+        } else if (!videoSource) {
+            Socket.log("提取出错");
+            throw new Error("提取出错");
+        }
+        Socket.log("获取视频源地址:", videoSource);
+        let req = getRequest(videoSource);
+        let deadline = (parseInt(req.deadline || req.um_deadline || req.expires) * 1000) || (Date.now() + 1000 * 60 * 30);
+        Socket.log("视频过期时间:", new Date(deadline));
+        Socket.log("上报视频源地址到目录");
+        await Http.call("https://chatbot.api.talkmoment.com/video/link/post", {
+            web_url: webUrl,
+            video_url: videoSource,
+            img_url: "",
+            created_at: Date.now(),
+            deadline: deadline
+        });
+        tab.remove();
+    };
+
+    const runPearVideoTask = async (task, webUrl) => {
         Socket.log("打开PearVideo网页web_url=", webUrl);
         let tab = new Tab(webUrl, ["./business/script_pearvideo.js"], 10000);
         let videoSource = await tab.run();
@@ -122,14 +156,14 @@ require([
             deadline: deadline
         });
     };
-    const postDataToMessage = async(data) => {
+    const postDataToMessage = async (data) => {
         await Http.call(`http://bee.api.talkmoment.com/message/publish?topic=suck_url_fail`, data);
     };
-    const postDataToMessage2 = async(data) => {
+    const postDataToMessage2 = async (data) => {
         await Http.call(`http://bee.api.talkmoment.com/message/publish?topic=suck_url_timeout`, data);
     };
 
-    const runDefaultTask = async(task, webUrl) => {
+    const runDefaultTask = async (task, webUrl) => {
         console.log("!!!!!!!未知的视频来源 打开网页web_url=", webUrl);
         let tab = new Tab(webUrl, ["./business/script_default.js"], 20000);
         let videoSource = await tab.run();
@@ -171,6 +205,8 @@ require([
         } else if (type === "zuiyou" && source) {
             // DO NOTHING
             console.log("使用的是 最右 SCRIPT");
+        } else if (type === "bubble" && source) {
+            await runBubbleVideoTask(task, source);
         } else {
             console.log("使用的是 默认的 SCRIPT");
             await runDefaultTask(task, source);
@@ -206,10 +242,10 @@ require([
                     ++task.failed_count;
                 }
 
-                try{
+                try {
                     await Http.call(`https://chatbot.api.talkmoment.com/video/task/reject`, task);
                     console.log("reject");
-                }catch(e){
+                } catch (e) {
                     console.log("这我就没招数了");
                     console.log(e);
                 }
@@ -217,13 +253,3 @@ require([
         }
     })();
 });
-
-//微信里面的视频
-//https://mp.weixin.qq.com/s?__biz=MzI5NjQzMzQ0MQ%3D%3D&mid=2247484472&idx=2&sn=85c0bdf3e7282a6265a9bef77999640e#wechat_redirect
-
-//易车网
-//http://vc.yiche.com/vplay/357099.html
-
-//pptv
-//youku
-//iqiyi

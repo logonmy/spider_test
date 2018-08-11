@@ -4,6 +4,7 @@ let inter = setInterval(function(){
         let href = document.querySelector("source").getAttribute("src");
         if (href) { } else return;
         href = "https:" + href;
+        console.log(href)
         chrome.runtime.sendMessage(href);
         clearInterval(inter);
         window.close();
