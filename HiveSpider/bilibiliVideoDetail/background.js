@@ -45,6 +45,8 @@ require([
     };
 
     const postDataToDereplicate = async (task) => {
+        console.log("开始去重");
+        console.log("丢过去的值为", task.value);
         let query = {
             partition: DETAIL_BEE_NAME,
             key: task.value
@@ -57,6 +59,8 @@ require([
             Socket.log(`开始处理爬取任务,task=`, task);
 
             let filter = await filterItem(task);
+            console.log(task.value, "结束filter", filter);
+
             if (!filter) {
                 Socket.log(`网页(url=${task.value})已经爬取过, 跳过`);
             } else {
@@ -95,6 +99,7 @@ require([
                 Socket.log(`发送爬取结果到消息队列完成`);
 
                 Socket.log(`发起清洗任务`);
+                console.log("发起清洗任务")
                 let task_id = await postWashTask(task, data);
 
                 Socket.log('发送到记数的地方')
@@ -117,10 +122,13 @@ require([
                 });
             }
 
+            console.log("爬取成功");
             Socket.log(`上报爬取任务成功,task=`, task);
             await Task.resolveTask(task);
             Socket.log(`爬取任务完成`);
         } catch (err) {
+            console.log("爬取失败");
+            console.log(err);
             Socket.error("爬取失败,err=", err.stack);
             Socket.log(`上报爬取任务失败,task=`, task);
             await Task.rejectTask(task, err);
@@ -130,6 +138,7 @@ require([
     (async () => {
         Socket.startHeartBeat(DETAIL_BEE_NAME);
         while (true) {
+            console.log("###########################")
             let task = await Task.fetchTask(DETAIL_BEE_NAME);
             if (task === null) {
                 Socket.log("暂时没有任务");

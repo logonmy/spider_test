@@ -22,6 +22,7 @@ require([
         data.items = data.items.filter((item, i) => (res.filter_result[i]));
     };
 
+
     const postDetailTasks = async(data) => {
         for (let item of data.items) {
             let query = {

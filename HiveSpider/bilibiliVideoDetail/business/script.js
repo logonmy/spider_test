@@ -34,14 +34,15 @@ setTimeout(function(){
         naturalUrl = naturalUrl.split("?")[0];
         TemplateData.url = naturalUrl;
 
+        //bilibili-player-video
         TemplateData.video_source = document.querySelector(".bilibili-player-video video").getAttribute("src");
 
         TemplateData.cover_img.src = document.querySelector("meta[itemprop=image]").getAttribute("content");
 
-        TemplateData.play_count = viewBox.querySelector(".number .v.play").getAttribute("title").substr(4);
-        TemplateData.collect_count = viewBox.querySelector(".number .u.fav").getAttribute("title").substr(4);
-        TemplateData.coin_count = viewBox.querySelector(".number .u.coin").getAttribute("title").substr(5);
-        TemplateData.danmu_count = viewBox.querySelector(".number .v.dm").getAttribute("title").substr(4);
+        TemplateData.play_count = document.querySelector(".view").getAttribute("title").substr(4);
+        TemplateData.collect_count = document.querySelector(".collect").getAttribute("title").substr(4);
+        TemplateData.coin_count = document.querySelector(".coin").getAttribute("title").substr(5);
+        TemplateData.danmu_count = document.querySelector(".dm").getAttribute("title").substr(4);
 
         let crumbs = viewBox.querySelectorAll(".crumb");
         for(let i=0;i<crumbs.length;i++){
@@ -64,6 +65,7 @@ setTimeout(function(){
         chrome.runtime.sendMessage(TemplateData, function (response) {});
         window.close();
     }catch(e){
+        console.log(e)
         chrome.runtime.sendMessage({
             error:e,
             data: TemplateData,
