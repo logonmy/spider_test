@@ -1,10 +1,11 @@
 const http = require("https");
-const Http = require("./api/http").Http;
-const Task = require("./api/task").Task;
-const Socket = require("./api/socket").Socket;
-const Queue = require("./api/queue").Queue
+const Http = require("../api/http").Http;
+const Https = require("../api/https").Http;
+const Task = require("../api/task").Task;
+const Socket = require("../api/socket").Socket;
+const Queue = require("../api/queue").Queue
 
-const getApi = require("./api/fetch").getApi;
+const getApi = require("../api/fetch").getApi;
 
 const BEE_NAME = "jike_topic_history";
 let token;
@@ -236,6 +237,8 @@ let getAllTopicContent = async (topicId, loadMoreKey) => {
 
         console.log(new Date(result.data[ll - 1].createdAt).getTime());
         if(result.loadMoreKey){
+            console.log("永不下一页");
+            break;
             Socket.log("下一页");
             await sleep(1);
             result = await getTopicContent(topicId, result.loadMoreKey);
@@ -269,20 +272,20 @@ let getAllTopicContent = async (topicId, loadMoreKey) => {
 const getTopicId = async(value) => {
 
     console.log(value, "getTopicIdINGGGGGGG");
-    let moreArgs = {
-        method: "POST",
-        headers: {
-            "Content-Type":"application/json",
-            "x-jike-app-auth-jwt": token
-        },
-        body: JSON.stringify({
-            "limit":10,
-            keywords: value,
-            onlyUserPostEnabled: true,
-            type: "ALL"
-        })
+    let headers = {
+        "x-jike-access-token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiWTVVdHFMbGVCQTI5a2UwTjdScTFIcUVOQ2d2V1FJcDdySGNJV2hyQ0k4TnpJVXg3MU51TnRyaTd6UXl1ZzljMmVsMFZ2RzhqajFFZm9nODFOdUZXVVlveGZnTFZsTGpKU1B6UXNPMlV4eHJPVTdhd3ZkblJXS0NIOXpOVlltMDdLZ2ZHcXZIeVRLTkVsdW4zeDNkbHEwRndDNXVLeENkVytzb0pjbElaQ3plT1pYOGh4ZHQzaDZkeWpVcXc3VGs1TmRXTlRndUt4MDg3QlhERm5YbGNpbUh3dldOQ3lXK3I0QkxkN3ArQXZnV2VNQ0NxWTAwVTUyRUx5UkJHazFcLzFaQ1phOHdseHY0XC8zS1AzNzcrWXU1ZVVnMWFEOEN2ZmNjdU5mRXdrQ3VwWHVsMHdSbnErSlVISGZjOUtVSUhvbEhGWXVuNVArcVYzR29mXC9ZbkRRRG93PT0iLCJ2IjozLCJpdiI6IkowWGNwbEtjTlwvRlwvN1Bhd3hYS3hDdz09IiwiaWF0IjoxNTM1MzM3NDk4Ljc3N30.E6dQwG4hDTQChcsX99QNPaTaMces6UMAUCrLIVz555g",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36",
+        "Accept": "application/json",
+        "App-Version": "4.1.0",
+        "Content-Type": "application/json",
+        "Origin": "https://web.okjike.com",
+        "platform": "web",
+        "Referer": "https://web.okjike.com/feed"        
     }
-    let result = await getApi("https://app.jike.ruguoapp.com/1.0/users/topics/search", moreArgs);
+    let href = "https://app.jike.ruguoapp.com/1.0/search/integrate?keyword=" + encodeURIComponent(value);
+    let result = await Https.get(href,headers);    
+    result = await Https.get(href,headers);    
+
     console.log(result);
     if(result && result.data && result.data[0]){
         return result.data[0].id;
@@ -305,13 +308,16 @@ const getTopicId = async(value) => {
 (async () => {
     Socket.startHeartBeat("jike_topic_history");
     token = await getToken();
+    let task = null;
     while(true){
-        let task = await Task.fetchTask(BEE_NAME);
-        if(task === null){
-            console.log("暂时没有任务");
+        try{
+            task = await Task.fetchTask(BEE_NAME);
+        }catch(e){
+            console.log(e);
             await sleep(5);
             continue
         }
+
         console.log(task);
         cardCommentCount = 0;
         task.brick_id = JSON.parse(task.config).brick_id;
@@ -320,7 +326,7 @@ const getTopicId = async(value) => {
             topicId = await getTopicId(task.value);
             console.log("获得topicId", topicId)
             if(!topicId) {
-                task.reject();
+                await Task.rejectTask(task)
                 continue
             }
         }else{
@@ -333,9 +339,8 @@ const getTopicId = async(value) => {
         for(let re of result){
             re.keyword = task.value;
             re.brick_id = task.brick_id;
-            await postDataToDereplicate(re.id);
-            await postDataToMessage(re);
-            await postWashTask(task.brick_id, re)
+            // await postDataToDereplicate(re.id);
+            // await postWashTask(task.brick_id, re)
         }
         let legoName = await readLegoById(task.brick_id);
         let update = {
