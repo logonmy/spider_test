@@ -3,6 +3,8 @@ const Task = require("../api/task").Task;
 const Https = require("../api/https").Http;
 const Http = require("../api/http").Http;
 const Socket = require("../api/socket").Socket;
+const RedisClient = require("../api/redis").RedisClient
+const redis = new RedisClient({host: "127.0.0.1", port: 6379})
 
 let getcommentCount = 0;
 
@@ -18,6 +20,7 @@ socket.on("signRes", (data) => {
     myEmitter.emit(data.echo, data)
 })
 const AskSign = async (url, params, echo) => {
+    echo = echo + "hiveYouKnow";
     return new Promise((resolve, reject) => {
         socket.emit("signReq", {
             url: url,
@@ -196,18 +199,15 @@ let getTopicAll = async (topicId) => {
     return new Promise(async (resolve, reject) => {
         try {
             sign = await AskSign("http://106.15.82.26/topic/posts", {tid: topicId, sort: "new"}, "getTopic");
-            console.log(sign.url);
-            console.log(sign.params);
             result = await Http.call(sign.url, sign.params);
             result = JSON.parse(result);
-            console.log(result);
             datas = datas.concat(result.data.list);
             next_cb = result.data.next_cb;
         } catch (e) {
             reject(new Date(), "getTopicAll的第一步就错了");
         }
         console.log(result);
-        while (result.data.more) {
+        while (result &&result.data &&result.data.more) {
             Socket.log("现在是第 ", nextPageCount++, " 个下一页");
             if (nextPageCount >= 1) {
                 nextPageCount = 0;
@@ -265,6 +265,7 @@ let getTopicAll = async (topicId) => {
             result = await filterItems(result);
             try {
                 for (let re of result) {
+                    console.log("上传数据", re);
                     re.brick_id = task.brick_id;
                     await postDataToDereplicate(re.id);
                     await postDataToMessage(re);
@@ -277,7 +278,6 @@ let getTopicAll = async (topicId) => {
             await sleep(5)
         } catch (e) {
             console.log(e);
-            await task.rejectTask(task, "反正是失败了");
             await sleep(5);
             continue;
         }

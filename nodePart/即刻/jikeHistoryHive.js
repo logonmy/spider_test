@@ -220,7 +220,7 @@ let getTopicContent = async (topicId, loadMoreKey) => {
         body: JSON.stringify({
             "loadMoreKey":loadMoreKey,
             "topic":topicId,
-            "limit":50
+            "limit":20
         })
     }
     let result = await getApi("https://app.jike.ruguoapp.com/1.0/messages/history", moreArgs);
@@ -339,8 +339,8 @@ const getTopicId = async(value) => {
         for(let re of result){
             re.keyword = task.value;
             re.brick_id = task.brick_id;
-            // await postDataToDereplicate(re.id);
-            // await postWashTask(task.brick_id, re)
+            await postDataToDereplicate(re.id);
+            await postWashTask(task.brick_id, re)
         }
         let legoName = await readLegoById(task.brick_id);
         let update = {

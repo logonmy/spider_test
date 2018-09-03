@@ -3,15 +3,26 @@ let Http = {};
 
 const timeout = 10000;
 
+const suckPath = (str) => {
+    let a = str.split("//")[1].split("/");
+    let b = "/";
+    for (let i = 1; i < a.length; i++) {
+        b = b + a[i] + "/";
+    }
+    return b.split("?")[0]
+}
+
 Http.call = async (path, args) => {
+
     let data = args || {};
     let postData = JSON.stringify(data);
+    let s = suckPath(path)
     let options = {
         protocol: path.split(":")[0] + ":",
         host: path.split("//")[1].split("/")[0],
         //port: "3000",
         method: "POST",
-        path: "/" + path.split("com/")[1],
+        path: s,
         headers: {
             'Content-Type': 'application/json',
             'Content-Length': Buffer.byteLength(postData)

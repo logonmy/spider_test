@@ -119,7 +119,6 @@ const launchBrowser = async () => {
         await pages[0].reload();
         await sleep();
         return;
-
     }
     console.log("已启动");
     process.send({

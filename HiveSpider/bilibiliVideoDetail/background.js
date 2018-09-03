@@ -45,15 +45,26 @@ require([
     };
 
     const postDataToDereplicate = async (task) => {
-        console.log("开始去重");
-        console.log("丢过去的值为", task.value);
-        let query = {
-            partition: DETAIL_BEE_NAME,
-            key: task.value
-        };
-        await Http.call(`http://bee.api.talkmoment.com/dereplicate/history/add`, query);
+        try{
+            console.log("开始去重");
+            console.log("丢过去的值为", task.value);
+            let query = {
+                partition: DETAIL_BEE_NAME,
+                key: task.value
+            };
+            await Http.call(`http://bee.api.talkmoment.com/dereplicate/history/add`, query);
+        }catch(e){
+            console.log(e)
+        }
     };
-
+    const localPass =  (data) => {
+        console.log(data.created_at);
+        let sixMonthPass = new Date().getTime() - (1000* 6 * 30*24*60*60)
+        if(data.created_at < sixMonthPass){
+            return false;
+        }
+        return true;
+    }
     const runTask = async (task) => {
         try {
             Socket.log(`开始处理爬取任务,task=`, task);
@@ -95,24 +106,40 @@ require([
                     return;
                 }
 
-                await postDataToMessage(task, data);
-                Socket.log(`发送爬取结果到消息队列完成`);
+                if(!localPass(data)){
+                    console.log("FFFFFFFFFFFFFFOCUS")
+                    console.log("FFFFFFFFFFFFFFOCUS")
+                    console.log("FFFFFFFFFFFFFFOCUS")
+                    console.log("FFFFFFFFFFFFFFOCUS")
+                    console.log("FFFFFFFFFFFFFFOCUS")
+                    console.log(data);
+                    console.log("FFFFFFFFFFFFFFOCUS")
+                    console.log("FFFFFFFFFFFFFFOCUS")
+                    console.log("FFFFFFFFFFFFFFOCUS")
+                    console.log("FFFFFFFFFFFFFFOCUS")
+                    console.log("FFFFFFFFFFFFFFOCUS")
+                    console.log("FFFFFFFFFFFFFFOCUS")
+                }else{
+                    await postDataToMessage(task, data);
+                    Socket.log(`发送爬取结果到消息队列完成`);
 
-                Socket.log(`发起清洗任务`);
-                console.log("发起清洗任务")
-                let task_id = await postWashTask(task, data);
+                    Socket.log(`发起清洗任务`);
+                    console.log("发起清洗任务")
+                    let task_id = await postWashTask(task, data);
 
-                Socket.log('发送到记数的地方')
-                await Task.countTask(task_id, DETAIL_BEE_NAME);
+                    Socket.log('发送到记数的地方')
+                    await Task.countTask(task_id, DETAIL_BEE_NAME);
 
-                Socket.log(`添加内容url(${task.value})到去重模块的历史集合`);
-                await postDataToDereplicate(task);
-                Socket.log(`添加到去重模块成功`);
+                    Socket.log(`添加内容url(${task.value})到去重模块的历史集合`);
+                    await postDataToDereplicate(task);
+                    Socket.log(`添加到去重模块成功`);
 
-                task.data = JSON.stringify(data);
-                Socket.log(`提交爬取任务结果数据`);
-                await Task.putTaskData(task);
-                Socket.log(`提交爬取任务结果数据完成`);
+                    task.data = JSON.stringify(data);
+                    Socket.log(`提交爬取任务结果数据`);
+                    await Task.putTaskData(task);
+                    Socket.log(`提交爬取任务结果数据完成`);
+                }
+                
             }
             if (task.scheduled_at == 9999999999999) {
                 Socket.emitEvent({

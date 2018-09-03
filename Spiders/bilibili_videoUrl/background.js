@@ -38,5 +38,5 @@ chrome.webRequest.onBeforeSendHeaders.addListener(details => {
         requestHeaders: headers
     };
 }, {
-    urls: ["*://m.bilibili.com/*"]
+    urls: ["*://m.bilibili.com/*", "*://www.zhihu.com/question/*/answer/*"]
 }, ["requestHeaders", "blocking"]);
