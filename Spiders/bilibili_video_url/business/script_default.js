@@ -122,7 +122,6 @@ function domExtension(window) {
     }
 }
 
-
 let inter = setInterval(function () {
     try {
         if (document.querySelector("h1").innerText == "414 Request-URI Too Large") {
@@ -132,27 +131,27 @@ let inter = setInterval(function () {
             chrome.runtime.sendMessage("");
             window.close();
         }
-    }catch(e){
+    } catch (e) {
         console.log(e);
     }
-    try{
-        if(document.querySelector("em.S_link1").innerText == "抱歉，网络繁忙"){
+    try {
+        if (document.querySelector("em.S_link1").innerText == "抱歉，网络繁忙") {
             console.log("可能是短链接 网络繁忙 无法处理 提取失败");
             clearInterval(inter);
             chrome.runtime.sendMessage("");
             window.close();
         }
-    }catch(e){
+    } catch (e) {
         console.log(e)
     }
-    try{
-        if(document.querySelector("p.h5-4con").innerText == "抱歉，网络繁忙"){
+    try {
+        if (document.querySelector("p.h5-4con").innerText == "抱歉，网络繁忙") {
             console.log("微博不存在或无查看权限");
             clearInterval(inter);
             chrome.runtime.sendMessage("");
             window.close();
         }
-    }catch(e){
+    } catch (e) {
 
     }
     findVideoAndCoverImg();
@@ -184,6 +183,7 @@ function findVideoAndCoverImg() {
         var btn = document.byClass("mwbv-play-button");
         if (btn) {
             btn.click();
+            console.log("click mwbv-play-button");
             setTimeout(function () {
                 findVideoAndCoverImg();
             }, 100);
@@ -203,6 +203,38 @@ function findVideoAndCoverImg() {
         var source = video.childNodes[0];
         if (source) {
             src = source.src;
+        }else{
+            var btn = document.byClass("m-btn-media");
+            if (btn) {
+                btn.click();
+                setTimeout(function () {
+                    findVideoAndCoverImg();
+                }, 100);
+                return;
+            }
+    
+            var btn = document.byClass("player-icon");
+            if (btn) {
+                btn.click();
+                setTimeout(function () {
+                    findVideoAndCoverImg();
+                }, 100);
+                return;
+            }
+            var btn = document.byClass("mwbv-play-button");
+            if (btn) {
+                btn.click();
+                console.log("click mwbv-play-button");
+                setTimeout(function () {
+                    findVideoAndCoverImg();
+                }, 100);
+                return;
+            }
+            console.log(model, "这就是最后的结果0000000000");
+            chrome.runtime.sendMessage(model.source, function (response) {
+                window.close();
+            });
+            return;
         }
     }
 
