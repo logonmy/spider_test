@@ -35,7 +35,12 @@ const filterItems = async (data) => {
     let query = {
         partition: "jike",
         keys: data.map((item) => {
-            return item.id + ""
+            if (item && item.id) {
+                return item.id + ""
+            } else {
+                return "notexist";
+            }
+
         })
     };
     Socket.log(query);
@@ -56,10 +61,10 @@ const postDataToDereplicate = async (data) => {
 
 const httpGet = async (path, header) => {
     let timeout = 10000;
-    if(!header){
+    if (!header) {
         header = {
-            "Content-Type":"application/json",
-            "User-Agent":"Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Mobile /sa-sdk-ios Jike/4.3.1",
+            "Content-Type": "application/json",
+            "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Mobile /sa-sdk-ios Jike/4.3.1",
         }
     }
     let options = {
@@ -95,7 +100,7 @@ const httpGet = async (path, header) => {
         req.end();
     })
 }
-const postWashTask = async(brick_id, data) => {
+const postWashTask = async (brick_id, data) => {
     let washTask = {
         name: "wash_corpus",
         value: "",
@@ -114,53 +119,57 @@ const postWashTask = async(brick_id, data) => {
 const postDataToMessage = async (data) => {
     await Http.call(`http://bee.api.talkmoment.com/message/publish?topic=${BEE_NAME}`, data);
 };
-const getUuid = async() => {
+const getUuid = async () => {
     let result = await httpGet("https://app.jike.ruguoapp.com/sessions.create");
-    return JSON.parse(result).uuid;}
-const login = async(uuid, cookie) => {
+    return JSON.parse(result).uuid;
+}
+const login = async (uuid, cookie) => {
     let headers = {
-        "Host":"app.jike.ruguoapp.com",
-        "Content-Type":"application/json",
-        "Origin":"https://ruguoapp.com",
-        "Connection":"keep-alive",
-        "Accept":"*/*",
-        "User-Agent":"Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Mobile /sa-sdk-ios Jike/4.3.1",
-        "Referer":"https://ruguoapp.com/account/scan?uuid=" + uuid,
-        "Accept-Language":"zh-cn",
+        "Host": "app.jike.ruguoapp.com",
+        "Content-Type": "application/json",
+        "Origin": "https://ruguoapp.com",
+        "Connection": "keep-alive",
+        "Accept": "*/*",
+        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Mobile /sa-sdk-ios Jike/4.3.1",
+        "Referer": "https://ruguoapp.com/account/scan?uuid=" + uuid,
+        "Accept-Language": "zh-cn",
         "Cookie": cookie
     }
     let result = await httpGet("https://app.jike.ruguoapp.com/sessions.login?uuid=" + uuid, headers);
-    return result;}
-const confirm = async(uuid, cookie) => {
+    return result;
+}
+const confirm = async (uuid, cookie) => {
     let headers = {
-        "Host":"app.jike.ruguoapp.com",
-        "Content-Type":"application/json",
-        "Origin":"https://ruguoapp.com",
-        "Connection":"keep-alive",
-        "Accept":"*/*",
-        "User-Agent":"Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Mobile /sa-sdk-ios Jike/4.3.1",
-        "Referer":"https://ruguoapp.com/account/scan?uuid=" + uuid,
-        "Accept-Language":"zh-cn",
+        "Host": "app.jike.ruguoapp.com",
+        "Content-Type": "application/json",
+        "Origin": "https://ruguoapp.com",
+        "Connection": "keep-alive",
+        "Accept": "*/*",
+        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Mobile /sa-sdk-ios Jike/4.3.1",
+        "Referer": "https://ruguoapp.com/account/scan?uuid=" + uuid,
+        "Accept-Language": "zh-cn",
         "Cookie": cookie
     }
     let result = await httpGet("https://app.jike.ruguoapp.com/sessions.confirm?uuid=" + uuid, headers);
-    return result;}
-const confirmation = async(uuid, cookie) => {
+    return result;
+}
+const confirmation = async (uuid, cookie) => {
     let headers = {
-        "Host":"app.jike.ruguoapp.com",
-        "Content-Type":"application/json",
-        "Origin":"https://ruguoapp.com",
-        "Connection":"keep-alive",
-        "Accept":"*/*",
-        "User-Agent":"Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Mobile /sa-sdk-ios Jike/4.3.1",
-        "Referer":"https://ruguoapp.com/account/scan?uuid=" + uuid,
-        "Accept-Language":"zh-cn",
+        "Host": "app.jike.ruguoapp.com",
+        "Content-Type": "application/json",
+        "Origin": "https://ruguoapp.com",
+        "Connection": "keep-alive",
+        "Accept": "*/*",
+        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Mobile /sa-sdk-ios Jike/4.3.1",
+        "Referer": "https://ruguoapp.com/account/scan?uuid=" + uuid,
+        "Accept-Language": "zh-cn",
         "Cookie": cookie
     }
     let result = await httpGet("https://app.jike.ruguoapp.com/sessions.wait_for_confirmation?uuid=" + uuid, headers);
-    return result;}
-const readLegoById = async(brick_id) => {
-    let href = "http://chatbot.api.talkmoment.com/lego/library/legobrick/get?brick_id=" + brick_id+ "&version=002";
+    return result;
+}
+const readLegoById = async (brick_id) => {
+    let href = "http://chatbot.api.talkmoment.com/lego/library/legobrick/get?brick_id=" + brick_id + "&version=002";
     let result = await Http.get(href);
     result = JSON.parse(result).result;
     return result.name;
@@ -171,105 +180,111 @@ let getToken = async () => {
     let cookie = getCookie()
     let uuid = await getUuid();
     await sleep(1);
-    if(JSON.parse(await login(uuid, cookie)).success){
+    if (JSON.parse(await login(uuid, cookie)).success) {
         await sleep(1)
-        if(JSON.parse(await confirm(uuid, cookie)).success){
+        if (JSON.parse(await confirm(uuid, cookie)).success) {
             await sleep(1)
-            if(JSON.parse(await confirmation(uuid, cookie)).token){
+            if (JSON.parse(await confirmation(uuid, cookie)).token) {
                 console.log("token获取成功");
                 return JSON.parse(await confirmation(uuid, cookie)).token
-            }else{
+            } else {
                 throw Error("confirmation 出错");
             }
-        }else{
+        } else {
             throw Error("confirm 出错")
         }
-    }else{
+    } else {
         throw Error("login 出错")
-    }}
+    }
+}
 
-let getCardComment = async (targetId)=> {
+let getCardComment = async (targetId) => {
     console.log(targetId, "getCardCommentINGGGGG");
     let moreArgs = {
         method: "POST",
         headers: {
-            "Content-Type":"application/json",
+            "Content-Type": "application/json",
             "x-jike-app-auth-jwt": token
         },
         body: JSON.stringify({
             "targetId": targetId,
-            "limit":20,
+            "limit": 20,
             "targetType": "OFFICIAL_MESSAGE"
         })
     }
     let result = await getApi("https://app.jike.ruguoapp.com/1.0/comments/listPrimary", moreArgs);
-    Socket.log("已经获取其中一条的评论",cardCommentCount++);
+    Socket.log("已经获取其中一条的评论", cardCommentCount++);
     Socket.log(result.content);
-    if(!result){
+    if (!result) {
         out = true;
     }
-    return result;}
+    return result;
+}
 let getTopicContent = async (topicId, loadMoreKey) => {
     Socket.log(topicId, loadMoreKey, "getTopicContentINGGGGGGG");
     let moreArgs = {
         method: "POST",
         headers: {
-            "Content-Type":"application/json",
+            "Content-Type": "application/json",
             "x-jike-app-auth-jwt": token
         },
         body: JSON.stringify({
-            "loadMoreKey":loadMoreKey,
-            "topic":topicId,
-            "limit":20
+            "loadMoreKey": loadMoreKey,
+            "topic": topicId,
+            "limit": 20
         })
     }
     let result = await getApi("https://app.jike.ruguoapp.com/1.0/messages/history", moreArgs);
-    return result;}
+    return result;
+}
 let getAllTopicContent = async (topicId, loadMoreKey) => {
     let datas = []
     let result = await getTopicContent(topicId, loadMoreKey);
     datas = datas.concat(result.data);
-    if(!result.data){
+    if (!result.data) {
         result.data = []
     }
-    while(result && result.data && result.data.length > 0){
+    while (result && result.data && result.data.length > 0) {
         let ll = result.data.length;
 
         console.log(new Date(result.data[ll - 1].createdAt).getTime());
-        if(result.loadMoreKey){
+        if (result.loadMoreKey) {
             console.log("永不下一页");
             break;
             Socket.log("下一页");
             await sleep(1);
             result = await getTopicContent(topicId, result.loadMoreKey);
             datas = datas.concat(result.data);
-        }else{
+        } else {
             Socket.log("这页已经够了");
             break;
         }
     }
 
 
-    if(datas && datas.length){
+    if (datas && datas.length) {
         Socket.log("共计拿到  ", datas.length, "条");
     }
 
-    for(let da of datas){
-        if(da.createdAt){
-            try{
+    for (let da of datas) {
+        if (da && da.createdAt) {
+            try {
                 da.created_at = new Date(da.createdAt).getTime();
                 delete da.createdAt;
-            }catch(e){
+            } catch (e) {
                 console.log(e)
             }
         }
-        let comment = await getCardComment(da.id);
-        await sleep(0.5)
-        da.addComment = comment;
+        if (da && da.id) {
+            let comment = await getCardComment(da.id);
+            await sleep(0.5)
+            da.addComment = comment;
+        }
     }
 
-    return datas;}
-const getTopicId = async(value) => {
+    return datas;
+}
+const getTopicId = async (value) => {
 
     console.log(value, "getTopicIdINGGGGGGG");
     let headers = {
@@ -280,22 +295,22 @@ const getTopicId = async(value) => {
         "Content-Type": "application/json",
         "Origin": "https://web.okjike.com",
         "platform": "web",
-        "Referer": "https://web.okjike.com/feed"        
+        "Referer": "https://web.okjike.com/feed"
     }
     let href = "https://app.jike.ruguoapp.com/1.0/search/integrate?keyword=" + encodeURIComponent(value);
-    let result = await Https.get(href,headers);    
-    result = await Https.get(href,headers);    
+    let result = await Https.get(href, headers);
+    result = await Https.get(href, headers);
 
     console.log(result);
-    if(result && result.data && result.data[0]){
+    if (result && result.data && result.data[0]) {
         return result.data[0].id;
     }
     return false;
 }
 //更新token
-(async ()=> {
-    while(true){
-        if(out){
+(async () => {
+    while (true) {
+        if (out) {
             break;
         }
         await sleep(300);
@@ -309,10 +324,10 @@ const getTopicId = async(value) => {
     Socket.startHeartBeat("jike_topic_history");
     token = await getToken();
     let task = null;
-    while(true){
-        try{
+    while (true) {
+        try {
             task = await Task.fetchTask(BEE_NAME);
-        }catch(e){
+        } catch (e) {
             console.log(e);
             await sleep(5);
             continue
@@ -322,25 +337,27 @@ const getTopicId = async(value) => {
         cardCommentCount = 0;
         task.brick_id = JSON.parse(task.config).brick_id;
         let topicId;
-        if(task.value.length !== 24){
+        if (task.value.length !== 24) {
             topicId = await getTopicId(task.value);
             console.log("获得topicId", topicId)
-            if(!topicId) {
+            if (!topicId) {
                 await Task.rejectTask(task)
                 continue
             }
-        }else{
+        } else {
             topicId = task.value;
         }
 
         let result = await getAllTopicContent(topicId, null);
         console.log(result.length);
         result = await filterItems(result);
-        for(let re of result){
-            re.keyword = task.value;
-            re.brick_id = task.brick_id;
-            await postDataToDereplicate(re.id);
-            await postWashTask(task.brick_id, re)
+        for (let re of result) {
+            if (re) {
+                re.keyword = task.value;
+                re.brick_id = task.brick_id;
+                await postDataToDereplicate(re.id);
+                await postWashTask(task.brick_id, re)
+            }
         }
         let legoName = await readLegoById(task.brick_id);
         let update = {

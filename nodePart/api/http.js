@@ -126,41 +126,11 @@ Http.proxyGet = async (path, proxy) => {
     })
 }
 
-Http.GBKGet = async (path) => {
-    let options = {
-        protocol: path.split(":")[0] + ":",
-        host: path.split("//")[1].split("/")[0],
-        //port: "3000",
-        method: "POST",
-        path: "/" + path.split("com/")[1],
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    };
+Http.GBKGet = (path) => {
     return new Promise((resolve, reject) => {
-
-        let req = http.request(options, (res) => {
-            let data = "";
-            res.setEncoding('utf-8');
-            res.on("data", (chunk) => {
-                chunk = iconv.decode(chunk, 'utf-8');
-                data += chunk;
-            })
-            res.on("end", () => {
-                resolve(data);
-            })
-        })
-
-        req.setTimeout(timeout, () => {
-            reject("timeout")
-        })
-
-        req.on("error", (e) => {
-            console.log(e);
-            reject(e);
-        })
-
-        req.end();
+        request.get(href).pipe(iconv.decodeStream('gbk')).collect(function (err, body) {
+            resolve(body)
+        });
     })
 }
 exports.Http = Http;
