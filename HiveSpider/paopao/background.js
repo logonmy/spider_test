@@ -85,6 +85,10 @@ require([
     const runTask = async (task) => {
         try {
             Socket.log(`开始处理爬取任务,task=`, task);
+            console.log(task.value);
+            if(!task.value){
+                throw new Error("这value也没有值啊");
+            }            
             if(task.value.indexOf("paopao") < 0){
                 task.value = task.value + "?select=paopao";
             }
