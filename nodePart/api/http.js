@@ -58,7 +58,7 @@ Http.get = async (path) => {
         protocol: path.split(":")[0] + ":",
         host: path.split("//")[1].split("/")[0],
         //port: "3000",
-        method: "POST",
+        method: "GET",
         path: "/" + path.split("com/")[1],
         headers: {
             'Content-Type': 'application/json',

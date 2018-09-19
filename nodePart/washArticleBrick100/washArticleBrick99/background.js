@@ -15,7 +15,7 @@ require([
     "../api/legoUtil"
 ], (Config, Http, Async, Task, Socket, Tab, FileControll, Lego, getTypeOfR) => {
     let lego_ids = Config.lego_ids;
-    console.log(lego_ids)
+    lego_ids = false;
     let lastLego;
 
     let urlSet = new Set();

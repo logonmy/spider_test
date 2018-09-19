@@ -1,7 +1,6 @@
-const readLine = require("lei-stream").readLine
-const File = require('fs')
+const readLine = require("lei-stream").readLine;
 
-Array.prototype.remove = function(val) {
+Array.prototype.remove = function (val) {
     var index = this.indexOf(val);
     if (index > -1) {
         this.splice(index, 1);
@@ -299,7 +298,7 @@ function CardCoverter(session) {
                     }
                 });
             } else {
-                setTimeout(function() {
+                setTimeout(function () {
                     if (videoCallback) {
                         videoCallback(model.source);
                     }
@@ -376,39 +375,6 @@ function CardCoverter(session) {
         videoCallback = c;
     }
 }
-
-function extractVideoUrl(id, callback) {
-    var that = this;
-    var start = Date.now();
-
-    wx.request({
-        url: "https://chatbot.api.talkmoment.com/video/lego/link/extract?lego_id=" + id,
-        method: "GET",
-        success: function (res) {
-            if (res.data.err_no == -1) {
-                console.log("server error")
-                return;
-            }
-            var source = res.data.result.video_url;
-            var end = Date.now();
-            var elapse = end - start;
-            console.log("elapse:" + elapse)
-            if (elapse < 1000) {
-                setTimeout(function () {
-                    callback(source);
-                }, 1000 - elapse)
-            } else {
-                callback(source);
-            }
-        },
-        fail: function (res) {
-            console.log("视频已经丢失了");
-            callback(null);
-        },
-        complete: function (res) { }
-    })
-}
-
 function convertTimestamp(t) {
     var d = new Date();
     var now = Date.now();
@@ -427,22 +393,118 @@ function convertTimestamp(t) {
     var month = d.getMonth() + 1;
     return month + "/" + date;
 }
+const init = async () => {
+    let videos = [];
+    return new Promise((resolve, reject) => {
+        readLine("lego_100_0916.txt").go((data, next) => {
+            try {
+                data = JSON.parse(data);
+                let t = getTypeOfR(data.R);
+                if (t == 5) {
+                    let model = r2Models(data.R)
+                    let json;
+                    for (let m of model) {
+                        if (m.type) {
+                            json = m
+                        }
+                    }
+                    if (json.type == "web_url" || json.type == "video") {
+                        videos.push(data);
+                    }
+                }
+            } catch (e) {
+
+            }
+            next()
+        }, () => {
+            resolve(videos);
+        });
+    })
+}
 
 
+const http = require("http");
 
+const checkOk = (path) => {
+    let req;
+    const get = (path) => {
+        let options = {
+            protocol: path.split(":")[0] + ":",
+            host: path.split("//")[1].split("/")[0],
+            //port: "3000",
+            method: "GET",
+            path: "/" + path.split("com/")[1],
+            headers: {
+                // 'Accept': '*/*',
+                // 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1',
+            }
+        };
+        return new Promise((resolve, reject) => {
+            req = http.request(options, (res) => {
+                let data = "";
+                res.on("data", (chunk) => {
+                    console.log(data);
+                    data += chunk;
+                })
+                res.on("end", () => {
+                    console.log(data);
+                    resolve(data);
+                })
+            })
 
-let search = new Set();
-readLine("lego_100_0916.txt").go((data, next) => {
-    try {
-        let r = JSON.parse(data).R
-        console.log("ok")
-        if(getTypeOfR(r) == 4){
-            File.appendFileSync("article.txt", data + "\n");
-        }
-        
-    } catch (e) { 
-        console.log(e)
+            req.setTimeout(5000, () => {
+                reject("timeout")
+            })
+
+            req.on("error", (e) => {
+                console.log(e);
+                reject(e);
+            })
+
+            req.end();
+        })
     }
-    next();
-}, () => {
-})
+    return new Promise(async (resolve, reject) => {
+        let re;
+        let out = setTimeout(function () {
+            if (req) {
+                req.abort();
+            }
+            resolve(true)
+        }, 2000)
+        await get(path);
+        if (re) {
+            return;
+        }
+        clearTimeout(out);
+        resolve(false);
+    })
+
+}
+
+
+(async () => {
+    // let videos = await init()
+    // for (let v of videos) {
+    //     let model = r2Models(v.R);
+    //     for (let m of model) {
+            
+    //         if (m.type && m.type == "video") {
+    //             console.log("-[--==-=-=-=-==-=-=-=-=-=-");
+    //             // console.log(m)
+    //             let ok = await checkOk(m.source)
+    //             console.log(ok)
+    //             if (!ok) {
+    //                 console.log(m.source)
+    //                 console.log(v)
+    //             } else {
+    //                 console.log(ok);
+    //             }
+    //         }
+    //     }
+    // }
+    // console.log(videos);
+
+    let ok = await checkOk("http://qnvideo.ixiaochuan.cn/zyvd/a7/ea/8f0d-59d0-11e8-97ab-00163e042306")
+    console.log(ok)
+})()

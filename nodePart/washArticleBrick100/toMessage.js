@@ -1,4 +1,5 @@
 const Queue = require("../api/queue").Queue;
+const File = require("fs");
 const getLegoBrickAll = require("../api/lego").getLegoBrickAll;
 const getLegoBrick = require("../api/lego").getBrick;
 const getLegoBrickOne = require("../api/lego").getLegoBrickOne;
@@ -36,8 +37,9 @@ const jsdom = require("jsdom")
     let sendAlready = new Set();
     for (let le of legos) {
         if(!sendAlready.has(le.url)){
-            console.log(le.url);
-            await Queue.postDataToMessage("yigemingzieryi", le.url)
+            console.log(le)
+            await File.appendFileSync("allLego.txt", JSON.stringify(le) + "\n");
+            // await Queue.postDataToMessage("yigemingzieryi", le.url)
         }
         sendAlready.add(le.url);
     }

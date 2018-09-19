@@ -48,4 +48,3 @@ readLine("./最右/zuiyou_brick.txt").go(async (data, next) => {
     File.appendFileSync("tett.txt", JSON.stringify(write) + "\n");
     next();
 })
-
