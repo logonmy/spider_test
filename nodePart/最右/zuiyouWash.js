@@ -1,4 +1,7 @@
 const readLine = require("lei-stream").readLine;
+const getPage = require("../api/fetch").getPage;
+const File = require("fs")
+const jsdom = require("jsdom")
 
 Array.prototype.remove = function (val) {
     var index = this.indexOf(val);
@@ -484,27 +487,38 @@ const checkOk = (path) => {
 
 
 (async () => {
-    // let videos = await init()
-    // for (let v of videos) {
-    //     let model = r2Models(v.R);
-    //     for (let m of model) {
-            
-    //         if (m.type && m.type == "video") {
-    //             console.log("-[--==-=-=-=-==-=-=-=-=-=-");
-    //             // console.log(m)
-    //             let ok = await checkOk(m.source)
-    //             console.log(ok)
-    //             if (!ok) {
-    //                 console.log(m.source)
-    //                 console.log(v)
-    //             } else {
-    //                 console.log(ok);
-    //             }
-    //         }
-    //     }
-    // }
-    // console.log(videos);
+    let videos = await init()
+    for (let v of videos) {
+        try {
+            let model = r2Models(v.R);
+            for (let m of model) {
+                if (m.type && m.type == "web_url") {
+                    console.log("-[--==-=-=-=-==-=-=-=-=-=-");
+                    let host = m.source.split("//")[1].split("/")[0];
 
-    let ok = await checkOk("http://qnvideo.ixiaochuan.cn/zyvd/a7/ea/8f0d-59d0-11e8-97ab-00163e042306")
-    console.log(ok)
+
+
+                    if (m.source.indexOf("bilibili") > -1) {
+                        console.log(m.source);
+                        try {
+                            let html = await getPage(m.source);
+                            let d = new jsdom.JSDOM(html);
+                            let document = d.window.document;
+                            let error = document.querySelector(".error-body");
+                            if (error) {
+                                throw new Error("err");
+                            }
+                            console.log("this one fucking ok");
+                        } catch (e) {
+                            console.log(e, 1)
+                            File.appendFileSync("badWebUrl.txt", JSON.stringify(v) + "\n");
+                        }
+                    }
+                }
+            }
+        } catch (e) {
+            console.log(e, 2)
+        }
+    }
+    // let ok = await checkOk("http://qnvideo.ixiaochuan.cn/zyvd/a7/ea/8f0d-59d0-11e8-97ab-00163e042306")
 })()

@@ -33,6 +33,7 @@ require([
         try {
             let tab = new Tab(url, ["./business/script.js"], 10000);
             let data = await tab.run();
+            tab.remove();
             console.log("-----------")
             console.log(data);
             console.log("-----------")
@@ -152,6 +153,8 @@ require([
                         let d = await Lego.putLego(lego);
                         console.log(d);
                         d = await Lego.importLego(c.id);
+                    }else{
+                        console.log("不存在text");
                     }
                 } catch (e) {
                     console.log(e, "first part");
@@ -197,6 +200,8 @@ require([
                                 let d = await Lego.putLego(lego);
                                 console.log(d);
                                 d = await Lego.importLego(c.id);
+                            }else{
+                                console.log("不存在text")
                             }
                         }
                     } else {

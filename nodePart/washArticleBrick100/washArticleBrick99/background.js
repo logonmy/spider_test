@@ -15,7 +15,8 @@ require([
     "../api/legoUtil"
 ], (Config, Http, Async, Task, Socket, Tab, FileControll, Lego, getTypeOfR) => {
     let lego_ids = Config.lego_ids;
-    lego_ids = false;
+    lego_ids =  false;
+
     let lastLego;
 
     let urlSet = new Set();
@@ -33,6 +34,7 @@ require([
         try {
             let tab = new Tab(url, ["./business/script.js"], 10000);
             let data = await tab.run();
+            tab.remove();
             console.log("-----------")
             console.log(data);
             console.log("-----------")
@@ -161,7 +163,7 @@ require([
         } else {
             let d = await Lego.readLegoFirst(100);
             lastLego = d[0].id;
-            lastLego = 70569079;
+            lastLego = 70625075;
             console.log(lastLego);
             while (true) {
                 try {

@@ -11,7 +11,7 @@ const safeFetch = async (url, moreArgs = {}) => {
 
 const getApi = async (url, moreArgs = {
     headers: {
-        "Content-Type":"application/json",
+        "Content-Type": "application/json",
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36",
         "Connection": "keep-alive",
     }
@@ -23,6 +23,22 @@ const getApi = async (url, moreArgs = {
         return false;
     }
 };
+
+const plainApi = async (url, moreArgs = {
+    headers: {
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36",
+        "Connection": "keep-alive",
+    }
+}) => { 
+    let res = await safeFetch(url, moreArgs);
+    if (res !== undefined && res.status === 200) {
+        return res.text();
+    } else {
+        return false;
+    }
+}
+
 
 const getPage = async (url, moreArgs = {
     headers: {

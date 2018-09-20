@@ -38,7 +38,7 @@ const jsdom = require("jsdom")
     for (let le of legos) {
         if(!sendAlready.has(le.url)){
             console.log(le)
-            await File.appendFileSync("allLego.txt", JSON.stringify(le) + "\n");
+            // await File.appendFileSync("allLego.txt", JSON.stringify(le) + "\n");
             // await Queue.postDataToMessage("yigemingzieryi", le.url)
         }
         sendAlready.add(le.url);
